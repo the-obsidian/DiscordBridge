@@ -1,0 +1,11 @@
+machine:
+  java:
+    version: oraclejdk8
+
+deployment:
+  release:
+    tag: /v[0-9]+(\.[0-9]+)*/
+    owner: the-obsidian
+    commands:
+      - mvn release:prepare -D bintray-
+      - mvn release:perform
