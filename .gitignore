@@ -1,6 +1,5 @@
 .idea/
 *.iml
-/target
-dependency-reduced-pom.xml
-release.properties
+target/
+
 
