@@ -1,0 +1,9 @@
+name: DiscordBridge
+version: ${project.version}
+description: ${project.description}
+
+author: Jacob Gillespie
+website: ${project.url}
+
+main: gg.obsidian.discordbridge.DiscordBridge
+

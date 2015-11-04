@@ -1,0 +1,6 @@
+settings:
+  server-id: '00000000'
+  channel: 'test'
+  username: 'username'
+  email: 'email@example.com'
+  password: 'password'
