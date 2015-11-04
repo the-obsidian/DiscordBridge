@@ -1,9 +1,9 @@
 name: DiscordBridge
-version: ${version}
-description: Bridges chat between Minecraft and Discord
+version: ${project.version}
+description: ${project.description}
 
 author: Jacob Gillespie
-website: https://github.com/the-obsidian/DiscordBridge
+website: ${project.url}
 
 main: gg.obsidian.discordbridge.DiscordBridge
 
