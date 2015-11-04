@@ -4,9 +4,9 @@
                           http://maven.apache.org/xsd/settings-1.0.0.xsd">
     <servers>
         <server>
-            <id>bintray</id>
-            <username>{bintray-api-user}</username>
-            <password>{bintray-api-key}</password>
+            <id>github</id>
+            <username>{github-api-user}</username>
+            <privateKey>{github-api-key}</privateKey>
         </server>
     </servers>
 </settings>
