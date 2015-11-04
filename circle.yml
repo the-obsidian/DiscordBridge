@@ -7,5 +7,5 @@ deployment:
     tag: /v[0-9]+(\.[0-9]+)*/
     owner: the-obsidian
     commands:
-      - mvn release:prepare -D bintray-
-      - mvn release:perform
+      - mvn release:prepare -Dbintray-api-user=$BINTRAY_API_USER -Dbintray-api-key=$BINTRAY_API_KEY
+      - mvn release:perform -Dbintray-api-user=$BINTRAY_API_USER -Dbintray-api-key=$BINTRAY_API_KEY
