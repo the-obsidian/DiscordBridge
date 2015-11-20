@@ -2,6 +2,10 @@
 
 Bridges chat between Discord and Minecraft (Bukkit/Spigot).
 
+## Requirements
+
+* Java 8
+
 ## Installation
 
 1. Download the [latest release](https://github.com/the-obsidian/DiscordBridge/releases) from GitHub
