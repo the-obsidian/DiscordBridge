@@ -5,7 +5,7 @@ import me.itsghost.jdiscord.event.EventListener
 import me.itsghost.jdiscord.events.UserChatEvent
 import org.bukkit.ChatColor
 
-class DiscordListener(val plugin: DiscordBridge, val api: DiscordAPI) : EventListener {
+class DiscordListener(val plugin: Plugin, val api: DiscordAPI) : EventListener {
 
     fun userChat(e: UserChatEvent) {
         plugin.logDebug("Received message ${e.msg.id} from Discord")

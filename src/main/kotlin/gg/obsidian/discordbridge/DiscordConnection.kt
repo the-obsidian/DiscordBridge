@@ -5,7 +5,7 @@ import me.itsghost.jdiscord.DiscordBuilder
 import me.itsghost.jdiscord.Server
 import me.itsghost.jdiscord.talkable.Group
 
-class DiscordConnection(val plugin: DiscordBridge) : Runnable {
+class DiscordConnection(val plugin: Plugin) : Runnable {
     var api: DiscordAPI = DiscordBuilder(plugin.email, plugin.password).build()
     var server: Server? = null
     var channel: Group? = null
