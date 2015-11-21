@@ -5,3 +5,10 @@ settings:
   email: 'email@example.com'
   password: 'password'
   debug: false
+  templates:
+    discord:
+      chat_message: '<%u> %m'
+      player_join: '%u joined the server'
+      player_leave: '%u left the server'
+    minecraft:
+      chat_message: '<%u&b(discord)&r> %m'

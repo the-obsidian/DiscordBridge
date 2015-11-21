@@ -6,7 +6,7 @@ import me.itsghost.jdiscord.Server
 import me.itsghost.jdiscord.talkable.Group
 
 class DiscordConnection(val plugin: Plugin) : Runnable {
-    var api: DiscordAPI = DiscordBuilder(plugin.email, plugin.password).build()
+    var api: DiscordAPI = DiscordBuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).build()
     var server: Server? = null
     var channel: Group? = null
 
@@ -20,14 +20,14 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
 
     }
 
-    fun send(name: String, message: String) {
-        server = if (server == null) getServerById(plugin.serverID) else server
+    fun send(message: String) {
+        server = if (server == null) getServerById(plugin.configuration.SERVER_ID) else server
         if (server == null) return
 
-        channel = if (channel == null) getGroupByName(server!!, plugin.channel) else channel
+        channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
         if (channel == null) return
 
-        channel!!.sendMessage("<$name> $message")
+        channel!!.sendMessage(message)
     }
 
     private fun getServerById(id: String): Server? {
