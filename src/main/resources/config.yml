@@ -4,3 +4,4 @@ settings:
   username: 'username'
   email: 'email@example.com'
   password: 'password'
+  debug: false
