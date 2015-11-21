@@ -26,7 +26,7 @@ settings:
   password: 'password'
 ```
 
-* `server-id` is the ID if your Discord server.  This can be found under *Server Settings > Widget > Server ID*
+* `server-id` is the ID of your Discord server.  This can be found under *Server Settings > Widget > Server ID*
 * `channel` is the Discord channel name you would like to bridge with your Minecraft server
 * `username` is the Discord username of your bot user
 * `email` is the Discord email address of your bot user
