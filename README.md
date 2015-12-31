@@ -25,6 +25,7 @@ settings:
   email: 'email@example.com'
   password: 'password'
   debug: false
+  relay_cancelled_messages: true
   templates:
     discord:
       chat_message: '<%u> %m'
@@ -40,6 +41,7 @@ settings:
 * `email` is the Discord email address of your bot user
 * `password` is the Discord password of your bot user
 * `debug` enables more verbose logging
+* `relay_cancelled_messages` will relay chat messages even if they are cancelled
 * `templates` - customize the message text - `%u` will be replaced with the username and `%m` will be replaced with the message.  Color codes, prefixed with `&`, will be translated on the Minecraft end.
 
 ## Features

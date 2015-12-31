@@ -8,6 +8,7 @@ class Configuration(val plugin: Plugin) {
     var EMAIL: String = ""
     var PASSWORD: String = ""
     var DEBUG: Boolean = false
+    var RELAY_CANCELLED_MESSAGES = true
     var TEMPLATES_DISCORD_CHAT_MESSAGE = ""
     var TEMPLATES_DISCORD_PLAYER_JOIN = ""
     var TEMPLATES_DISCORD_PLAYER_LEAVE = ""
@@ -22,6 +23,7 @@ class Configuration(val plugin: Plugin) {
         EMAIL = plugin.config.getString("settings.email")
         PASSWORD = plugin.config.getString("settings.password")
         DEBUG = plugin.config.getBoolean("settings.debug", false)
+        RELAY_CANCELLED_MESSAGES = plugin.config.getBoolean("settings.relay_cancelled_messages", true);
 
         TEMPLATES_DISCORD_CHAT_MESSAGE = plugin.config.getString("settings.templates.discord.chat_message", "<%u> %m")
         TEMPLATES_DISCORD_PLAYER_JOIN = plugin.config.getString("settings.templates.discord.player_join", "%u joined the server")
