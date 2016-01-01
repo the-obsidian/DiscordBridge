@@ -28,11 +28,13 @@ class Plugin : JavaPlugin(), Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     fun onChat(event: AsyncPlayerChatEvent) {
         logDebug("Received a chat event from ${event.player.name}: ${event.message}")
-        val username = ChatColor.stripColor(event.player.name)
-        val formattedMessage = configuration.TEMPLATES_DISCORD_CHAT_MESSAGE
-                .replace("%u", username)
-                .replace("%m", event.message)
-        sendToDiscord(formattedMessage)
+        if (!event.isCancelled || configuration.RELAY_CANCELLED_MESSAGES) {
+            val username = ChatColor.stripColor(event.player.name)
+            val formattedMessage = configuration.TEMPLATES_DISCORD_CHAT_MESSAGE
+                    .replace("%u", username)
+                    .replace("%m", event.message)
+            sendToDiscord(formattedMessage)
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

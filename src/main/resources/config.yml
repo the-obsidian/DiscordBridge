@@ -5,6 +5,7 @@ settings:
   email: 'email@example.com'
   password: 'password'
   debug: false
+  relay_cancelled_messages: true
   templates:
     discord:
       chat_message: '<%u> %m'
