@@ -26,11 +26,16 @@ settings:
   password: 'password'
   debug: false
   relay_cancelled_messages: true
+  messages:
+    join: true
+    leave: true
+    death: false
   templates:
     discord:
       chat_message: '<%u> %m'
       player_join: '%u joined the server'
       player_leave: '%u left the server'
+      player_death: '%r'
     minecraft:
       chat_message: '<%u&b(discord)&r> %m'
 ```
@@ -42,14 +47,33 @@ settings:
 * `password` is the Discord password of your bot user
 * `debug` enables more verbose logging
 * `relay_cancelled_messages` will relay chat messages even if they are cancelled
-* `templates` - customize the message text - `%u` will be replaced with the username and `%m` will be replaced with the message.  Color codes, prefixed with `&`, will be translated on the Minecraft end.
+* `messages` enables or disables certain kinds of messages
+* `templates` - customize the message text 
+
+**Templates**
+
+- `%u` will be replaced with the username 
+- '%d' will be replaced with the user's display name
+- `%m` will be replaced with the message
+- `%w` will be replaced with the world name
+- `%r` will be replaced with the death reason
+- Color codes, prefixed with `&`, will be translated on the Minecraft end
 
 ## Features
 
 * Anything said in Minecraft chat will be sent to your chosen Discord channel
 * Anything said in your chosen Discord channel will be sent to your Minecraft chat (with a `(discord)` suffix added to usernames)
 * Join / leave messages are sent to Discord
+* Death messages can optionally be sent to Discord
 * Message templates are customized
+
+## Permissions
+
+- `discordbridge.reload` - ability to reload config and reconnect the Discord connection
+
+## Commands
+
+- `/discord reload` - reloads config and reconnects to Discord
 
 ## Upcoming Features
 

@@ -2,11 +2,12 @@ package gg.obsidian.discordbridge
 
 import com.neovisionaries.ws.client.WebSocket
 import com.neovisionaries.ws.client.WebSocketException
+import com.neovisionaries.ws.client.WebSocketFrame
 import net.dv8tion.jda.JDA
 import net.dv8tion.jda.events.message.MessageReceivedEvent
 import net.dv8tion.jda.hooks.ListenerAdapter
 
-class DiscordListener(val plugin: Plugin, val api: JDA) : ListenerAdapter() {
+class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordConnection) : ListenerAdapter() {
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
         plugin.logDebug("Received message ${event.message.id} from Discord")
@@ -34,5 +35,10 @@ class DiscordListener(val plugin: Plugin, val api: JDA) : ListenerAdapter() {
 
     fun onUnexpectedError(ws: WebSocket, wse: WebSocketException) {
         plugin.logger.severe("Unexpected error from DiscordBridge: ${wse.message}")
+    }
+
+    fun onDisconnected(webSocket: WebSocket, serverCloseFrame: WebSocketFrame, clientCloseFrame: WebSocketFrame, closedByServer: Boolean) {
+        plugin.logDebug("Discord disconnected - attempting to reconnect")
+        connection.reconnect()
     }
 }

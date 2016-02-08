@@ -6,10 +6,15 @@ settings:
   password: 'password'
   debug: false
   relay_cancelled_messages: true
+  messages:
+    join: true
+    leave: true
+    death: false
   templates:
     discord:
       chat_message: '<%u> %m'
       player_join: '%u joined the server'
       player_leave: '%u left the server'
+      player_death: '%r'
     minecraft:
       chat_message: '<%u&b(discord)&r> %m'

@@ -7,3 +7,12 @@ website: ${project.url}
 
 main: gg.obsidian.discordbridge.Plugin
 
+permissions:
+  discordbridge.reload:
+    description: Reload the Discord Bridge
+    default: op
+
+commands:
+  discord:
+    description: Reload the Discord Bridge
+    usage: /discord reload

@@ -6,12 +6,13 @@ import net.dv8tion.jda.entities.TextChannel
 
 class DiscordConnection(val plugin: Plugin) : Runnable {
     var api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).build()
+    var listener = DiscordListener(plugin, api, this)
     var server: Guild? = null
     var channel: TextChannel? = null
 
     override fun run() {
         try {
-            api.addEventListener(DiscordListener(plugin, api))
+            api.addEventListener(listener)
         } catch (e: Exception) {
             plugin.logger.severe("Error connecting to Discord: " + e)
         }
@@ -26,6 +27,14 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
         if (channel == null) return
 
         channel!!.sendMessage(message)
+    }
+
+    fun reconnect() {
+        api.removeEventListener(listener)
+        api.shutdown(false)
+        api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).build()
+        listener = DiscordListener(plugin, api, this)
+        api.addEventListener(listener)
     }
 
     private fun getServerById(id: String): Guild? {
