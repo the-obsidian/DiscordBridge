@@ -1,19 +1,17 @@
 package gg.obsidian.discordbridge
 
-import me.itsghost.jdiscord.DiscordAPI
-import me.itsghost.jdiscord.DiscordBuilder
-import me.itsghost.jdiscord.Server
-import me.itsghost.jdiscord.talkable.Group
+import net.dv8tion.jda.JDABuilder
+import net.dv8tion.jda.entities.Guild
+import net.dv8tion.jda.entities.TextChannel
 
 class DiscordConnection(val plugin: Plugin) : Runnable {
-    var api: DiscordAPI = DiscordBuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).build()
-    var server: Server? = null
-    var channel: Group? = null
+    var api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).build()
+    var server: Guild? = null
+    var channel: TextChannel? = null
 
     override fun run() {
         try {
-            api.login()
-            api.eventManager.registerListener(DiscordListener(plugin, api))
+            api.addEventListener(DiscordListener(plugin, api))
         } catch (e: Exception) {
             plugin.logger.severe("Error connecting to Discord: " + e)
         }
@@ -30,15 +28,15 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
         channel!!.sendMessage(message)
     }
 
-    private fun getServerById(id: String): Server? {
-        for (server in api.availableServers)
+    private fun getServerById(id: String): Guild? {
+        for (server in api.guilds)
             if (server.id.equals(id, true))
                 return server
         return null
     }
 
-    private fun getGroupByName(server: Server, name: String): Group? {
-        for (group in server.groups)
+    private fun getGroupByName(server: Guild, name: String): TextChannel? {
+        for (group in server.textChannels)
             if (group.name.equals(name))
                 return group
         return null

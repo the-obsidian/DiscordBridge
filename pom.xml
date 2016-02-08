@@ -19,17 +19,13 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.0.0-beta-1103</kotlin.version>
+        <kotlin.version>1.0.0-rc-1036</kotlin.version>
     </properties>
 
     <repositories>
         <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
-        </repository>
-        <repository>
-            <id>xyz.gghost</id>
-            <url>http://gghost.xyz/maven/</url>
         </repository>
     </repositories>
 
@@ -45,10 +41,9 @@
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
-            <groupId>xyz.gghost</groupId>
-            <artifactId>jdiscord</artifactId>
-            <version>1.3</version>
-            <scope>compile</scope>
+            <groupId>net.dv8tion</groupId>
+            <artifactId>JDA</artifactId>
+            <version>1.2.1_106</version>
         </dependency>
     </dependencies>
 
@@ -101,13 +96,17 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <minimizeJar>true</minimizeJar>
+                            <!-- Enabling minimizeJar currently breaks this plugin -->
+                            <minimizeJar>false</minimizeJar>
+
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <artifactSet>
                                 <includes>
-                                    <include>org.jetbrains.kotlin:*</include>
-                                    <include>xyz.gghost:*</include>
+                                    <include>*</include>
                                 </includes>
+                                <excludes>
+                                    <exclude>org.spigotmc:spigot-api</exclude>
+                                </excludes>
                             </artifactSet>
                         </configuration>
                     </execution>
