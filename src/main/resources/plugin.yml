@@ -5,6 +5,8 @@ description: ${project.description}
 author: Jacob Gillespie
 website: ${project.url}
 
+loadbefore: [SpaceBukkit, RemoteToolkitPlugin]
+
 main: gg.obsidian.discordbridge.Plugin
 
 permissions:
