@@ -5,7 +5,7 @@
 
     <groupId>gg.obsidian</groupId>
     <artifactId>DiscordBridge</artifactId>
-    <version>1.4.2</version>
+    <version>1.4.3</version>
     <description>Bridge chat between Discord and Minecraft</description>
     <url>https://github.com/the-obsidian/DiscordBridge</url>
 
@@ -35,6 +35,11 @@
             <id>DV8FromTheWorld</id>
             <url>https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo</url>
         </repository>
+        <repository>
+            <id>central</id>
+            <name>bintray</name>
+            <url>http://jcenter.bintray.com</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -51,7 +56,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>1.2.2_139</version>
+            <version>1.2.2_165</version>
         </dependency>
     </dependencies>
 

@@ -5,7 +5,7 @@ import net.dv8tion.jda.entities.Guild
 import net.dv8tion.jda.entities.TextChannel
 
 class DiscordConnection(val plugin: Plugin) : Runnable {
-    var api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).build()
+    var api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).enableVoice(false).buildBlocking()
     var listener = DiscordListener(plugin, api, this)
     var server: Guild? = null
     var channel: TextChannel? = null
