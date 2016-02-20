@@ -5,7 +5,7 @@
 
     <groupId>gg.obsidian</groupId>
     <artifactId>DiscordBridge</artifactId>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
     <description>Bridge chat between Discord and Minecraft</description>
     <url>https://github.com/the-obsidian/DiscordBridge</url>
 
@@ -27,6 +27,14 @@
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
         </repository>
+        <repository>
+            <id>letece</id>
+            <url>http://lutece.paris.fr/nexus/content/repositories/lutece_third_party</url>
+        </repository>
+        <repository>
+            <id>DV8FromTheWorld</id>
+            <url>https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -43,7 +51,7 @@
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>1.2.1_106</version>
+            <version>1.2.2_139</version>
         </dependency>
     </dependencies>
 
