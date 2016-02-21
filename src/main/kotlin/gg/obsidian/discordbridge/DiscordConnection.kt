@@ -32,7 +32,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     fun reconnect() {
         api.removeEventListener(listener)
         api.shutdown(false)
-        api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).build()
+        api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).enableVoice(false).buildBlocking()
         listener = DiscordListener(plugin, api, this)
         api.addEventListener(listener)
     }
