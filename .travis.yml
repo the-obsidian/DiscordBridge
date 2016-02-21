@@ -6,7 +6,7 @@ deploy:
   provider: releases
   api_key:
     secure: KJd23J+YlpBuUs+5//5BjYlSQ9mVOsYnpfanE03ZQ4E9Qp+pGpMSaH60d/CXkSkDVr32QL5jk0VRDNVl0wvTZpRJfNclQgh3fh2iPkaBDmjun0YkGHfE6VeRzJZVuIF/F34pkziEC01B7Tq2loms+RSm9pNeWgN+ulaajNENUT2J4nmb33yyKbGN9I4EdjcMCQmgdnxn/4QNXV6T3Xls9S9X7AwA9pg4WNpdACqJ0oWj2YlSWKmAdcKw0iLQtRbQfbiqj6waOLODdxieIu0KVWEVQnTdcv7ElGl9BgDrHzXBjfS+9G112TBqsNIPx60o8Z7ThR02DYPWYXrRyfvaHM0FqXrBSaUZUxfHpGn5F4CRQLZh/jOnIOZ9hHmCSDD69pcS254tVCoB+hRuS7PBstuh8iUO7VGJASb5Mv34LZYLAxfvNDAKLeY60xdz/Uiku9JW0dpLQC+FWAvFZWdQ3IvCMYRnaT1fmjDJKanYvCw31l5ypACjfhIQfnwG7FKeLdh6BJx9CG/eHV2URO4do5OCLBkuL2IYQQXqlj6jU4QpXjfWDf7XCAW3MBthjwe5lnLeNZTkcwttQqIOZdCn7Qa/zaG+HJM62tnV9uhLpj4fhaGmf7tapdUWJ5cuUUGLA3MNmSqsZ3ohF5wGlKsGwFVOb6UhoB9szmA9p7zQGpw=
-  file: target/DiscordBridge-*.jar
+  file: build/DiscordBridge-*.jar
   file_glob: true
   on:
     repo: the-obsidian/DiscordBridge

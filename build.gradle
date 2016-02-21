@@ -1,0 +1,76 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
+buildscript {
+  ext.kotlin_version = '1.0.0'
+
+  repositories {
+    mavenCentral()
+    maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
+    jcenter()
+  }
+
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
+
+
+plugins {
+  id 'java'
+  id 'com.github.johnrengelman.shadow' version '1.2.3'
+}
+
+apply plugin: 'kotlin'
+
+group = 'gg.obsidian'
+version = '1.4.3'
+description = """Bridge chat between Minecraft and Discord"""
+ext.url = 'https://github.com/the-obsidian/DiscordBridge'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  maven { url 'https://maven-central.storage.googleapis.com' }
+  maven { url 'https://hub.spigotmc.org/nexus/content/groups/public/' }
+  maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+  maven { url 'http://lutece.paris.fr/nexus/content/repositories/lutece_third_party' }
+  maven { url 'https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo' }
+
+  jcenter()
+}
+
+dependencies {
+  compile group: 'org.spigotmc', name: 'spigot-api', version:'1.8.8-R0.1-SNAPSHOT'
+  compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version:'1.0.0-rc-1036'
+  compile group: 'net.dv8tion', name: 'JDA', version:'1.2.2_165'
+}
+
+processResources {
+  filter ReplaceTokens, tokens: [
+    'DESCRIPTION': project.property('description'),
+    'URL': project.property('url'),
+    'VERSION': project.property('version')
+  ]
+}
+
+build.finalizedBy(shadowJar)
+
+shadowJar {
+  classifier 'dist'
+  dependencies {
+    exclude(dependency('org.spigotmc:.*:.*'))
+  }
+  exclude '.cache'
+}
+
+task copyFinalJar(type: Copy) {
+  from "build/libs/${shadowJar.archiveName}"
+  into "build"
+  rename(
+    shadowJar.archiveName,
+    "${project.property('name')}-${project.property('version')}.jar"
+  )
+}
+
+shadowJar.finalizedBy(copyFinalJar)

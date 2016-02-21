@@ -1,9 +1,9 @@
 name: DiscordBridge
-version: ${project.version}
-description: ${project.description}
+version: '@VERSION@'
+description: '@DESCRIPTION@'
 
 author: Jacob Gillespie
-website: ${project.url}
+website: '@URL@'
 
 loadbefore: [SpaceBukkit, RemoteToolkitPlugin]
 
