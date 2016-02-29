@@ -7,8 +7,14 @@ settings:
   debug: false
   relay_cancelled_messages: true
   messages:
+    chat: true
     join: true
     leave: true
+    death: false
+  if_vanished:
+    chat: false
+    join: false
+    leave: false
     death: false
   templates:
     discord:

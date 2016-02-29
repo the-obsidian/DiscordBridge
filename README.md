@@ -27,8 +27,14 @@ settings:
   debug: false
   relay_cancelled_messages: true
   messages:
+    chat: true
     join: true
     leave: true
+    death: false
+  if_vanished:
+    chat: false
+    join: false
+    leave: false
     death: false
   templates:
     discord:
@@ -48,6 +54,7 @@ settings:
 * `debug` enables more verbose logging
 * `relay_cancelled_messages` will relay chat messages even if they are cancelled
 * `messages` enables or disables certain kinds of messages
+* `if_vanished` enables or disables messages if the user is vanished (applies after `messages`)
 * `templates` - customize the message text 
 
 **Templates**

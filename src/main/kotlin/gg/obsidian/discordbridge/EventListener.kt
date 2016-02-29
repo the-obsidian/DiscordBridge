@@ -14,34 +14,49 @@ class EventListener(val plugin: Plugin): Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     fun onChat(event: AsyncPlayerChatEvent) {
         plugin.logDebug("Received a chat event from ${event.player.name}: ${event.message}")
-        if (!event.isCancelled || plugin.configuration.RELAY_CANCELLED_MESSAGES) {
-            val username = ChatColor.stripColor(event.player.name)
-            val formattedMessage = Util.formatMessage(
-                    plugin.configuration.TEMPLATES_DISCORD_CHAT_MESSAGE,
-                    mapOf(
-                            "%u" to username,
-                            "%m" to ChatColor.stripColor(event.message),
-                            "%d" to ChatColor.stripColor(event.player.displayName),
-                            "%w" to event.player.world.name
-                    )
-            )
 
-            plugin.sendToDiscord(formattedMessage)
-        }
+
+        if (!plugin.configuration.MESSAGES_CHAT) return
+        if (event.isCancelled && !plugin.configuration.RELAY_CANCELLED_MESSAGES) return
+
+        // Check for vanished
+        val player = event.player;
+        if (player.hasMetadata("vanished") &&
+                player.getMetadata("vanished")[0].asBoolean() &&
+                !plugin.configuration.IF_VANISHED_CHAT) return
+
+        val username = ChatColor.stripColor(event.player.name)
+        val formattedMessage = Util.formatMessage(
+                plugin.configuration.TEMPLATES_DISCORD_CHAT_MESSAGE,
+                mapOf(
+                        "%u" to username,
+                        "%m" to ChatColor.stripColor(event.message),
+                        "%d" to ChatColor.stripColor(player.displayName),
+                        "%w" to player.world.name
+                )
+        )
+
+        plugin.sendToDiscord(formattedMessage)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         if (!plugin.configuration.MESSAGES_JOIN) return
 
-        val username = ChatColor.stripColor(event.player.name)
+        // Check for vanished
+        val player = event.player;
+        if (player.hasMetadata("vanished") &&
+                player.getMetadata("vanished")[0].asBoolean() &&
+                !plugin.configuration.IF_VANISHED_JOIN) return
+
+        val username = ChatColor.stripColor(player.name)
         plugin.logDebug("Received a join event for $username")
 
         val formattedMessage = Util.formatMessage(
                 plugin.configuration.TEMPLATES_DISCORD_PLAYER_JOIN,
                 mapOf(
                         "%u" to username,
-                        "%d" to ChatColor.stripColor(event.player.displayName)
+                        "%d" to ChatColor.stripColor(player.displayName)
                 )
         )
 
@@ -51,6 +66,12 @@ class EventListener(val plugin: Plugin): Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerQuit(event: PlayerQuitEvent) {
         if (!plugin.configuration.MESSAGES_LEAVE) return
+
+        // Check for vanished
+        val player = event.player;
+        if (player.hasMetadata("vanished") &&
+                player.getMetadata("vanished")[0].asBoolean() &&
+                !plugin.configuration.IF_VANISHED_LEAVE) return
 
         val username = ChatColor.stripColor(event.player.name)
         plugin.logDebug("Received a leave event for $username")
@@ -69,6 +90,12 @@ class EventListener(val plugin: Plugin): Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerDeath(event: PlayerDeathEvent) {
         if (!plugin.configuration.MESSAGES_DEATH) return
+
+        // Check for vanished
+        val player = event.entity;
+        if (player.hasMetadata("vanished") &&
+                player.getMetadata("vanished")[0].asBoolean() &&
+                !plugin.configuration.IF_VANISHED_DEATH) return
 
         val username = ChatColor.stripColor(event.entity.name)
         plugin.logDebug("Received a death event for $username")
