@@ -5,7 +5,7 @@ import net.dv8tion.jda.entities.Guild
 import net.dv8tion.jda.entities.TextChannel
 
 class DiscordConnection(val plugin: Plugin) : Runnable {
-    var api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).enableVoice(false).buildBlocking()
+    var api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).setAudioEnabled(false).buildBlocking()
     var listener = DiscordListener(plugin, api, this)
     var server: Guild? = null
     var channel: TextChannel? = null
@@ -32,7 +32,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     fun reconnect() {
         api.removeEventListener(listener)
         api.shutdown(false)
-        api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).enableVoice(false).buildBlocking()
+        api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).setAudioEnabled(false).buildBlocking()
         listener = DiscordListener(plugin, api, this)
         api.addEventListener(listener)
     }
