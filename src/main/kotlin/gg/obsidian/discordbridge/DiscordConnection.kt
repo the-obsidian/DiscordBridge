@@ -1,18 +1,19 @@
 package gg.obsidian.discordbridge
 
+import net.dv8tion.jda.JDA
 import net.dv8tion.jda.JDABuilder
 import net.dv8tion.jda.entities.Guild
 import net.dv8tion.jda.entities.TextChannel
 
 class DiscordConnection(val plugin: Plugin) : Runnable {
-    var api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).setAudioEnabled(false).buildBlocking()
-    var listener = DiscordListener(plugin, api, this)
+    var api: JDA? = null
+    var listener: DiscordListener? = null
     var server: Guild? = null
     var channel: TextChannel? = null
 
     override fun run() {
         try {
-            api.addEventListener(listener)
+            connect()
         } catch (e: Exception) {
             plugin.logger.severe("Error connecting to Discord: " + e)
         }
@@ -30,15 +31,29 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     }
 
     fun reconnect() {
-        api.removeEventListener(listener)
-        api.shutdown(false)
-        api = JDABuilder(plugin.configuration.EMAIL, plugin.configuration.PASSWORD).setAudioEnabled(false).buildBlocking()
-        listener = DiscordListener(plugin, api, this)
-        api.addEventListener(listener)
+        disconnect()
+        connect()
+    }
+
+    private fun disconnect() {
+        api?.removeEventListener(listener)
+        api?.shutdown(false)
+    }
+
+    private fun connect() {
+        var builder = JDABuilder().setAudioEnabled(false)
+        if (plugin.configuration.TOKEN != "") {
+            builder = builder.setBotToken(plugin.configuration.TOKEN)
+        } else {
+            builder = builder.setEmail(plugin.configuration.EMAIL).setPassword(plugin.configuration.PASSWORD)
+        }
+        api = builder.buildBlocking()
+        listener = DiscordListener(plugin, api as JDA, this)
+        api!!.addEventListener(listener)
     }
 
     private fun getServerById(id: String): Guild? {
-        for (server in api.guilds)
+        for (server in api!!.guilds)
             if (server.id.equals(id, true))
                 return server
         return null

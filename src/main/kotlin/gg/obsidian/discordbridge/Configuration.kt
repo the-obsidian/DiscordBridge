@@ -7,6 +7,7 @@ class Configuration(val plugin: Plugin) {
     var USERNAME: String = ""
     var EMAIL: String = ""
     var PASSWORD: String = ""
+    var TOKEN: String = ""
     var DEBUG: Boolean = false
     var RELAY_CANCELLED_MESSAGES = true
 
@@ -39,6 +40,7 @@ class Configuration(val plugin: Plugin) {
         USERNAME = plugin.config.getString("settings.username")
         EMAIL = plugin.config.getString("settings.email")
         PASSWORD = plugin.config.getString("settings.password")
+        TOKEN = plugin.config.getString("settings.token")
         DEBUG = plugin.config.getBoolean("settings.debug", false)
         RELAY_CANCELLED_MESSAGES = plugin.config.getBoolean("settings.relay_cancelled_messages", true)
 
