@@ -15,6 +15,8 @@ Bridges chat between Discord and Minecraft (Bukkit/Spigot).
 
 ## Configuration
 
+**Note:** To use with the official Discord API and a bot user, add a `token: 'your-bot-token-here'` line alongside `email` and `password` (so it will have two spaces of indentation).  If a `token` setting is present, it will ignore `email` and `password`.  A more user-friendly version of this will be released shortly.
+
 DiscordBridge has several options that can be configured in the `config.yml` file:
 
 ```yaml
