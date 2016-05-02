@@ -38,9 +38,9 @@ class Configuration(val plugin: Plugin) {
         SERVER_ID = plugin.config.getString("settings.server-id")
         CHANNEL = plugin.config.getString("settings.channel")
         USERNAME = plugin.config.getString("settings.username")
-        EMAIL = plugin.config.getString("settings.email")
-        PASSWORD = plugin.config.getString("settings.password")
-        TOKEN = plugin.config.getString("settings.token")
+        EMAIL = plugin.config.getString("settings.email", "")
+        PASSWORD = plugin.config.getString("settings.password", "")
+        TOKEN = plugin.config.getString("settings.token", "")
         DEBUG = plugin.config.getBoolean("settings.debug", false)
         RELAY_CANCELLED_MESSAGES = plugin.config.getBoolean("settings.relay_cancelled_messages", true)
 
