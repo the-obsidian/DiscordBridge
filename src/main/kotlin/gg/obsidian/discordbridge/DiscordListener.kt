@@ -3,10 +3,12 @@ package gg.obsidian.discordbridge
 import com.neovisionaries.ws.client.WebSocket
 import com.neovisionaries.ws.client.WebSocketException
 import com.neovisionaries.ws.client.WebSocketFrame
-import net.dv8tion.jda.JDA
-import net.dv8tion.jda.events.message.MessageReceivedEvent
-import net.dv8tion.jda.hooks.ListenerAdapter
+import net.dv8tion.jda.core.JDA
+import net.dv8tion.jda.core.entities.ChannelType
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent
+import net.dv8tion.jda.core.hooks.ListenerAdapter
 
+@Suppress("unused", "UNUSED_PARAMETER")
 class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordConnection) : ListenerAdapter() {
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
@@ -14,9 +16,9 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
 
         val rawmsg: String = event.message.rawContent
         val msg: String = event.message.content
-        val username: String = event.author.username
+        val username: String = event.member.effectiveName
 
-        if (rawmsg.startsWith("<@267902537074606082> confirm", true) && event.isPrivate) {
+        if (rawmsg.startsWith("<@267902537074606082> confirm", true) && event.isFromType(ChannelType.PRIVATE)) {
             plugin.logDebug("user $username wants to confirm an alias")
             val ua = plugin.requests.find {it.discordId == event.author.id}
             if (ua == null) {

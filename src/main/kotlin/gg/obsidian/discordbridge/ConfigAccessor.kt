@@ -1,7 +1,7 @@
 package gg.obsidian.discordbridge
 
 /*
-* Copyright (C) 2012
+* Copyright (C) 2012 SagaciousZed
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -70,6 +70,7 @@ class ConfigAccessor(private val plugin: JavaPlugin, private val fileName: Strin
         }
     }
 
+    @Suppress("unused")
     fun saveDefaultConfig() {
         if (!configFile!!.exists()) {
             this.plugin.saveResource(fileName, false)

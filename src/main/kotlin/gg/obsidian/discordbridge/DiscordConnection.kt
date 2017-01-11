@@ -1,10 +1,12 @@
 package gg.obsidian.discordbridge
 
-import net.dv8tion.jda.JDA
-import net.dv8tion.jda.JDABuilder
-import net.dv8tion.jda.entities.Guild
-import net.dv8tion.jda.entities.TextChannel
-import net.dv8tion.jda.events.message.MessageReceivedEvent
+import net.dv8tion.jda.core.AccountType
+import net.dv8tion.jda.core.JDA
+import net.dv8tion.jda.core.JDABuilder
+import net.dv8tion.jda.core.entities.ChannelType
+import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 
 class DiscordConnection(val plugin: Plugin) : Runnable {
     var api: JDA? = null
@@ -32,7 +34,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     }
 
     fun respond(message: String, event: MessageReceivedEvent) {
-        if (event.isPrivate) event.privateChannel.sendMessage(message)
+        if (event.isFromType(ChannelType.PRIVATE)) event.privateChannel.sendMessage(message)
         else event.channel.sendMessage(message)
     }
 
@@ -49,9 +51,9 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
         channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
         if (channel == null) return mutableListOf()
 
-        val usernames: MutableList<Pair<String, String>> = mutableListOf()
-        channel!!.users.mapTo(usernames) { Pair(it.username, it.id) }
-        return usernames
+        val listOfUsers: MutableList<Pair<String, String>> = mutableListOf()
+        channel!!.members.mapTo(listOfUsers) { Pair(it.nickname, it.user.id) }
+        return listOfUsers
     }
 
     private fun disconnect() {
@@ -60,28 +62,18 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     }
 
     private fun connect() {
-        var builder = JDABuilder().setAudioEnabled(false)
-        if (plugin.configuration.TOKEN != "") {
-            builder = builder.setBotToken(plugin.configuration.TOKEN)
-        } else {
-            builder = builder.setEmail(plugin.configuration.EMAIL).setPassword(plugin.configuration.PASSWORD)
-        }
+        var builder = JDABuilder(AccountType.BOT).setAudioEnabled(false)
+        builder = builder.setToken(plugin.configuration.TOKEN)
         api = builder.buildBlocking()
         listener = DiscordListener(plugin, api as JDA, this)
         api!!.addEventListener(listener)
     }
 
     private fun getServerById(id: String): Guild? {
-        for (server in api!!.guilds)
-            if (server.id.equals(id, true))
-                return server
-        return null
+        return api!!.guilds.firstOrNull { it.id.equals(id, true) }
     }
 
     private fun getGroupByName(server: Guild, name: String): TextChannel? {
-        for (group in server.textChannels)
-            if (group.name == name)
-                return group
-        return null
+        return server.textChannels.firstOrNull { it.name == name }
     }
 }

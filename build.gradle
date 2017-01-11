@@ -1,7 +1,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
-    ext.kotlin_version = '1.0.0'
+    ext.kotlin_version = '1.0.6'
 
     repositories {
         mavenCentral()
@@ -23,7 +23,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group = 'gg.obsidian'
-version = '1.7.1'
+version = '1.7.2'
 description = """Bridge chat between Minecraft and Discord"""
 ext.url = 'https://github.com/the-obsidian/DiscordBridge'
 
@@ -43,7 +43,7 @@ repositories {
 dependencies {
     compile group: 'org.spigotmc', name: 'spigot-api', version:'1.8.8-R0.1-SNAPSHOT'
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version:'1.0.0-rc-1036'
-    compile group: 'net.dv8tion', name: 'JDA', version:'1.4.0_238'
+    compile group: 'net.dv8tion', name: 'JDA', version:'3.0.BETA2_108'
 }
 
 processResources {

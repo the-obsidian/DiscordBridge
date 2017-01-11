@@ -1,6 +1,7 @@
 package gg.obsidian.discordbridge
 
-import net.dv8tion.jda.events.message.MessageReceivedEvent
+import net.dv8tion.jda.core.entities.ChannelType
+import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import org.bukkit.plugin.java.JavaPlugin
 
 class Plugin : JavaPlugin() {
@@ -44,7 +45,7 @@ class Plugin : JavaPlugin() {
     }
 
     fun sendToDiscordRespond(message: String, event: MessageReceivedEvent) {
-        if (event.isPrivate) logDebug("Sending message to ${event.author.username} - $message")
+        if (event.isFromType(ChannelType.PRIVATE)) logDebug("Sending message to ${event.author.name} - $message")
         else logDebug("Sending message to Discord - $message")
         connection!!.respond(message, event)
     }

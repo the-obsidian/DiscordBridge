@@ -2,8 +2,7 @@ settings:
   server-id: '00000000'
   channel: 'test'
   username: 'username'
-  email: 'email@example.com'
-  password: 'password'
+  token: 'token'
   debug: false
   relay_cancelled_messages: true
   messages:

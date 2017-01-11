@@ -39,7 +39,6 @@ class CommandHandler(val plugin: Plugin): CommandExecutor {
         }
 
         val users = plugin.getDiscordUsers()
-        //val found: Boolean = users.any { it.second == args[0] }
         val found: Pair<String, String>? = users.find { it.second == args[0] }
         if (found == null) {
             sendMessage("&eCould not find Discord user with that ID.", player, false)
