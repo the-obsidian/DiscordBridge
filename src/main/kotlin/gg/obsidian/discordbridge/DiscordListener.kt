@@ -47,9 +47,9 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
             return
         }
 
-        if (rawmsg == "<@267902537074606082> :D") {
+        if (rawmsg == "<@267902537074606082> :smile:") {
             plugin.logDebug("user $username has initiated Oikos Part 2!")
-            plugin.sendToDiscordRespond(":D", event)
+            plugin.sendToDiscordRespond(":smile:", event)
             return
         }
 
