@@ -4,6 +4,7 @@ import net.dv8tion.jda.JDA
 import net.dv8tion.jda.JDABuilder
 import net.dv8tion.jda.entities.Guild
 import net.dv8tion.jda.entities.TextChannel
+import net.dv8tion.jda.events.message.MessageReceivedEvent
 
 class DiscordConnection(val plugin: Plugin) : Runnable {
     var api: JDA? = null
@@ -20,7 +21,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
 
     }
 
-    fun send(message: String) {
+    fun relay(message: String) {
         server = if (server == null) getServerById(plugin.configuration.SERVER_ID) else server
         if (server == null) return
 
@@ -30,9 +31,27 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
         channel!!.sendMessage(message)
     }
 
+    fun respond(message: String, event: MessageReceivedEvent) {
+        if (event.isPrivate) event.privateChannel.sendMessage(message)
+        else event.channel.sendMessage(message)
+    }
+
+    fun tell(message: String, id: String) {
+        api!!.getUserById(id).privateChannel.sendMessage(message)
+    }
+
     fun reconnect() {
         disconnect()
         connect()
+    }
+
+    fun listUsers(): List<Pair<String, String>> {
+        channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
+        if (channel == null) return mutableListOf()
+
+        val usernames: MutableList<Pair<String, String>> = mutableListOf()
+        channel!!.users.mapTo(usernames) { Pair(it.username, it.id) }
+        return usernames
     }
 
     private fun disconnect() {
@@ -61,7 +80,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
 
     private fun getGroupByName(server: Guild, name: String): TextChannel? {
         for (group in server.textChannels)
-            if (group.name.equals(name))
+            if (group.name == name)
                 return group
         return null
     }

@@ -20,7 +20,7 @@ class EventListener(val plugin: Plugin): Listener {
         if (event.isCancelled && !plugin.configuration.RELAY_CANCELLED_MESSAGES) return
 
         // Check for vanished
-        val player = event.player;
+        val player = event.player
         if (player.hasMetadata("vanished") &&
                 player.getMetadata("vanished")[0].asBoolean() &&
                 !plugin.configuration.IF_VANISHED_CHAT) return
@@ -36,7 +36,7 @@ class EventListener(val plugin: Plugin): Listener {
                 )
         )
 
-        plugin.sendToDiscord(formattedMessage)
+        plugin.sendToDiscordRelay(formattedMessage, event.player.uniqueId.toString())
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -44,7 +44,7 @@ class EventListener(val plugin: Plugin): Listener {
         if (!plugin.configuration.MESSAGES_JOIN) return
 
         // Check for vanished
-        val player = event.player;
+        val player = event.player
         if (player.hasMetadata("vanished") &&
                 player.getMetadata("vanished")[0].asBoolean() &&
                 !plugin.configuration.IF_VANISHED_JOIN) return
@@ -60,7 +60,7 @@ class EventListener(val plugin: Plugin): Listener {
                 )
         )
 
-        plugin.sendToDiscord(formattedMessage)
+        plugin.sendToDiscordRelay(formattedMessage, player.uniqueId.toString())
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -68,7 +68,7 @@ class EventListener(val plugin: Plugin): Listener {
         if (!plugin.configuration.MESSAGES_LEAVE) return
 
         // Check for vanished
-        val player = event.player;
+        val player = event.player
         if (player.hasMetadata("vanished") &&
                 player.getMetadata("vanished")[0].asBoolean() &&
                 !plugin.configuration.IF_VANISHED_LEAVE) return
@@ -84,7 +84,7 @@ class EventListener(val plugin: Plugin): Listener {
                 )
         )
 
-        plugin.sendToDiscord(formattedMessage)
+        plugin.sendToDiscordRelay(formattedMessage, player.uniqueId.toString())
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -92,7 +92,7 @@ class EventListener(val plugin: Plugin): Listener {
         if (!plugin.configuration.MESSAGES_DEATH) return
 
         // Check for vanished
-        val player = event.entity;
+        val player = event.entity
         if (player.hasMetadata("vanished") &&
                 player.getMetadata("vanished")[0].asBoolean() &&
                 !plugin.configuration.IF_VANISHED_DEATH) return
@@ -110,6 +110,6 @@ class EventListener(val plugin: Plugin): Listener {
                 )
         )
 
-        plugin.sendToDiscord(formattedMessage)
+        plugin.sendToDiscordRelay(formattedMessage, player.uniqueId.toString())
     }
 }
