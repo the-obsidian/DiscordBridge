@@ -18,3 +18,9 @@ commands:
   discord:
     description: Reload the Discord Bridge
     usage: /discord reload
+  registeralias:
+      description: Associate a Minecraft user with a Discord user
+      usage: /registeralias <discord id>
+    getdiscordids:
+      description: Lists the internal IDs of all Discord users currently in the server
+      usage: /getdiscordids

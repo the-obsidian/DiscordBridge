@@ -18,7 +18,7 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
         val msg: String = event.message.content
         val username: String = event.member.effectiveName
 
-        if (rawmsg.startsWith("<@267902537074606082> confirm", true) && event.isFromType(ChannelType.PRIVATE)) {
+        if (rawmsg.startsWith("${api.selfUser.asMention} confirm", true) && event.isFromType(ChannelType.PRIVATE)) {
             plugin.logDebug("user $username wants to confirm an alias")
             val ua = plugin.requests.find {it.discordId == event.author.id}
             if (ua == null) {
@@ -31,7 +31,7 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
             return
         }
 
-        if (rawmsg.startsWith("<@267902537074606082> serverlist", true)) {
+        if (rawmsg.startsWith("${api.selfUser.asMention} serverlist", true)) {
             plugin.logDebug("user $username has requested a listing of online players")
             val players = plugin.getOnlinePlayers()
             if (players.isEmpty()) {
@@ -43,15 +43,15 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
             return
         }
 
-        if (rawmsg.startsWith("<@267902537074606082> oikos", true)) {
+        if (rawmsg.startsWith("${api.selfUser.asMention} oikos", true)) {
             plugin.logDebug("user $username has initiated oikos!")
             plugin.sendToDiscordRespond("Delicious Greek yogurt from Danone!", event)
             return
         }
 
-        if (rawmsg == "<@267902537074606082> :smile:") {
+        if (rawmsg == "<${api.selfUser.asMention} \uD83D\uDE04") {
             plugin.logDebug("user $username has initiated Oikos Part 2!")
-            plugin.sendToDiscordRespond(":smile:", event)
+            plugin.sendToDiscordRespond("\uD83D\uDE04", event)
             return
         }
 
