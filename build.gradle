@@ -17,7 +17,7 @@ buildscript {
 
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
 }
 
 apply plugin: 'kotlin'
@@ -26,9 +26,6 @@ group = 'gg.obsidian'
 version = '1.7.2'
 description = """Bridge chat between Minecraft and Discord"""
 ext.url = 'https://github.com/the-obsidian/DiscordBridge'
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 repositories {
     maven { url 'https://maven-central.storage.googleapis.com' }
@@ -41,7 +38,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.spigotmc', name: 'spigot-api', version:'1.8.8-R0.1-SNAPSHOT'
+    compile group: 'org.spigotmc', name: 'spigot-api', version:'1.11.2-R0.1-SNAPSHOT'
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version:'1.0.0-rc-1036'
     compile group: 'net.dv8tion', name: 'JDA', version:'3.0.BETA2_108'
 }
@@ -57,6 +54,7 @@ processResources {
 build.finalizedBy(shadowJar)
 
 shadowJar {
+    relocate 'org.apache', 'shadow.apache'
     classifier 'dist'
     dependencies {
         exclude(dependency('org.spigotmc:.*:.*'))

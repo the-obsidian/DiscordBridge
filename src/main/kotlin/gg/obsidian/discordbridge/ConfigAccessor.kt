@@ -44,6 +44,8 @@ class ConfigAccessor(private val plugin: JavaPlugin, private val fileName: Strin
         fileConfiguration = YamlConfiguration.loadConfiguration(configFile!!)
 
         // Look for defaults in the jar
+        if (plugin.getResource(fileName) == null)
+            plugin.logger.log(Level.SEVERE, "usernames.yml cannot be found for some reason")
         val defConfigReader = InputStreamReader(plugin.getResource(fileName))
         val defConfig = YamlConfiguration.loadConfiguration(defConfigReader)
         fileConfiguration!!.defaults = defConfig

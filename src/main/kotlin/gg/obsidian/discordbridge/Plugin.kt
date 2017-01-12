@@ -13,6 +13,7 @@ class Plugin : JavaPlugin() {
 
     override fun onEnable() {
         updateConfig(description.version)
+        users.saveDefaultConfig()
 
         this.connection = DiscordConnection(this)
 
@@ -51,7 +52,7 @@ class Plugin : JavaPlugin() {
     }
 
     fun sendToMinecraft(username: String, id: String, message: String) {
-        var alias = users.config.getString("discordAliases.$id.mcusername")
+        var alias = users.config.getString("discordaliases.$id.mcusername")
         if (alias == null) alias = username
         val formattedMessage = Util.formatMessage(
                 configuration.TEMPLATES_MINECRAFT_CHAT_MESSAGE,

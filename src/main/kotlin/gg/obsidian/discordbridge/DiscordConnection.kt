@@ -30,16 +30,16 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
         channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
         if (channel == null) return
 
-        channel!!.sendMessage(message)
+        channel!!.sendMessage(message).queue()
     }
 
     fun respond(message: String, event: MessageReceivedEvent) {
-        if (event.isFromType(ChannelType.PRIVATE)) event.privateChannel.sendMessage(message)
-        else event.channel.sendMessage(message)
+        if (event.isFromType(ChannelType.PRIVATE)) event.privateChannel.sendMessage(message).queue()
+        else event.channel.sendMessage(message).queue()
     }
 
     fun tell(message: String, id: String) {
-        api!!.getUserById(id).privateChannel.sendMessage(message)
+        api!!.getUserById(id).privateChannel.sendMessage(message).queue()
     }
 
     fun reconnect() {
@@ -52,7 +52,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
         if (channel == null) return mutableListOf()
 
         val listOfUsers: MutableList<Pair<String, String>> = mutableListOf()
-        channel!!.members.mapTo(listOfUsers) { Pair(it.nickname, it.user.id) }
+        channel!!.members.mapTo(listOfUsers) { Pair(it.effectiveName, it.user.id) }
         return listOfUsers
     }
 

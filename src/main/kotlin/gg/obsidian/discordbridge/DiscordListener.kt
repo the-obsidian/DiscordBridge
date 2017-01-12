@@ -16,7 +16,7 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
 
         val rawmsg: String = event.message.rawContent
         val msg: String = event.message.content
-        val username: String = event.member.effectiveName
+        val username: String = event.author.name
 
         if (rawmsg.startsWith("${api.selfUser.asMention} confirm", true) && event.isFromType(ChannelType.PRIVATE)) {
             plugin.logDebug("user $username wants to confirm an alias")
@@ -43,36 +43,39 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
             return
         }
 
-        if (rawmsg.startsWith("${api.selfUser.asMention} oikos", true)) {
-            plugin.logDebug("user $username has initiated oikos!")
-            plugin.sendToDiscordRespond("Delicious Greek yogurt from Danone!", event)
-            return
-        }
+        // Relay
+        if (event.isFromType(ChannelType.TEXT)) {
+            if (rawmsg.startsWith("${api.selfUser.asMention} oikos", true)) {
+                plugin.logDebug("user $username has initiated oikos!")
+                plugin.sendToDiscordRespond("Delicious Greek yogurt from Danone!", event)
+                return
+            }
 
-        if (rawmsg == "<${api.selfUser.asMention} \uD83D\uDE04") {
-            plugin.logDebug("user $username has initiated Oikos Part 2!")
-            plugin.sendToDiscordRespond("\uD83D\uDE04", event)
-            return
-        }
+            if (rawmsg == "<${api.selfUser.asMention} \uD83D\uDE04") {
+                plugin.logDebug("user $username has initiated Oikos Part 2!")
+                plugin.sendToDiscordRespond("\uD83D\uDE04", event)
+                return
+            }
 
-        if (event.guild.id != plugin.configuration.SERVER_ID) {
-            plugin.logDebug("Ignoring message ${event.message.id} from Discord: server does not match")
-            return
-        }
+            if (event.guild.id != plugin.configuration.SERVER_ID) {
+                plugin.logDebug("Ignoring message ${event.message.id} from Discord: server does not match")
+                return
+            }
 
-        if (!event.textChannel.name.equals(plugin.configuration.CHANNEL, true)) {
-            plugin.logDebug("Ignoring message ${event.message.id} from Discord: channel does not match")
-            return
-        }
+            if (!event.textChannel.name.equals(plugin.configuration.CHANNEL, true)) {
+                plugin.logDebug("Ignoring message ${event.message.id} from Discord: channel does not match")
+                return
+            }
 
-        if (username.equals(plugin.configuration.USERNAME, true)) {
-            plugin.logDebug("Ignoring message ${event.message.id} from Discord: it matches the server's username")
-            return
-        }
+            if (username.equals(plugin.configuration.USERNAME, true)) {
+                plugin.logDebug("Ignoring message ${event.message.id} from Discord: it matches the server's username")
+                return
+            }
 
-        plugin.logDebug("Broadcasting message ${event.message.id} from Discord as user $username")
-        plugin.logDebug(msg)
-        plugin.sendToMinecraft(username, event.author.id, event.message.content)
+            plugin.logDebug("Broadcasting message ${event.message.id} from Discord as user $username")
+            plugin.logDebug(msg)
+            plugin.sendToMinecraft(username, event.author.id, event.message.content)
+        }
     }
 
     fun onUnexpectedError(ws: WebSocket, wse: WebSocketException) {
