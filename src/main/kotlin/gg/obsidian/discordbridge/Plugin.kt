@@ -3,6 +3,7 @@ package gg.obsidian.discordbridge
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import org.bukkit.plugin.java.JavaPlugin
+import java.util.logging.Level
 
 class Plugin : JavaPlugin() {
 
@@ -25,10 +26,12 @@ class Plugin : JavaPlugin() {
     }
 
     override fun onDisable() {
+        logger.log(Level.FINE, "Attempting to cancel tasks")
         server.scheduler.cancelTasks(this)
     }
 
     fun reload() {
+
         reloadConfig()
         users.reloadConfig()
         configuration.load()
@@ -93,8 +96,8 @@ class Plugin : JavaPlugin() {
     fun registerUserRequest(ua: UserAlias) {
         requests.add(ua)
         val msg = "Minecraft user '${ua.mcUsername}' has requested to become associated with your Discord" +
-                " account. If this is you, respond '<@267902537074606082> confirm'. If this is not" +
-                " you, respond '<@267902537074606082> deny'."
+                " account. If this is you, respond '<@me> confirm'. If this is not" +
+                " you, respond '<@me> deny'."
         connection!!.tell(msg, ua.discordId)
     }
 

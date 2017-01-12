@@ -39,7 +39,8 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     }
 
     fun tell(message: String, id: String) {
-        api!!.getUserById(id).privateChannel.sendMessage(message).queue()
+        val modifiedMsg = message.replace("<@me>", api!!.selfUser.asMention)
+        api!!.getUserById(id).privateChannel.sendMessage(modifiedMsg).queue()
     }
 
     fun reconnect() {

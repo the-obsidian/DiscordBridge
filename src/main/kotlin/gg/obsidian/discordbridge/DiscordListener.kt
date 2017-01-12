@@ -7,12 +7,12 @@ import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
+import java.nio.charset.Charset
 
-@Suppress("unused", "UNUSED_PARAMETER")
 class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordConnection) : ListenerAdapter() {
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
-        plugin.logDebug("Received message ${event.message.id} from Discord")
+        plugin.logDebug("Received message ${event.message.id} from Discord - ${event.message.rawContent}")
 
         val rawmsg: String = event.message.rawContent
         val msg: String = event.message.content
@@ -43,20 +43,26 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
             return
         }
 
+        if (rawmsg.startsWith("${api.selfUser.asMention} oikos", true)) {
+            plugin.logDebug("user $username has initiated oikos!")
+            plugin.sendToDiscordRespond("Delicious Greek yogurt from Danone!", event)
+            return
+        }
+
+        if (rawmsg == "${api.selfUser.asMention} \uD83D\uDE04") {
+            plugin.logDebug("user $username has initiated Oikos Part 2!")
+            plugin.sendToDiscordRespond("\uD83D\uDE04", event)
+            return
+        }
+
+        if (rawmsg.startsWith("${api.selfUser.asMention} smile", true)) {
+            plugin.logDebug("user $username has initiated Oikos Part 2!")
+            plugin.sendToDiscordRespond("\uD83D\uDE04", event)
+            return
+        }
+
         // Relay
         if (event.isFromType(ChannelType.TEXT)) {
-            if (rawmsg.startsWith("${api.selfUser.asMention} oikos", true)) {
-                plugin.logDebug("user $username has initiated oikos!")
-                plugin.sendToDiscordRespond("Delicious Greek yogurt from Danone!", event)
-                return
-            }
-
-            if (rawmsg == "<${api.selfUser.asMention} \uD83D\uDE04") {
-                plugin.logDebug("user $username has initiated Oikos Part 2!")
-                plugin.sendToDiscordRespond("\uD83D\uDE04", event)
-                return
-            }
-
             if (event.guild.id != plugin.configuration.SERVER_ID) {
                 plugin.logDebug("Ignoring message ${event.message.id} from Discord: server does not match")
                 return
@@ -78,10 +84,12 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
         }
     }
 
+    @Suppress("unused", "UNUSED_PARAMETER")
     fun onUnexpectedError(ws: WebSocket, wse: WebSocketException) {
         plugin.logger.severe("Unexpected error from DiscordBridge: ${wse.message}")
     }
 
+    @Suppress("unused", "UNUSED_PARAMETER")
     fun onDisconnected(webSocket: WebSocket, serverCloseFrame: WebSocketFrame, clientCloseFrame: WebSocketFrame, closedByServer: Boolean) {
         plugin.logDebug("Discord disconnected - attempting to reconnect")
         connection.reconnect()

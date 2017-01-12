@@ -41,6 +41,7 @@ dependencies {
     compile group: 'org.spigotmc', name: 'spigot-api', version:'1.11.2-R0.1-SNAPSHOT'
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version:'1.0.0-rc-1036'
     compile group: 'net.dv8tion', name: 'JDA', version:'3.0.BETA2_108'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
 processResources {
@@ -72,3 +73,6 @@ task copyFinalJar(type: Copy) {
 }
 
 shadowJar.finalizedBy(copyFinalJar)
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
