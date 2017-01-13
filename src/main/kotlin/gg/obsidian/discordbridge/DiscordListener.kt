@@ -7,7 +7,6 @@ import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
-import java.nio.charset.Charset
 
 class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordConnection) : ListenerAdapter() {
 
@@ -50,13 +49,7 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
         }
 
         if (rawmsg == "${api.selfUser.asMention} \uD83D\uDE04") {
-            plugin.logDebug("user $username has initiated Oikos Part 2!")
-            plugin.sendToDiscordRespond("\uD83D\uDE04", event)
-            return
-        }
-
-        if (rawmsg.startsWith("${api.selfUser.asMention} smile", true)) {
-            plugin.logDebug("user $username has initiated Oikos Part 2!")
+            plugin.logDebug("user $username has initiated oikos 2!")
             plugin.sendToDiscordRespond("\uD83D\uDE04", event)
             return
         }

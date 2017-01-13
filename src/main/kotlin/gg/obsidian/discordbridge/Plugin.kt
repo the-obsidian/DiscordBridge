@@ -1,5 +1,6 @@
 package gg.obsidian.discordbridge
 
+import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import org.bukkit.plugin.java.JavaPlugin
@@ -101,8 +102,12 @@ class Plugin : JavaPlugin() {
         connection!!.tell(msg, ua.discordId)
     }
 
-    fun getDiscordUsers(): List<Pair<String, String>> {
+    fun getDiscordUsers(): List<Triple<String, String, Boolean>> {
         return connection!!.listUsers()
+    }
+
+    fun getDiscordOnline(): List<Triple<String, Boolean, OnlineStatus>> {
+        return connection!!.listOnline()
     }
 
     fun updateAlias(ua: UserAlias) {

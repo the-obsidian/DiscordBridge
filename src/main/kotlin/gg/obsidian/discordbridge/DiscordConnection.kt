@@ -3,6 +3,7 @@ package gg.obsidian.discordbridge
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
+import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.TextChannel
@@ -48,12 +49,25 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
         connect()
     }
 
-    fun listUsers(): List<Pair<String, String>> {
+    fun listUsers(): List<Triple<String, String, Boolean>> {
         channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
         if (channel == null) return mutableListOf()
 
-        val listOfUsers: MutableList<Pair<String, String>> = mutableListOf()
-        channel!!.members.mapTo(listOfUsers) { Pair(it.effectiveName, it.user.id) }
+        val listOfUsers: MutableList<Triple<String, String, Boolean>> = mutableListOf()
+        channel!!.members.mapTo(listOfUsers) {
+            Triple(it.effectiveName, it.user.id, it.user.isBot)
+        }
+        return listOfUsers
+    }
+
+    fun listOnline(): List<Triple<String, Boolean, OnlineStatus>> {
+        channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
+        if (channel == null) return mutableListOf()
+
+        val listOfUsers: MutableList<Triple<String, Boolean, OnlineStatus>> = mutableListOf()
+        channel!!.members.mapTo(listOfUsers) {
+            Triple(it.effectiveName, it.user.isBot, it.onlineStatus)
+        }
         return listOfUsers
     }
 
