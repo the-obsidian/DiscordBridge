@@ -22,8 +22,6 @@ class Plugin : JavaPlugin() {
         server.scheduler.runTaskAsynchronously(this, connection)
         server.pluginManager.registerEvents(EventListener(this), this)
         getCommand("discord").executor = CommandHandler(this)
-        getCommand("registeralias").executor = CommandHandler(this)
-        getCommand("getdiscordids").executor = CommandHandler(this)
     }
 
     override fun onDisable() {
