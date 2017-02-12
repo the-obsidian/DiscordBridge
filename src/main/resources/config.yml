@@ -4,6 +4,7 @@ settings:
   username: 'username'
   username-color: ''
   token: 'token'
+  cleverbot-key: ''
   debug: false
   relay_cancelled_messages: true
   messages:

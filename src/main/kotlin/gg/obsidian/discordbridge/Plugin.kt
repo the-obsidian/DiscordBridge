@@ -5,7 +5,6 @@ import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.logging.Level
-import org.bukkit.ChatColor
 import java.io.File
 
 class Plugin : JavaPlugin() {

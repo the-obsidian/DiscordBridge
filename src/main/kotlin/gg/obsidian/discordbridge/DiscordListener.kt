@@ -97,7 +97,7 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
 
             // CLEVERBOT - Assume anything else invokes Cleverbot
             plugin.logDebug("user $username asks CleverBot something")
-            val response = Util.askCleverbot(arg)
+            val response = Util.askCleverbot(plugin.configuration.CLEVERBOT_KEY, arg)
             plugin.sendToDiscordRespond(response, event)
             // if this occurs in the relay channel, relay the response
             if (event.isFromType(ChannelType.TEXT) && event.textChannel.name.equals(plugin.configuration.CHANNEL, true))
