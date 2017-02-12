@@ -82,6 +82,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
         api = builder.buildBlocking()
         listener = DiscordListener(plugin, api as JDA, this)
         api!!.addEventListener(listener)
+        relay("Oikos!")
     }
 
     private fun getServerById(id: String): Guild? {

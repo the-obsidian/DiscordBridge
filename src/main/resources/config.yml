@@ -2,6 +2,7 @@ settings:
   server-id: '00000000'
   channel: 'test'
   username: 'username'
+  username-color: ''
   token: 'token'
   debug: false
   relay_cancelled_messages: true

@@ -6,6 +6,7 @@ author: Jacob Gillespie
 website: '@URL@'
 
 loadbefore: [SpaceBukkit, RemoteToolkitPlugin]
+softdepend: [Multiverse-Core]
 
 main: gg.obsidian.discordbridge.Plugin
 
@@ -18,3 +19,6 @@ commands:
   discord:
     description: Issue a command to the bot
     usage: /discord <command>
+  marina:
+    description: Chat with Marina!
+    usage: /marina <what to say to Marina>

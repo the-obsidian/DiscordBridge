@@ -8,6 +8,7 @@ import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import java.lang.reflect.Method
 
 class EventListener(val plugin: Plugin): Listener {
 
@@ -26,13 +27,22 @@ class EventListener(val plugin: Plugin): Listener {
                 !plugin.configuration.IF_VANISHED_CHAT) return
 
         val username = ChatColor.stripColor(event.player.name)
+        var worldname = player.world.name
+        if (plugin.isMultiverse()) {
+            val worldProperties = plugin.worlds!!.config.get("worlds.$worldname")
+            val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
+            val meth: Method = cls.getMethod("getAlias")
+            val alias = meth.invoke(worldProperties)
+            if (alias is String)  worldname = alias
+        }
+
         val formattedMessage = Util.formatMessage(
                 plugin.configuration.TEMPLATES_DISCORD_CHAT_MESSAGE,
                 mapOf(
                         "%u" to username,
                         "%m" to ChatColor.stripColor(event.message),
                         "%d" to ChatColor.stripColor(player.displayName),
-                        "%w" to player.world.name
+                        "%w" to worldname
                 )
         )
 

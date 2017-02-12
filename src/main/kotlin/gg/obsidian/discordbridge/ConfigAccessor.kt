@@ -30,25 +30,26 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.logging.Level
 
-class ConfigAccessor(private val plugin: JavaPlugin, private val fileName: String) {
+class ConfigAccessor(private val plugin: JavaPlugin, filepath: File, private val fileName: String) {
 
     private val configFile: File?
     private var fileConfiguration: FileConfiguration? = null
 
     init {
         plugin.dataFolder ?: throw IllegalStateException()
-        this.configFile = File(plugin.dataFolder, fileName)
+        this.configFile = File(filepath, fileName)
     }
 
     fun reloadConfig() {
-        fileConfiguration = YamlConfiguration.loadConfiguration(configFile!!)
-
-        // Look for defaults in the jar
-        if (plugin.getResource(fileName) == null)
-            plugin.logger.log(Level.SEVERE, "usernames.yml cannot be found for some reason")
-        val defConfigReader = InputStreamReader(plugin.getResource(fileName))
-        val defConfig = YamlConfiguration.loadConfiguration(defConfigReader)
-        fileConfiguration!!.defaults = defConfig
+        try { fileConfiguration = YamlConfiguration.loadConfiguration(configFile) }
+        catch (e: IllegalArgumentException) {
+            // Look for defaults in the jar
+            if (plugin.getResource(fileName) == null)
+                plugin.logger.log(Level.SEVERE, "usernames.yml cannot be found for some reason")
+            val defConfigReader = InputStreamReader(plugin.getResource(fileName))
+            val defConfig = YamlConfiguration.loadConfiguration(defConfigReader)
+            fileConfiguration!!.defaults = defConfig
+        }
     }
 
     val config: FileConfiguration

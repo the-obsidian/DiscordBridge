@@ -23,7 +23,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group = 'gg.obsidian'
-version = '1.7.3'
+version = '1.7.4'
 description = """Bridge chat between Minecraft and Discord"""
 ext.url = 'https://github.com/the-obsidian/DiscordBridge'
 
@@ -41,6 +41,7 @@ dependencies {
     compile group: 'org.spigotmc', name: 'spigot-api', version:'1.11.2-R0.1-SNAPSHOT'
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version:'1.0.0-rc-1036'
     compile group: 'net.dv8tion', name: 'JDA', version:'3.0.BETA2_108'
+    compile group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
@@ -52,12 +53,14 @@ processResources {
     ]
 }
 
+//noinspection GroovyAssignabilityCheck
 build.finalizedBy(shadowJar)
 
 shadowJar {
     relocate 'org.apache', 'shadow.apache'
     classifier 'dist'
     dependencies {
+        //noinspection GroovyAssignabilityCheck
         exclude(dependency('org.spigotmc:.*:.*'))
     }
     exclude '.cache'

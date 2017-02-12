@@ -5,6 +5,7 @@ class Configuration(val plugin: Plugin) {
     var SERVER_ID: String = ""
     var CHANNEL: String = ""
     var USERNAME: String = ""
+    var USERNAME_COLOR: String = ""
     var EMAIL: String = ""
     var PASSWORD: String = ""
     var TOKEN: String = ""
@@ -38,6 +39,7 @@ class Configuration(val plugin: Plugin) {
         SERVER_ID = plugin.config.getString("settings.server-id")
         CHANNEL = plugin.config.getString("settings.channel")
         USERNAME = plugin.config.getString("settings.username")
+        USERNAME_COLOR = plugin.config.getString("settings.username-color")
         EMAIL = plugin.config.getString("settings.email", "")
         PASSWORD = plugin.config.getString("settings.password", "")
         TOKEN = plugin.config.getString("settings.token", "")
