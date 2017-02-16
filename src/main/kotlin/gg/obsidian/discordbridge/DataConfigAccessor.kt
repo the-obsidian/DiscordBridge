@@ -30,7 +30,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.logging.Level
 
-class ConfigAccessor(private val plugin: JavaPlugin, filepath: File, private val fileName: String) {
+class DataConfigAccessor(private val plugin: JavaPlugin, filepath: File, private val fileName: String) {
 
     private val configFile: File?
     private var fileConfiguration: FileConfiguration? = null
@@ -52,7 +52,7 @@ class ConfigAccessor(private val plugin: JavaPlugin, filepath: File, private val
         }
     }
 
-    val config: FileConfiguration
+    val data: FileConfiguration
         get() {
             if (fileConfiguration == null) {
                 this.reloadConfig()
@@ -65,9 +65,9 @@ class ConfigAccessor(private val plugin: JavaPlugin, filepath: File, private val
             return
         } else {
             try {
-                config.save(configFile)
+                data.save(configFile)
             } catch (ex: IOException) {
-                plugin.logger.log(Level.SEVERE, "Could not save config to " + configFile, ex)
+                plugin.logger.log(Level.SEVERE, "Could not save data to " + configFile, ex)
             }
 
         }

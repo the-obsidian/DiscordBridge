@@ -1,5 +1,6 @@
-package gg.obsidian.discordbridge
+package gg.obsidian.discordbridge.discord
 
+import gg.obsidian.discordbridge.Plugin
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
@@ -9,9 +10,9 @@ import net.dv8tion.jda.core.entities.Guild
 import net.dv8tion.jda.core.entities.TextChannel
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 
-class DiscordConnection(val plugin: Plugin) : Runnable {
+class Connection(val plugin: Plugin) : Runnable {
     var api: JDA? = null
-    var listener: DiscordListener? = null
+    var listener: Listener? = null
     var server: Guild? = null
     var channel: TextChannel? = null
 
@@ -25,10 +26,10 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     }
 
     fun relay(message: String) {
-        server = if (server == null) getServerById(plugin.configuration.SERVER_ID) else server
+        server = if (server == null) getServerById(plugin.cfg.SERVER_ID) else server
         if (server == null) return
 
-        channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
+        channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
         if (channel == null) return
 
         channel!!.sendMessage(message).queue()
@@ -50,7 +51,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     }
 
     fun listUsers(): List<Triple<String, String, Boolean>> {
-        channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
+        channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
         if (channel == null) return mutableListOf()
 
         val listOfUsers: MutableList<Triple<String, String, Boolean>> = mutableListOf()
@@ -61,7 +62,7 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
     }
 
     fun listOnline(): List<Triple<String, Boolean, OnlineStatus>> {
-        channel = if (channel == null) getGroupByName(server!!, plugin.configuration.CHANNEL) else channel
+        channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
         if (channel == null) return mutableListOf()
 
         val listOfUsers: MutableList<Triple<String, Boolean, OnlineStatus>> = mutableListOf()
@@ -78,9 +79,9 @@ class DiscordConnection(val plugin: Plugin) : Runnable {
 
     private fun connect() {
         var builder = JDABuilder(AccountType.BOT).setAudioEnabled(false)
-        builder = builder.setToken(plugin.configuration.TOKEN)
+        builder = builder.setToken(plugin.cfg.TOKEN)
         api = builder.buildBlocking()
-        listener = DiscordListener(plugin, api as JDA, this)
+        listener = Listener(plugin, api as JDA, this)
         api!!.addEventListener(listener)
         relay("Oikos!")
     }

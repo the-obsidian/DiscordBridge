@@ -1,5 +1,8 @@
-package gg.obsidian.discordbridge
+package gg.obsidian.discordbridge.minecraft.commands
 
+import gg.obsidian.discordbridge.Permissions
+import gg.obsidian.discordbridge.Plugin
+import gg.obsidian.discordbridge.UserAlias
 import net.dv8tion.jda.core.OnlineStatus
 import org.bukkit.ChatColor
 import org.bukkit.command.Command
@@ -7,14 +10,9 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-class CommandHandler(val plugin: Plugin): CommandExecutor {
+class Discord(val plugin: Plugin) : CommandExecutor {
 
     override fun onCommand(player: CommandSender, cmd: Command, alias: String?, args: Array<out String>?): Boolean {
-        if (cmd.name == "discord") return handleDiscord(player, args)
-        return false
-    }
-
-    private fun handleDiscord(player: CommandSender, args: Array<out String>?): Boolean {
         if (args == null || args.isEmpty()) {
             sendMessage("&eUsage: /discord <reload/alias/get>", player)
             return true
@@ -121,21 +119,21 @@ class CommandHandler(val plugin: Plugin): CommandExecutor {
         }
 
         var response = ""
-        if (users.filter{it.third == OnlineStatus.ONLINE}.isNotEmpty()) {
+        if (users.filter { it.third == OnlineStatus.ONLINE }.isNotEmpty()) {
             response += "\n&2Online:&r"
-            for (user in users.filter{it.third == OnlineStatus.ONLINE}) {
+            for (user in users.filter { it.third == OnlineStatus.ONLINE }) {
                 if (user.second) response += "\n&2- ${user.first} (Bot)&r"
                 else response += "\n&2- ${user.first}&r"
             }
         }
-        if (users.filter{it.third == OnlineStatus.IDLE}.isNotEmpty()) {
+        if (users.filter { it.third == OnlineStatus.IDLE }.isNotEmpty()) {
             response += "\n&eIdle:&r"
-            for (user in users.filter{it.third == OnlineStatus.IDLE}) {
+            for (user in users.filter { it.third == OnlineStatus.IDLE }) {
                 if (user.second) response += "\n&e- ${user.first} (Bot)&r"
                 else response += "\n&e- ${user.first}&r"
             }
         }
-        if (users.filter{it.third == OnlineStatus.DO_NOT_DISTURB}.isNotEmpty()) {
+        if (users.filter { it.third == OnlineStatus.DO_NOT_DISTURB }.isNotEmpty()) {
             response += "\n&cDo Not Disturb:&r"
             for (user in users.filter { it.third == OnlineStatus.DO_NOT_DISTURB }) {
                 if (user.second) response += "\n&c- ${user.first} (Bot)&r"

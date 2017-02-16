@@ -1,14 +1,16 @@
-package gg.obsidian.discordbridge
+package gg.obsidian.discordbridge.discord
 
 import com.neovisionaries.ws.client.WebSocket
 import com.neovisionaries.ws.client.WebSocketException
 import com.neovisionaries.ws.client.WebSocketFrame
+import gg.obsidian.discordbridge.CommandLogic
+import gg.obsidian.discordbridge.Plugin
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 
-class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordConnection) : ListenerAdapter() {
+class Listener(val plugin: Plugin, val api: JDA, val connection: Connection) : ListenerAdapter() {
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
         plugin.logDebug("Received message ${event.message.id} from Discord - ${event.message.rawContent}")
@@ -17,17 +19,17 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
         val username: String = event.author.name
 
         // Immediately throw out messages sent from itself or from non-matching servers
-        if (username.equals(plugin.configuration.USERNAME, true)) {
+        if (username.equals(plugin.cfg.USERNAME, true)) {
             plugin.logDebug("Ignoring message ${event.message.id} from Discord: it matches this bot's username")
             return
         }
-        if (event.guild.id != plugin.configuration.SERVER_ID) {
+        if (event.guild.id != plugin.cfg.SERVER_ID) {
             plugin.logDebug("Not relaying message ${event.message.id} from Discord: server does not match")
             return
         }
 
         // NON-RELAY COMMANDS - the following commands and their responses are not sent to Minecraft
-        if(rawmsg.startsWith(api.selfUser.asMention, true)) {
+        if (rawmsg.startsWith(api.selfUser.asMention, true)) {
             val arg = rawmsg.replaceFirst(api.selfUser.asMention, "").replaceFirst("\\s+", "")
 
             // CONFIRM - Confirm an alias
@@ -35,12 +37,12 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
                 plugin.logDebug("user $username wants to confirm an alias")
                 val ua = plugin.requests.find { it.discordId == event.author.id }
                 if (ua == null) {
-                    plugin.sendToDiscordRespond("You have not requested an alias, or your request has expired!", event)
+                    plugin.sendToDiscord("You have not requested an alias, or your request has expired!", event)
                     return
                 }
                 plugin.updateAlias(ua)
                 plugin.requests.remove(ua)
-                plugin.sendToDiscordRespond("Successfully linked aliases!", event)
+                plugin.sendToDiscord("Successfully linked aliases!", event)
                 return
             }
 
@@ -49,11 +51,11 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
                 plugin.logDebug("user $username has requested a listing of online players")
                 val players = plugin.getOnlinePlayers()
                 if (players.isEmpty()) {
-                    plugin.sendToDiscordRespond("Nobody is currently online.", event)
+                    plugin.sendToDiscord("Nobody is currently online.", event)
                     return
                 }
                 val response = players.joinToString("\n", "The following players are currently online:\n```\n", "\n```")
-                plugin.sendToDiscordRespond(response, event)
+                plugin.sendToDiscord(response, event)
                 return
             }
         }
@@ -61,16 +63,16 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
         // If it is from the relay channel, relay it immediately
         if (event.isFromType(ChannelType.TEXT)) {
 
-            if (!event.textChannel.name.equals(plugin.configuration.CHANNEL, true))
+            if (!event.textChannel.name.equals(plugin.cfg.CHANNEL, true))
                 plugin.logDebug("Not relaying message ${event.message.id} from Discord: channel does not match")
             else {
                 plugin.logDebug("Broadcasting message ${event.message.id} from Discord to Minecraft as user $username")
-                plugin.sendToMinecraft(username, event.author.id, event.message.content)
+                plugin.sendToMinecraft(event.message.content, username, event.author.id)
             }
         }
 
         // RELAY COMMANDS - These commands and their outputs DO get relayed to Minecraft
-        if(rawmsg.startsWith(api.selfUser.asMention, true)) {
+        if (rawmsg.startsWith(api.selfUser.asMention, true)) {
             val arg = rawmsg.replaceFirst(api.selfUser.asMention, "").removePrefix(" ")
             if (arg.isEmpty()) return
             plugin.logDebug("Relay command received.  Arg: $arg")
@@ -78,30 +80,30 @@ class DiscordListener(val plugin: Plugin, val api: JDA, val connection: DiscordC
             // OIKOS - Delicious Greek yogurt from Danone!
             if (arg.startsWith("oikos", true)) {
                 plugin.logDebug("user $username has initiated oikos!")
-                plugin.sendToDiscordRespond("Delicious Greek yogurt from Danone!", event)
-                plugin.sendToMinecraftBroadcast("Delicious Greek yogurt from Danone!")
+                plugin.sendToDiscord("Delicious Greek yogurt from Danone!", event)
+                plugin.sendToMinecraft("Delicious Greek yogurt from Danone!")
                 return
             }
             if (arg.startsWith("delicious greek yogurt from danone", true)) {
                 plugin.logDebug("user $username has initiated oikos 2!")
-                plugin.sendToDiscordRespond("\uD83D\uDE04", event)
-                plugin.sendToMinecraftBroadcast(":D")
+                plugin.sendToDiscord("\uD83D\uDE04", event)
+                plugin.sendToMinecraft(":D")
                 return
             }
             if (arg == "\uD83D\uDE04") {
                 plugin.logDebug("user $username has initiated oikos 3!")
-                plugin.sendToDiscordRespond("\uD83D\uDE04", event)
-                plugin.sendToMinecraftBroadcast(":D")
+                plugin.sendToDiscord("\uD83D\uDE04", event)
+                plugin.sendToMinecraft(":D")
                 return
             }
 
             // CLEVERBOT - Assume anything else invokes Cleverbot
             plugin.logDebug("user $username asks CleverBot something")
-            val response = Util.askCleverbot(plugin.configuration.CLEVERBOT_KEY, arg)
-            plugin.sendToDiscordRespond(response, event)
+            val response = CommandLogic.askCleverbot(plugin.cfg.CLEVERBOT_KEY, arg)
+            plugin.sendToDiscord(response, event)
             // if this occurs in the relay channel, relay the response
-            if (event.isFromType(ChannelType.TEXT) && event.textChannel.name.equals(plugin.configuration.CHANNEL, true))
-                plugin.sendToMinecraftBroadcast(response)
+            if (event.isFromType(ChannelType.TEXT) && event.textChannel.name.equals(plugin.cfg.CHANNEL, true))
+                plugin.sendToMinecraft(response)
             return
         }
     }

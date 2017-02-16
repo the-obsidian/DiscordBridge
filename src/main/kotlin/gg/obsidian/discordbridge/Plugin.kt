@@ -1,5 +1,9 @@
 package gg.obsidian.discordbridge
 
+import gg.obsidian.discordbridge.Utils.Utils
+import gg.obsidian.discordbridge.discord.Connection
+import gg.obsidian.discordbridge.minecraft.commands.Discord
+import gg.obsidian.discordbridge.minecraft.commands.Marina
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
@@ -9,58 +13,59 @@ import java.io.File
 
 class Plugin : JavaPlugin() {
 
-    val configuration = Configuration(this)
-    var connection: DiscordConnection? = null
-    var users: ConfigAccessor = ConfigAccessor(this, dataFolder, "usernames.yml")
-    var worlds: ConfigAccessor? = null
+    val cfg = Configuration(this)
+    var connection: Connection? = null
+    var users: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "usernames.yml")
+    var worlds: DataConfigAccessor? = null
     var requests: MutableList<UserAlias> = mutableListOf()
 
     override fun onEnable() {
+        // Load configs
         updateConfig(description.version)
         users.saveDefaultConfig()
-        if (isMultiverse()) worlds = ConfigAccessor(this, File("plugins/Multiverse-Core"), "worlds.yml")
+        if (isMultiverse()) worlds = DataConfigAccessor(this, File("plugins/Multiverse-Core"), "worlds.yml")
 
-
-        this.connection = DiscordConnection(this)
-
+        // Connect to Discord
+        this.connection = Connection(this)
         server.scheduler.runTaskAsynchronously(this, connection)
         server.pluginManager.registerEvents(EventListener(this), this)
-        getCommand("discord").executor = CommandHandler(this)
-        getCommand("marina").executor = HandleMarina(this)
+
+        // Register commands
+        getCommand("discord").executor = Discord(this)
+        getCommand("marina").executor = Marina(this)
     }
 
     override fun onDisable() {
         connection!!.relay("Shutting down...")
+
+        // Pretend like this does anything
         logger.log(Level.INFO, "Attempting to cancel tasks")
         server.scheduler.cancelTasks(this)
     }
 
-    fun reload() {
+    /*======================================
+      Messaging Functions
+    ===================================== */
 
-        reloadConfig()
-        users.reloadConfig()
-        configuration.load()
-        connection?.reconnect()
-    }
-
-    // Message senders
-
-    fun sendToDiscordRelaySelf(message: String) {
+    // Send a message to Discord as the bot itself
+    fun sendToDiscord(message: String) {
         logDebug("Sending message to Discord - $message")
         connection!!.relay(message)
     }
 
-    fun sendToDiscordRelay(message: String, uuid: String) {
-        val alias = users.config.getString("mcaliases.$uuid.discordusername")
+    // Send a message from a Minecraft player to Discord
+    fun sendToDiscord(message: String, uuid: String) {
+        val alias = users.data.getString("mcaliases.$uuid.discordusername")
         var newMessage = message
 
-        // This section should convert attempted @mentions to real ones wherever possible
+        // This gross section converts attempted @mentions to real ones wherever possible
+        // Mentionable names MUST not contain spaces!
         val discordusers = getDiscordUsers()
         val discordaliases: MutableList<Pair<String, String>> = mutableListOf()
         discordusers
-                .filter { users.config.isSet("discordaliases.${it.second}") }
+                .filter { users.data.isSet("discordaliases.${it.second}") }
                 .mapTo(discordaliases) {
-                    Pair(users.config.getString("discordaliases.${it.second}.mcusername"),
+                    Pair(users.data.getString("discordaliases.${it.second}.mcusername"),
                             it.second)
                 }
         for (match in Regex("""(?:^| )@(w+)""").findAll(message)) {
@@ -75,65 +80,78 @@ class Plugin : JavaPlugin() {
             if (found2 != null) newMessage = newMessage.replaceFirst("@${match.value}", "<@${found2.first}>")
         }
 
-        if (alias != null) newMessage = message.replaceFirst(users.config.getString("mcaliases.$uuid.mcusername"), alias)
+        if (alias != null) newMessage = message.replaceFirst(users.data.getString("mcaliases.$uuid.mcusername"), alias)
         logDebug("Sending message to Discord - $newMessage")
         connection!!.relay(newMessage)
     }
 
-    fun sendToDiscordRespond(message: String, event: MessageReceivedEvent) {
+    // TODO: this function is  little different because it isn't a simple relay. Consider refactoring.
+    // Send a direct message to a Discord user as the bot itself
+    fun sendToDiscord(message: String, event: MessageReceivedEvent) {
         if (event.isFromType(ChannelType.PRIVATE)) logDebug("Sending message to ${event.author.name} - $message")
         else logDebug("Sending message to Discord - $message")
         connection!!.respond(message, event)
     }
 
-    fun sendToMinecraft(username: String, id: String, message: String) {
-        var alias = users.config.getString("discordaliases.$id.mcusername")
+    // Send a message to Minecraft as the bot iself
+    fun sendToMinecraft(message: String) {
+        val formattedMessage = Utils.formatMessage(
+                cfg.TEMPLATES_MINECRAFT_CHAT_MESSAGE,
+                mapOf(
+                        "%u" to cfg.USERNAME_COLOR + cfg.USERNAME.replace("\\s+", "") + "&r",
+                        "%m" to message
+                ),
+                colors = true
+        )
+        server.broadcastMessage(formattedMessage)
+    }
+
+    // Send a message to Minecraft from a Discord user
+    fun sendToMinecraft(message: String, username: String, id: String) {
+        var alias = users.data.getString("discordaliases.$id.mcusername")
         if (alias == null) alias = username.replace("\\s+", "")
-        val formattedMessage = Util.formatMessage(
-                configuration.TEMPLATES_MINECRAFT_CHAT_MESSAGE,
-                mapOf(
-                        "%u" to alias,
-                        "%m" to message
-                ),
-                colors = true
-        )
-
-        server.broadcastMessage(formattedMessage)
-    }
-
-    fun sendToMinecraftBroadcast(message: String) {
-        val formattedMessage = Util.formatMessage(
-                configuration.TEMPLATES_MINECRAFT_CHAT_MESSAGE,
-                mapOf(
-                        "%u" to configuration.USERNAME_COLOR + configuration.USERNAME.replace("\\s+", "") + "&r",
-                        "%m" to message
-                ),
+        val formattedMessage = Utils.formatMessage(
+                cfg.TEMPLATES_MINECRAFT_CHAT_MESSAGE,
+                mapOf("%u" to alias, "%m" to message),
                 colors = true
         )
         server.broadcastMessage(formattedMessage)
     }
 
-    // Utilities
+    /*===========================================
+      Util
+    ===========================================*/
 
+    // Reload configs
+    fun reload() {
+        reloadConfig()
+        users.reloadConfig()
+        if (isMultiverse()) worlds!!.reloadConfig()
+        cfg.load()
+        //connection?.reconnect()
+    }
+
+    // Save default config
     fun updateConfig(version: String) {
         this.saveDefaultConfig()
         config.options().copyDefaults(true)
         config.set("version", version)
         saveConfig()
-        configuration.load()
+        cfg.load()
     }
 
+    // Log only if debug config is true
     fun logDebug(msg: String) {
-        if (!configuration.DEBUG) return
+        if (!cfg.DEBUG) return
         logger.info(msg)
     }
 
+    // Shorthand function to check if Multiverse is installed
     fun isMultiverse(): Boolean {
         return server.pluginManager.getPlugin("Multiverse-Core") != null
     }
 
-    // Stuff
-
+    // Get a list of usernames of players who are online
     fun getOnlinePlayers(): List<String> {
         val names: MutableList<String> = mutableListOf()
         val players = server.onlinePlayers.toTypedArray()
@@ -141,6 +159,7 @@ class Plugin : JavaPlugin() {
         return names.toList()
     }
 
+    // Open a request to link a Minecraft user with a Discord user
     fun registerUserRequest(ua: UserAlias) {
         requests.add(ua)
         val msg = "Minecraft user '${ua.mcUsername}' has requested to become associated with your Discord" +
@@ -149,21 +168,25 @@ class Plugin : JavaPlugin() {
         connection!!.tell(msg, ua.discordId)
     }
 
+    // Return a list of all Discord users in the specified server
     fun getDiscordUsers(): List<Triple<String, String, Boolean>> {
         return connection!!.listUsers()
     }
 
+    // Return a list of all Discord users in the specified server who are visibly available
     fun getDiscordOnline(): List<Triple<String, Boolean, OnlineStatus>> {
         return connection!!.listOnline()
     }
 
+    // TODO: Rename function to something more intuitive
+    // Add an alias to the Users data
     fun updateAlias(ua: UserAlias) {
-        users.config.set("mcaliases.${ua.mcUuid}.mcusername", ua.mcUsername)
-        users.config.set("mcaliases.${ua.mcUuid}.discordusername", ua.discordUsername)
-        users.config.set("mcaliases.${ua.mcUuid}.discordid", ua.discordId)
-        users.config.set("discordaliases.${ua.discordId}.mcuuid", ua.mcUuid)
-        users.config.set("discordaliases.${ua.discordId}.mcusername", ua.mcUsername)
-        users.config.set("discordaliases.${ua.discordId}.discordusername", ua.discordUsername)
+        users.data.set("mcaliases.${ua.mcUuid}.mcusername", ua.mcUsername)
+        users.data.set("mcaliases.${ua.mcUuid}.discordusername", ua.discordUsername)
+        users.data.set("mcaliases.${ua.mcUuid}.discordid", ua.discordId)
+        users.data.set("discordaliases.${ua.discordId}.mcuuid", ua.mcUuid)
+        users.data.set("discordaliases.${ua.discordId}.mcusername", ua.mcUsername)
+        users.data.set("discordaliases.${ua.discordId}.discordusername", ua.discordUsername)
         users.saveConfig()
     }
 }
