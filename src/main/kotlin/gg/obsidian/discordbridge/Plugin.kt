@@ -1,12 +1,11 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.Utils.Utils
 import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.minecraft.commands.Discord
 import gg.obsidian.discordbridge.minecraft.commands.Marina
 import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.ChannelType
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent
+import net.dv8tion.jda.core.entities.MessageChannel
+import org.bukkit.ChatColor
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.logging.Level
 import java.io.File
@@ -14,8 +13,10 @@ import java.io.File
 class Plugin : JavaPlugin() {
 
     val cfg = Configuration(this)
-    var connection: Connection? = null
+    lateinit var connection: Connection
     var users: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "usernames.yml")
+    var memory: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "botmemory.yml")
+    var scripted_responses: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "scriptedresponses.yml")
     var worlds: DataConfigAccessor? = null
     var requests: MutableList<UserAlias> = mutableListOf()
 
@@ -23,6 +24,8 @@ class Plugin : JavaPlugin() {
         // Load configs
         updateConfig(description.version)
         users.saveDefaultConfig()
+        memory.saveDefaultConfig()
+        scripted_responses.saveDefaultConfig()
         if (isMultiverse()) worlds = DataConfigAccessor(this, File("plugins/Multiverse-Core"), "worlds.yml")
 
         // Connect to Discord
@@ -36,7 +39,8 @@ class Plugin : JavaPlugin() {
     }
 
     override fun onDisable() {
-        connection!!.relay("Shutting down...")
+        if (cfg.ANNOUNCE_SERVER_START_STOP)
+            connection.send(cfg.TEMPLATES_DISCORD_SERVER_STOP, connection.getRelayChannel())
 
         // Pretend like this does anything
         logger.log(Level.INFO, "Attempting to cancel tasks")
@@ -47,75 +51,15 @@ class Plugin : JavaPlugin() {
       Messaging Functions
     ===================================== */
 
-    // Send a message to Discord as the bot itself
-    fun sendToDiscord(message: String) {
+    // Send a message to Discord
+    fun sendToDiscord(message: String, channel: MessageChannel?) {
         logDebug("Sending message to Discord - $message")
-        connection!!.relay(message)
+        connection.send(message, channel)
     }
 
-    // Send a message from a Minecraft player to Discord
-    fun sendToDiscord(message: String, uuid: String) {
-        val alias = users.data.getString("mcaliases.$uuid.discordusername")
-        var newMessage = message
-
-        // This gross section converts attempted @mentions to real ones wherever possible
-        // Mentionable names MUST not contain spaces!
-        val discordusers = getDiscordUsers()
-        val discordaliases: MutableList<Pair<String, String>> = mutableListOf()
-        discordusers
-                .filter { users.data.isSet("discordaliases.${it.second}") }
-                .mapTo(discordaliases) {
-                    Pair(users.data.getString("discordaliases.${it.second}.mcusername"),
-                            it.second)
-                }
-        for (match in Regex("""(?:^| )@(w+)""").findAll(message)) {
-            val found: Triple<String, String, Boolean>? = discordusers.firstOrNull {
-                it.first.replace("\\s+", "").toLowerCase() == match.value.toLowerCase()
-            }
-            if (found != null) newMessage = newMessage.replaceFirst("@${match.value}", "<@${found.second}>")
-
-            val found2: Pair<String, String>? = discordaliases.firstOrNull {
-                it.second.toLowerCase() == match.value.toLowerCase()
-            }
-            if (found2 != null) newMessage = newMessage.replaceFirst("@${match.value}", "<@${found2.first}>")
-        }
-
-        if (alias != null) newMessage = message.replaceFirst(users.data.getString("mcaliases.$uuid.mcusername"), alias)
-        logDebug("Sending message to Discord - $newMessage")
-        connection!!.relay(newMessage)
-    }
-
-    // TODO: this function is  little different because it isn't a simple relay. Consider refactoring.
-    // Send a direct message to a Discord user as the bot itself
-    fun sendToDiscord(message: String, event: MessageReceivedEvent) {
-        if (event.isFromType(ChannelType.PRIVATE)) logDebug("Sending message to ${event.author.name} - $message")
-        else logDebug("Sending message to Discord - $message")
-        connection!!.respond(message, event)
-    }
-
-    // Send a message to Minecraft as the bot iself
+    // Send a message to Minecraft
     fun sendToMinecraft(message: String) {
-        val formattedMessage = Utils.formatMessage(
-                cfg.TEMPLATES_MINECRAFT_CHAT_MESSAGE,
-                mapOf(
-                        "%u" to cfg.USERNAME_COLOR + cfg.USERNAME.replace("\\s+", "") + "&r",
-                        "%m" to message
-                ),
-                colors = true
-        )
-        server.broadcastMessage(formattedMessage)
-    }
-
-    // Send a message to Minecraft from a Discord user
-    fun sendToMinecraft(message: String, username: String, id: String) {
-        var alias = users.data.getString("discordaliases.$id.mcusername")
-        if (alias == null) alias = username.replace("\\s+", "")
-        val formattedMessage = Utils.formatMessage(
-                cfg.TEMPLATES_MINECRAFT_CHAT_MESSAGE,
-                mapOf("%u" to alias, "%m" to message),
-                colors = true
-        )
-        server.broadcastMessage(formattedMessage)
+        server.broadcastMessage(message)
     }
 
     /*===========================================
@@ -126,6 +70,8 @@ class Plugin : JavaPlugin() {
     fun reload() {
         reloadConfig()
         users.reloadConfig()
+        memory.reloadConfig()
+        scripted_responses.reloadConfig()
         if (isMultiverse()) worlds!!.reloadConfig()
         cfg.load()
         //connection?.reconnect()
@@ -165,17 +111,17 @@ class Plugin : JavaPlugin() {
         val msg = "Minecraft user '${ua.mcUsername}' has requested to become associated with your Discord" +
                 " account. If this is you, respond '<@me> confirm'. If this is not" +
                 " you, respond '<@me> deny'."
-        connection!!.tell(msg, ua.discordId)
+        connection.tell(msg, ua.discordId)
     }
 
     // Return a list of all Discord users in the specified server
     fun getDiscordUsers(): List<Triple<String, String, Boolean>> {
-        return connection!!.listUsers()
+        return connection.listUsers()
     }
 
     // Return a list of all Discord users in the specified server who are visibly available
     fun getDiscordOnline(): List<Triple<String, Boolean, OnlineStatus>> {
-        return connection!!.listOnline()
+        return connection.listOnline()
     }
 
     // TODO: Rename function to something more intuitive
@@ -188,5 +134,82 @@ class Plugin : JavaPlugin() {
         users.data.set("discordaliases.${ua.discordId}.mcusername", ua.mcUsername)
         users.data.set("discordaliases.${ua.discordId}.discordusername", ua.discordUsername)
         users.saveConfig()
+    }
+
+    /*======================================
+      Message Formatting Functions
+    ===================================== */
+
+    // Converts attempted @mentions to real ones wherever possible
+    // Replaces the sender's name with their registered alias if it exists
+    // Mentionable names MUST NOT contain spaces!
+    fun convertAtMentions(message: String): String {
+        var newMessage = message
+
+        val discordusers = getDiscordUsers()
+        val discordaliases: MutableList<Pair<String, String>> = mutableListOf()
+        discordusers
+                .filter { users.data.isSet("discordaliases.${it.second}") }
+                .mapTo(discordaliases) { Pair(users.data.getString("discordaliases.${it.second}.mcusername"), it.second) }
+        for (match in Regex("""(?:^| )@(w+)""").findAll(message)) {
+            val found: Triple<String, String, Boolean>? = discordusers.firstOrNull {
+                it.first.replace("\\s+", "").toLowerCase() == match.value.toLowerCase()
+            }
+            if (found != null) newMessage = newMessage.replaceFirst("@${match.value}", "<@${found.second}>")
+
+            val found2: Pair<String, String>? = discordaliases.firstOrNull {
+                it.second.toLowerCase() == match.value.toLowerCase()
+            }
+            if (found2 != null) newMessage = newMessage.replaceFirst("@${match.value}", "<@${found2.first}>")
+        }
+
+        return newMessage
+    }
+
+    // Scans the string for occurrences of the Minecraft name matching the given UUID and attempts to translate it
+    // to a registered Discord name, if it exists
+    fun translateAliasToDiscord(message: String, uuid: String?): String {
+        var newMessage = message
+        val alias = users.data.getString("mcaliases.$uuid.discordusername")
+        if (alias != null)
+            newMessage = newMessage.replaceFirst(users.data.getString("mcaliases.$uuid.mcusername"), alias)
+        return newMessage
+    }
+
+    fun toMinecraftChatMessage(message: String, alias: String): String {
+        var formattedString = cfg.TEMPLATES_MINECRAFT_CHAT_MESSAGE
+        formattedString = formattedString.replace("%u", alias).replace("%m", message)
+        formattedString = ChatColor.translateAlternateColorCodes('&', formattedString)
+        return formattedString
+    }
+
+    fun toDiscordChatMessage(message: String, username: String, displayName: String, worldName: String): String {
+        var formattedString = cfg.TEMPLATES_DISCORD_CHAT_MESSAGE
+        formattedString = formattedString.replace("%u", username).replace("%m", message)
+                .replace("%d", displayName).replace("%w", worldName)
+        formattedString = ChatColor.translateAlternateColorCodes('&', formattedString)
+        return formattedString
+    }
+
+    fun toDiscordPlayerJoin(username: String, displayName: String): String {
+        var formattedString = cfg.TEMPLATES_DISCORD_PLAYER_JOIN
+        formattedString = formattedString.replace("%u", username).replace("%d", displayName)
+        formattedString = ChatColor.translateAlternateColorCodes('&', formattedString)
+        return formattedString
+    }
+
+    fun toDiscordPlayerLeave(username: String, displayName: String): String {
+        var formattedString = cfg.TEMPLATES_DISCORD_PLAYER_LEAVE
+        formattedString = formattedString.replace("%u", username).replace("%d", displayName)
+        formattedString = ChatColor.translateAlternateColorCodes('&', formattedString)
+        return formattedString
+    }
+
+    fun toDiscordPlayerDeath(deathMessage: String, username: String, displayName: String, worldName: String): String {
+        var formattedString = cfg.TEMPLATES_DISCORD_PLAYER_DEATH
+        formattedString = formattedString.replace("%u", username).replace("%r", deathMessage)
+                .replace("%d", displayName).replace("%w", worldName)
+        formattedString = ChatColor.translateAlternateColorCodes('&', formattedString)
+        return formattedString
     }
 }

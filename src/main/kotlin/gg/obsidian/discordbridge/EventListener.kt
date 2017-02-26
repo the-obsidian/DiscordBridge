@@ -36,17 +36,11 @@ class EventListener(val plugin: Plugin) : Listener {
             if (alias is String) worldname = alias
         }
 
-        val formattedMessage = Utils.formatMessage(
-                plugin.cfg.TEMPLATES_DISCORD_CHAT_MESSAGE,
-                mapOf(
-                        "%u" to username,
-                        "%m" to event.message.stripColor(),
-                        "%d" to player.displayName.stripColor(),
-                        "%w" to worldname
-                )
-        )
+        var formattedMessage = plugin.toDiscordChatMessage(event.message.stripColor(), username, player.displayName.stripColor(), worldname)
+        formattedMessage = plugin.convertAtMentions(formattedMessage)
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, event.player.uniqueId.toString())
 
-        plugin.sendToDiscord(formattedMessage, event.player.uniqueId.toString())
+        plugin.sendToDiscord(formattedMessage, plugin.connection.getRelayChannel())
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -62,15 +56,10 @@ class EventListener(val plugin: Plugin) : Listener {
         val username = player.name.stripColor()
         plugin.logDebug("Received a join event for $username")
 
-        val formattedMessage = Utils.formatMessage(
-                plugin.cfg.TEMPLATES_DISCORD_PLAYER_JOIN,
-                mapOf(
-                        "%u" to username,
-                        "%d" to player.displayName.stripColor()
-                )
-        )
+        var formattedMessage = plugin.toDiscordPlayerJoin(username, player.displayName.stripColor())
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, event.player.uniqueId.toString())
 
-        plugin.sendToDiscord(formattedMessage, player.uniqueId.toString())
+        plugin.sendToDiscord(formattedMessage, plugin.connection.getRelayChannel())
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -86,15 +75,10 @@ class EventListener(val plugin: Plugin) : Listener {
         val username = event.player.name.stripColor()
         plugin.logDebug("Received a leave event for $username")
 
-        val formattedMessage = Utils.formatMessage(
-                plugin.cfg.TEMPLATES_DISCORD_PLAYER_LEAVE,
-                mapOf(
-                        "%u" to username,
-                        "%d" to event.player.displayName.stripColor()
-                )
-        )
+        var formattedMessage = plugin.toDiscordPlayerLeave(username, event.player.displayName.stripColor())
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, event.player.uniqueId.toString())
 
-        plugin.sendToDiscord(formattedMessage, player.uniqueId.toString())
+        plugin.sendToDiscord(formattedMessage, plugin.connection.getRelayChannel())
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -110,16 +94,9 @@ class EventListener(val plugin: Plugin) : Listener {
         val username = event.entity.name.stripColor()
         plugin.logDebug("Received a death event for $username")
 
-        val formattedMessage = Utils.formatMessage(
-                plugin.cfg.TEMPLATES_DISCORD_PLAYER_DEATH,
-                mapOf(
-                        "%u" to username,
-                        "%d" to event.entity.displayName.stripColor(),
-                        "%r" to event.deathMessage,
-                        "%w" to event.entity.world.name
-                )
-        )
+        var formattedMessage = plugin.toDiscordPlayerDeath(event.deathMessage, username, event.entity.displayName.stripColor(), event.entity.world.name)
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, player.uniqueId.toString())
 
-        plugin.sendToDiscord(formattedMessage, player.uniqueId.toString())
+        plugin.sendToDiscord(formattedMessage, plugin.connection.getRelayChannel())
     }
 }

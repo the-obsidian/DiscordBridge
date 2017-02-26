@@ -1,6 +1,7 @@
 package gg.obsidian.discordbridge.minecraft.commands
 
-import gg.obsidian.discordbridge.CommandLogic
+import gg.obsidian.discordbridge.CommandLogic.askCleverbot
+import gg.obsidian.discordbridge.Permissions
 import gg.obsidian.discordbridge.Plugin
 import gg.obsidian.discordbridge.Utils.*
 import org.bukkit.command.Command
@@ -13,21 +14,12 @@ class Marina(val plugin: Plugin) : CommandExecutor {
     override fun onCommand(player: CommandSender, cmd: Command, alias: String?, args: Array<out String>?): Boolean {
         if (args == null || args.isEmpty()) return false
 
-        if (player is Player) {
+        if (player is Player && Permissions.cleverbot.has(player)) {
             val message: String = args.joinToString(" ")
             player.chat("@${plugin.cfg.USERNAME.noSpace()} $message")
-            val response: String = CommandLogic.askCleverbot(plugin.cfg.CLEVERBOT_KEY, message)
-            val formattedMessage = Utils.formatMessage(
-                    plugin.cfg.TEMPLATES_MINECRAFT_CHAT_MESSAGE,
-                    mapOf(
-                            "%u" to plugin.cfg.USERNAME_COLOR
-                                    + plugin.cfg.USERNAME.noSpace() + "&r",
-                            "%m" to response
-                    ),
-                    colors = true
-            )
-            plugin.server.broadcastMessage(formattedMessage)
-            plugin.sendToDiscord(response)
+            val response = askCleverbot(plugin.cfg.CLEVERBOT_KEY, message)
+            plugin.sendToMinecraft(plugin.toMinecraftChatMessage(response, plugin.cfg.BOT_MC_USERNAME))
+            plugin.sendToDiscord(response, plugin.connection.getRelayChannel())
             return true
         }
         return true

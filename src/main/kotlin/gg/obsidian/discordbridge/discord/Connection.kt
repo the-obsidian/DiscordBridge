@@ -5,10 +5,9 @@ import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
 import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.entities.Guild
+import net.dv8tion.jda.core.entities.MessageChannel
 import net.dv8tion.jda.core.entities.TextChannel
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 
 class Connection(val plugin: Plugin) : Runnable {
     var api: JDA? = null
@@ -22,24 +21,23 @@ class Connection(val plugin: Plugin) : Runnable {
         } catch (e: Exception) {
             plugin.logger.severe("Error connecting to Discord: " + e)
         }
-
     }
 
-    fun relay(message: String) {
+    fun getRelayChannel(): TextChannel? {
         server = if (server == null) getServerById(plugin.cfg.SERVER_ID) else server
-        if (server == null) return
-
         channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
-        if (channel == null) return
-
-        channel!!.sendMessage(message).queue()
+        return channel
     }
 
-    fun respond(message: String, event: MessageReceivedEvent) {
-        if (event.isFromType(ChannelType.PRIVATE)) event.privateChannel.sendMessage(message).queue()
-        else event.channel.sendMessage(message).queue()
+    fun send(message: String, toChannel: MessageChannel?) {
+        if (toChannel == null) {
+            plugin.logger.severe("Could not send message to Discord: Channel is not defined")
+            return
+        }
+        toChannel.sendMessage(message).queue()
     }
 
+    // TODO: Try to merge this into "send"
     fun tell(message: String, id: String) {
         val modifiedMsg = message.replace("<@me>", api!!.selfUser.asMention)
         api!!.getUserById(id).privateChannel.sendMessage(modifiedMsg).queue()
@@ -50,6 +48,7 @@ class Connection(val plugin: Plugin) : Runnable {
         connect()
     }
 
+    // TODO: Unfuck this
     fun listUsers(): List<Triple<String, String, Boolean>> {
         channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
         if (channel == null) return mutableListOf()
@@ -61,6 +60,7 @@ class Connection(val plugin: Plugin) : Runnable {
         return listOfUsers
     }
 
+    // TODO: Unfuck this
     fun listOnline(): List<Triple<String, Boolean, OnlineStatus>> {
         channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
         if (channel == null) return mutableListOf()
@@ -83,7 +83,8 @@ class Connection(val plugin: Plugin) : Runnable {
         api = builder.buildBlocking()
         listener = Listener(plugin, api as JDA, this)
         api!!.addEventListener(listener)
-        relay("Oikos!")
+        if(plugin.cfg.ANNOUNCE_SERVER_START_STOP)
+            send(plugin.cfg.TEMPLATES_DISCORD_SERVER_START, getRelayChannel())
     }
 
     private fun getServerById(id: String): Guild? {

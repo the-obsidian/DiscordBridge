@@ -1,0 +1,5 @@
+responses:
+  '1':
+    casesensitive: false
+    response: 'Hello World!'
+    trigger: 'hello world!'

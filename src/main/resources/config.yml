@@ -7,6 +7,7 @@ settings:
   cleverbot-key: ''
   debug: false
   relay_cancelled_messages: true
+  announce_server_start_stop: true
   messages:
     chat: true
     join: true
@@ -23,5 +24,7 @@ settings:
       player_join: '%u joined the server'
       player_leave: '%u left the server'
       player_death: '%r'
+      server_start: 'Server started!'
+      server_stop: 'Shutting down...'
     minecraft:
       chat_message: '<%u&b(discord)&r> %m'
