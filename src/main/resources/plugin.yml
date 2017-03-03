@@ -2,7 +2,7 @@ name: DiscordBridge
 version: '@VERSION@'
 description: '@DESCRIPTION@'
 
-author: Jacob Gillespie
+authors: [Jacob Gillespie, Adam Hart]
 website: '@URL@'
 
 loadbefore: [SpaceBukkit, RemoteToolkitPlugin]
@@ -17,11 +17,32 @@ permissions:
   discordbridge.cleverbot:
     description: Determines whether this user can talk to Cleverbot
     default: true
+  discordbridge.f:
+    description: Determines whether this user can use the f command
+    default: true
+  discordbridge.rate:
+    description: Determines whether this user can use the rate command
+    default: true
+  discordbridge.eightball:
+    description: Determines whether this user can use the 8ball command
+    default: true
+  discordbridge.insult:
+    description: Determines whether this user can use the insult command
+    default: op
 
 commands:
+  8ball:
+    description: Consult the Magic 8-Ball to answer your yes/no questions
+    usage: /8ball <question>
   discord:
     description: Issue a command to the bot
     usage: /discord <command>
-  marina:
-    description: Chat with Marina!
-    usage: /marina <what to say to Marina>
+  f:
+    description: Press f to pay respects
+    usage: /f
+  rate:
+    description: Have the bot rate something for you
+    usage: /rate <thing to be rated>
+  insult:
+    description: Have the bot insult someone for your
+    usage: /insult <thing to insult>

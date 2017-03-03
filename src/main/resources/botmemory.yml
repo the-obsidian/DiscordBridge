@@ -1,1 +1,29 @@
+8-ball-responses:
+  - 'It is certain.'
+  - 'Seems pretty likely.'
+  - 'Absolutely.'
+  - 'Definitely.'
+  - 'Yes.'
+  - 'I think so.'
+  - 'Without a doubt.'
+  - 'Signs point to yes.'
+  - 'Probably.'
+  - 'The opposite is certain.'
+  - 'Seems pretty unlikely.'
+  - 'Absolutely not.'
+  - 'Definitely not.'
+  - 'No.'
+  - 'I don''t think so.'
+  - 'There''s plenty of doubt.'
+  - 'Signs point to no.'
+  - 'Probably not.'
+  - 'I''m not sure.'
+  - 'That''s hard to say at this time.'
+  - 'It''s impossible to know. Unless you ask me again.'
+  - 'Figure it out on your own.'
 respects: 0
+scripted-responses:
+  '1':
+    case-sensitive: false
+    response: 'Hello World!'
+    trigger: 'hello world!'

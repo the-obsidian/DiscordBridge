@@ -15,7 +15,7 @@ package gg.obsidian.discordbridge
 *
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+* FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.IN NO EVENT SHALL THE
 * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -41,8 +41,9 @@ class DataConfigAccessor(private val plugin: JavaPlugin, filepath: File, private
     }
 
     fun reloadConfig() {
-        try { fileConfiguration = YamlConfiguration.loadConfiguration(configFile) }
-        catch (e: IllegalArgumentException) {
+        try {
+            fileConfiguration = YamlConfiguration.loadConfiguration(configFile)
+        } catch (e: IllegalArgumentException) {
             // Look for defaults in the jar
             if (plugin.getResource(fileName) == null)
                 plugin.logger.log(Level.SEVERE, "usernames.yml cannot be found for some reason")
@@ -54,30 +55,27 @@ class DataConfigAccessor(private val plugin: JavaPlugin, filepath: File, private
 
     val data: FileConfiguration
         get() {
-            if (fileConfiguration == null) {
+            if (fileConfiguration == null)
                 this.reloadConfig()
-            }
             return fileConfiguration!!
         }
 
     fun saveConfig() {
-        if (fileConfiguration == null || configFile == null) {
+        if (fileConfiguration == null || configFile == null)
             return
-        } else {
+        else {
             try {
                 data.save(configFile)
             } catch (ex: IOException) {
-                plugin.logger.log(Level.SEVERE, "Could not save data to " + configFile, ex)
+                plugin.logger.log(Level.SEVERE, "Could not save data to $configFile", ex)
             }
-
         }
     }
 
     @Suppress("unused")
     fun saveDefaultConfig() {
-        if (!configFile!!.exists()) {
+        if (!configFile!!.exists())
             this.plugin.saveResource(fileName, false)
-        }
     }
 
 }

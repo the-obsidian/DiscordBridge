@@ -4,10 +4,7 @@ import gg.obsidian.discordbridge.Plugin
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
-import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.Guild
-import net.dv8tion.jda.core.entities.MessageChannel
-import net.dv8tion.jda.core.entities.TextChannel
+import net.dv8tion.jda.core.entities.*
 
 class Connection(val plugin: Plugin) : Runnable {
     var api: JDA? = null
@@ -37,44 +34,21 @@ class Connection(val plugin: Plugin) : Runnable {
         toChannel.sendMessage(message).queue()
     }
 
-    // TODO: Try to merge this into "send"
-    fun tell(message: String, id: String) {
-        val modifiedMsg = message.replace("<@me>", api!!.selfUser.asMention)
-        api!!.getUserById(id).privateChannel.sendMessage(modifiedMsg).queue()
-    }
-
     fun reconnect() {
         disconnect()
         connect()
     }
 
-    // TODO: Unfuck this
-    fun listUsers(): List<Triple<String, String, Boolean>> {
-        channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
+    fun listUsers(): List<Member> {
+        channel = getRelayChannel()
         if (channel == null) return mutableListOf()
-
-        val listOfUsers: MutableList<Triple<String, String, Boolean>> = mutableListOf()
-        channel!!.members.mapTo(listOfUsers) {
-            Triple(it.effectiveName, it.user.id, it.user.isBot)
-        }
-        return listOfUsers
+        return channel!!.members
     }
 
-    // TODO: Unfuck this
-    fun listOnline(): List<Triple<String, Boolean, OnlineStatus>> {
-        channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
-        if (channel == null) return mutableListOf()
-
-        val listOfUsers: MutableList<Triple<String, Boolean, OnlineStatus>> = mutableListOf()
-        channel!!.members.mapTo(listOfUsers) {
-            Triple(it.effectiveName, it.user.isBot, it.onlineStatus)
-        }
-        return listOfUsers
-    }
-
-    private fun disconnect() {
-        api?.removeEventListener(listener)
-        api?.shutdown(false)
+    fun listOnline(): List<Member> {
+        channel = getRelayChannel()
+        if (channel != null) return channel!!.members
+        return mutableListOf()
     }
 
     private fun connect() {
@@ -83,15 +57,21 @@ class Connection(val plugin: Plugin) : Runnable {
         api = builder.buildBlocking()
         listener = Listener(plugin, api as JDA, this)
         api!!.addEventListener(listener)
-        if(plugin.cfg.ANNOUNCE_SERVER_START_STOP)
+        if (plugin.cfg.ANNOUNCE_SERVER_START_STOP)
             send(plugin.cfg.TEMPLATES_DISCORD_SERVER_START, getRelayChannel())
+        api!!.presence.game = Game.of("Minecraft ${plugin.server.bukkitVersion.split("-")[0]}")
     }
 
-    private fun getServerById(id: String): Guild? {
-        return api!!.guilds.firstOrNull { it.id.equals(id, true) }
+    private fun disconnect() {
+        api?.removeEventListener(listener)
+        api?.shutdown(false)
     }
 
     private fun getGroupByName(server: Guild, name: String): TextChannel? {
         return server.textChannels.firstOrNull { it.name == name }
+    }
+
+    private fun getServerById(id: String): Guild? {
+        return api!!.guilds.firstOrNull { it.id.equals(id, true) }
     }
 }

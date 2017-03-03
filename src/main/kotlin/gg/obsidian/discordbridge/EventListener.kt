@@ -8,27 +8,28 @@ import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.ChatColor as CC
 import java.lang.reflect.Method
 
 class EventListener(val plugin: Plugin) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onChat(event: AsyncPlayerChatEvent) {
-        plugin.logDebug("Received a chat event from ${event.player.name}: ${event.message}")
+        val player = event.player
+        val username = event.player.name.stripColor()
+        val displayName = event.player.displayName.stripColor()
+        val uuid = event.player.uniqueId.toString()
+        val message = event.message.stripColor()
+        var worldname = event.player.world.name
 
-
+        plugin.logDebug("Received a chat event from $username: $message")
         if (!plugin.cfg.MESSAGES_CHAT) return
         if (event.isCancelled && !plugin.cfg.RELAY_CANCELLED_MESSAGES) return
-
-        // Check for vanished
-        val player = event.player
-        if (player.hasMetadata("vanished") &&
-                player.getMetadata("vanished")[0].asBoolean() &&
+        if (player.hasMetadata("vanished") && player.getMetadata("vanished")[0].asBoolean() &&
                 !plugin.cfg.IF_VANISHED_CHAT) return
 
-        val username = event.player.name.stripColor()
-        var worldname = player.world.name
-        if (plugin.isMultiverse()) {
+        // Get world alias if Multiverse is installed
+        if (plugin.foundMultiverse) {
             val worldProperties = plugin.worlds!!.data.get("worlds.$worldname")
             val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
             val meth: Method = cls.getMethod("getAlias")
@@ -36,67 +37,75 @@ class EventListener(val plugin: Plugin) : Listener {
             if (alias is String) worldname = alias
         }
 
-        var formattedMessage = plugin.toDiscordChatMessage(event.message.stripColor(), username, player.displayName.stripColor(), worldname)
+        var formattedMessage = plugin.toDiscordChatMessage(message, username, displayName, worldname)
         formattedMessage = plugin.convertAtMentions(formattedMessage)
-        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, event.player.uniqueId.toString())
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, uuid)
+        plugin.sendToDiscord(formattedMessage, plugin.conn.getRelayChannel())
 
-        plugin.sendToDiscord(formattedMessage, plugin.connection.getRelayChannel())
+        // If it was a @mention to the bot, treat it as a Cleverbot invocation
+        if (message.startsWith("@" + plugin.cfg.USERNAME.noSpace())) {
+            val task = Runnable {
+                if (Permissions.cleverbot.has(player)) {
+                    val arg: String = message.removePrefix("@" + plugin.cfg.USERNAME.noSpace()).trimStart()
+                    val response = CommandLogic.askCleverbot(plugin, arg)
+                    plugin.sendToMinecraft(plugin.toMinecraftChatMessage(response, plugin.cfg.BOT_MC_USERNAME))
+                    plugin.sendToDiscord(response, plugin.conn.getRelayChannel())
+                } else
+                    player.sendMessage("${CC.RED}You do not have permission to talk to the bot.")
+            }
+            plugin.server.scheduler.runTaskAsynchronously(plugin, task)
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (!plugin.cfg.MESSAGES_JOIN) return
-
-        // Check for vanished
         val player = event.player
-        if (player.hasMetadata("vanished") &&
-                player.getMetadata("vanished")[0].asBoolean() &&
+        val username = event.player.name.stripColor()
+        val displayName = event.player.displayName.stripColor()
+        val uuid = event.player.uniqueId.toString()
+
+        plugin.logDebug("Received a join event for $username")
+        if (!plugin.cfg.MESSAGES_JOIN) return
+        if (player.hasMetadata("vanished") && player.getMetadata("vanished")[0].asBoolean() &&
                 !plugin.cfg.IF_VANISHED_JOIN) return
 
-        val username = player.name.stripColor()
-        plugin.logDebug("Received a join event for $username")
-
-        var formattedMessage = plugin.toDiscordPlayerJoin(username, player.displayName.stripColor())
-        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, event.player.uniqueId.toString())
-
-        plugin.sendToDiscord(formattedMessage, plugin.connection.getRelayChannel())
+        var formattedMessage = plugin.toDiscordPlayerJoin(username, displayName)
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, uuid)
+        plugin.sendToDiscord(formattedMessage, plugin.conn.getRelayChannel())
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        if (!plugin.cfg.MESSAGES_LEAVE) return
-
-        // Check for vanished
         val player = event.player
-        if (player.hasMetadata("vanished") &&
-                player.getMetadata("vanished")[0].asBoolean() &&
+        val username = event.player.name.stripColor()
+        val displayName = event.player.displayName.stripColor()
+        val uuid = event.player.uniqueId.toString()
+
+        plugin.logDebug("Received a leave event for $username")
+        if (!plugin.cfg.MESSAGES_LEAVE) return
+        if (player.hasMetadata("vanished") && player.getMetadata("vanished")[0].asBoolean() &&
                 !plugin.cfg.IF_VANISHED_LEAVE) return
 
-        val username = event.player.name.stripColor()
-        plugin.logDebug("Received a leave event for $username")
-
-        var formattedMessage = plugin.toDiscordPlayerLeave(username, event.player.displayName.stripColor())
-        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, event.player.uniqueId.toString())
-
-        plugin.sendToDiscord(formattedMessage, plugin.connection.getRelayChannel())
+        var formattedMessage = plugin.toDiscordPlayerLeave(username, displayName)
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, uuid)
+        plugin.sendToDiscord(formattedMessage, plugin.conn.getRelayChannel())
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerDeath(event: PlayerDeathEvent) {
-        if (!plugin.cfg.MESSAGES_DEATH) return
-
-        // Check for vanished
         val player = event.entity
-        if (player.hasMetadata("vanished") &&
-                player.getMetadata("vanished")[0].asBoolean() &&
+        val username = event.entity.name.stripColor()
+        val displayName = event.entity.displayName.stripColor()
+        val uuid = event.entity.uniqueId.toString()
+        val deathMessage = event.deathMessage
+
+        plugin.logDebug("Received a death event for $username")
+        if (!plugin.cfg.MESSAGES_DEATH) return
+        if (player.hasMetadata("vanished") && player.getMetadata("vanished")[0].asBoolean() &&
                 !plugin.cfg.IF_VANISHED_DEATH) return
 
-        val username = event.entity.name.stripColor()
-        plugin.logDebug("Received a death event for $username")
-
-        var formattedMessage = plugin.toDiscordPlayerDeath(event.deathMessage, username, event.entity.displayName.stripColor(), event.entity.world.name)
-        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, player.uniqueId.toString())
-
-        plugin.sendToDiscord(formattedMessage, plugin.connection.getRelayChannel())
+        var formattedMessage = plugin.toDiscordPlayerDeath(deathMessage, username, displayName)
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, uuid)
+        plugin.sendToDiscord(formattedMessage, plugin.conn.getRelayChannel())
     }
 }
