@@ -1,5 +1,7 @@
-package gg.obsidian.discordbridge
+package gg.obsidian.discordbridge.minecraft
 
+import gg.obsidian.discordbridge.CommandLogic
+import gg.obsidian.discordbridge.Plugin
 import gg.obsidian.discordbridge.Utils.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority

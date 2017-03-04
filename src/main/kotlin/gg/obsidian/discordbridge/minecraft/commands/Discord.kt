@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge.minecraft.commands
 
-import gg.obsidian.discordbridge.Permissions
+import gg.obsidian.discordbridge.minecraft.Permissions
 import gg.obsidian.discordbridge.Plugin
 import org.bukkit.ChatColor as CC
 import org.bukkit.command.Command

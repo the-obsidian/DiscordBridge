@@ -46,7 +46,7 @@ class DataConfigAccessor(private val plugin: JavaPlugin, filepath: File, private
         } catch (e: IllegalArgumentException) {
             // Look for defaults in the jar
             if (plugin.getResource(fileName) == null)
-                plugin.logger.log(Level.SEVERE, "usernames.yml cannot be found for some reason")
+                plugin.logger.log(Level.SEVERE, "$fileName cannot be found for some reason")
             val defConfigReader = InputStreamReader(plugin.getResource(fileName))
             val defConfig = YamlConfiguration.loadConfiguration(defConfigReader)
             fileConfiguration!!.defaults = defConfig
@@ -67,7 +67,7 @@ class DataConfigAccessor(private val plugin: JavaPlugin, filepath: File, private
             try {
                 data.save(configFile)
             } catch (ex: IOException) {
-                plugin.logger.log(Level.SEVERE, "Could not save data to $configFile", ex)
+                plugin.logger.log(Level.SEVERE, "Could not save data to $fileName", ex)
             }
         }
     }

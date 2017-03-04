@@ -1,4 +1,7 @@
-8-ball-responses:
+# 8Ball Config
+
+# List of possible responses to the 8Ball command
+responses:
   - 'It is certain.'
   - 'Seems pretty likely.'
   - 'Absolutely.'
@@ -21,9 +24,3 @@
   - 'That''s hard to say at this time.'
   - 'It''s impossible to know. Unless you ask me again.'
   - 'Figure it out on your own.'
-respects: 0
-scripted-responses:
-  '1':
-    case-sensitive: false
-    response: 'Hello World!'
-    trigger: 'hello world!'

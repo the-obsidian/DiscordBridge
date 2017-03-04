@@ -1,7 +1,7 @@
 package gg.obsidian.discordbridge.minecraft.commands
 
 import gg.obsidian.discordbridge.CommandLogic
-import gg.obsidian.discordbridge.Permissions
+import gg.obsidian.discordbridge.minecraft.Permissions
 import gg.obsidian.discordbridge.Plugin
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor

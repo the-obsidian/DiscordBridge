@@ -1,8 +1,8 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.Utils.noSpace
-import gg.obsidian.discordbridge.Utils.UserAlias
+import gg.obsidian.discordbridge.Utils.*
 import gg.obsidian.discordbridge.discord.Connection
+import gg.obsidian.discordbridge.minecraft.EventListener
 import gg.obsidian.discordbridge.minecraft.commands.*
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Member
@@ -10,6 +10,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
 import org.bukkit.ChatColor as CC
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.configuration.serialization.ConfigurationSerialization
 import java.util.logging.Level
 import java.io.File
 
@@ -21,8 +22,11 @@ class Plugin : JavaPlugin() {
     // Configs
     val cfg = Configuration(this)
     var users: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "usernames.yml")
-    var memory: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "botmemory.yml")
-    var insults: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "insults.yml")
+    var eightball: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "8ball.yml")
+    var insult: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "insult.yml")
+    var f: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "f.yml")
+    var rate: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "rate.yml")
+    var script: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "script.yml")
     var worlds: DataConfigAccessor? = null
 
     // Temporary storage for alias linking requests
@@ -36,8 +40,11 @@ class Plugin : JavaPlugin() {
         // Load configs
         updateConfig(description.version)
         users.saveDefaultConfig()
-        memory.saveDefaultConfig()
-        insults.saveDefaultConfig()
+        eightball.saveDefaultConfig()
+        insult.saveDefaultConfig()
+        f.saveConfig()
+        rate.saveConfig()
+        script.saveConfig()
         if (foundMultiverse) worlds = DataConfigAccessor(this, File("plugins/Multiverse-Core"), "worlds.yml")
 
         // Connect to Discord
@@ -51,6 +58,9 @@ class Plugin : JavaPlugin() {
         getCommand("rate").executor = Rate(this)
         getCommand("8ball").executor = EightBall(this)
         getCommand("insult").executor = Insult(this)
+
+        ConfigurationSerialization.registerClass(Respect::class.java, "Respect")
+        ConfigurationSerialization.registerClass(Rating::class.java, "Rating")
     }
 
     override fun onDisable() {
@@ -85,8 +95,11 @@ class Plugin : JavaPlugin() {
     fun reload() {
         reloadConfig()
         users.reloadConfig()
-        memory.reloadConfig()
-        insults.reloadConfig()
+        eightball.reloadConfig()
+        insult.reloadConfig()
+        f.reloadConfig()
+        rate.reloadConfig()
+        script.reloadConfig()
         if (foundMultiverse) worlds!!.reloadConfig()
         cfg.load()
         //conn?.reconnect()

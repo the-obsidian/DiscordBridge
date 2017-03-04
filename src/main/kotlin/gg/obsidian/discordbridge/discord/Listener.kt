@@ -5,6 +5,7 @@ import com.neovisionaries.ws.client.WebSocketException
 import com.neovisionaries.ws.client.WebSocketFrame
 import gg.obsidian.discordbridge.CommandLogic
 import gg.obsidian.discordbridge.Plugin
+import gg.obsidian.discordbridge.Utils.Script
 import gg.obsidian.discordbridge.Utils.noSpace
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.entities.ChannelType
@@ -25,6 +26,21 @@ class Listener(val plugin: Plugin, val api: JDA, val connection: Connection) : L
         if (id == api.selfUser.id) {
             plugin.logDebug("Ignoring message ${event.message.id} from Discord: it matches this bot's username")
             return
+        }
+
+        // SCRIPTED RESPONSE - The bot replies with a pre-programmed response if it detects
+        // a corresponding trigger string
+        val responses = plugin.script.data.getList("responses").checkItemsAre<Script>()
+        if (responses == null) plugin.logger.warning("ERROR: Responses for this command could not be read from the config.")
+        else {
+            val response: Script?
+            for (r in responses) {
+                val ignorecase = !(r.caseSensitive != null && r.caseSensitive)
+                val startswith = r.startsWith != null && r.startsWith
+                val requiresmention = r.requiresMention != null && r.requiresMention
+
+                if (requiresmention) if ()
+            }
         }
 
         // NON-TRIGGER-RELAY COMMANDS - the triggers of these commands are never relayed to Minecraft
@@ -89,7 +105,7 @@ class Listener(val plugin: Plugin, val api: JDA, val connection: Connection) : L
             if (arg.startsWith("rate", true)) {
                 val arg2 = arg.replaceFirst("rate", "").trimStart()
                 plugin.logDebug("user $username requests a rating")
-                val response = CommandLogic.rate(username, arg2)
+                val response = CommandLogic.rate(plugin, username, arg2)
                 plugin.sendToDiscord(response, channel)
                 if (event.isFromRelayChannel())
                     plugin.sendToMinecraft(plugin.toMinecraftChatMessage(
@@ -101,7 +117,7 @@ class Listener(val plugin: Plugin, val api: JDA, val connection: Connection) : L
             if (arg.startsWith("insult", true)) {
                 val arg2 = arg.replaceFirst("insult", "").trimStart()
                 plugin.logDebug("user $username requests an insult against $arg2")
-                val response = CommandLogic.insult(plugin, arg2)
+                val response = CommandLogic.insult(plugin, username, arg2)
                 plugin.sendToDiscord(response, channel)
                 if (event.isFromRelayChannel())
                     plugin.sendToMinecraft(plugin.toMinecraftChatMessage(
@@ -129,22 +145,21 @@ class Listener(val plugin: Plugin, val api: JDA, val connection: Connection) : L
             if (arg.isEmpty()) return
             plugin.logDebug("Relay command received.  Arg: $arg")
 
-            // SCRIPTED RESPONSE - The bot replies with a pre-programmed response if it detects
-            // a corresponding trigger string
-            val responses = plugin.memory.data.getConfigurationSection("scripted-responses").getKeys(false)
-            var scripted_response: String? = null
-            for (r in responses) {
-                val casesensitive = plugin.memory.data.getBoolean("scripted-responses.$r.case-sensitive", false)
-                if (arg.startsWith(plugin.memory.data.getString("scripted-responses.$r.trigger").toLowerCase(), !casesensitive))
-                    scripted_response = plugin.memory.data.getString("scripted-responses.$r.response")
-            }
-            if (scripted_response != null) {
-                plugin.logDebug("user $username has triggered the scripted response: $scripted_response")
-                plugin.sendToDiscord(scripted_response, channel)
-                if (event.isFromRelayChannel())
-                    plugin.sendToMinecraft(plugin.toMinecraftChatMessage(scripted_response, plugin.cfg.BOT_MC_USERNAME))
-                return
-            }
+
+
+//            var scripted_response: String? = null
+//            for (r in responses) {
+//                val casesensitive = plugin.script.data.getBoolean("responses.$r.case-sensitive", false)
+//                if (arg.startsWith(plugin.script.data.getString("responses.$r.trigger").toLowerCase(), !casesensitive))
+//                    scripted_response = plugin.script.data.getString("responses.$r.response")
+//            }
+//            if (scripted_response != null) {
+//                plugin.logDebug("user $username has triggered the scripted response: $scripted_response")
+//                plugin.sendToDiscord(scripted_response, channel)
+//                if (event.isFromRelayChannel())
+//                    plugin.sendToMinecraft(plugin.toMinecraftChatMessage(scripted_response, plugin.cfg.BOT_MC_USERNAME))
+//                return
+//            }
 
             // CLEVERBOT - Assume anything else invokes Cleverbot
             plugin.logDebug("user $username asks CleverBot something")
@@ -172,4 +187,7 @@ class Listener(val plugin: Plugin, val api: JDA, val connection: Connection) : L
         plugin.logDebug("Discord disconnected - attempting to reconnect")
         connection.reconnect()
     }
+
+    @Suppress("UNCHECKED_CAST")
+    inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
 }
