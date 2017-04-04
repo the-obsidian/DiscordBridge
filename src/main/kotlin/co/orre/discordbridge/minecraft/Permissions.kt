@@ -1,4 +1,4 @@
-package gg.obsidian.discordbridge.minecraft
+package co.orre.discordbridge.minecraft
 
 import org.bukkit.entity.Player
 

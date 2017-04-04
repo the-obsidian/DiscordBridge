@@ -1,4 +1,4 @@
-package gg.obsidian.discordbridge
+package co.orre.discordbridge
 
 /*
 * Copyright (C) 2012 SagaciousZed
@@ -24,13 +24,12 @@ package gg.obsidian.discordbridge
 
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration
-import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
 import java.util.logging.Level
 
-class DataConfigAccessor(private val plugin: JavaPlugin, filepath: File, private val fileName: String) {
+class DataConfigAccessor(val plugin: Plugin, filepath: File, private val fileName: String) {
 
     private val configFile: File?
     private var fileConfiguration: FileConfiguration? = null
@@ -75,7 +74,7 @@ class DataConfigAccessor(private val plugin: JavaPlugin, filepath: File, private
     @Suppress("unused")
     fun saveDefaultConfig() {
         if (!configFile!!.exists())
-            this.plugin.saveResource(fileName, false)
+            plugin.saveResource(fileName, false)
     }
 
 }

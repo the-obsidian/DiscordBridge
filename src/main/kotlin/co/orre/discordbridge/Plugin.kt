@@ -1,26 +1,24 @@
-package gg.obsidian.discordbridge
+package co.orre.discordbridge
 
-import gg.obsidian.discordbridge.Utils.*
-import gg.obsidian.discordbridge.discord.Connection
-import gg.obsidian.discordbridge.minecraft.EventListener
-import gg.obsidian.discordbridge.minecraft.commands.*
+import co.orre.discordbridge.utils.UserAlias
+import co.orre.discordbridge.utils.UtilFunctions.noSpace
+import co.orre.discordbridge.utils.*
+import co.orre.discordbridge.discord.Connection
+import co.orre.discordbridge.minecraft.EventListener
+import co.orre.discordbridge.minecraft.commands.*
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.MessageChannel
-import org.bukkit.ChatColor as CC
+import org.bukkit.configuration.serialization.ConfigurationSerialization
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
-import org.bukkit.configuration.serialization.ConfigurationSerialization
-import java.util.logging.Level
 import java.io.File
+import java.util.logging.Level
+import org.bukkit.ChatColor as CC
 
 class Plugin : JavaPlugin() {
 
-    // Connection to Discord
-    lateinit var conn: Connection
-
     // Configs
-    val cfg = Configuration(this)
     var users: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "usernames.yml")
     var eightball: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "8ball.yml")
     var insult: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "insult.yml")
@@ -33,7 +31,7 @@ class Plugin : JavaPlugin() {
     var requests: MutableList<UserAlias> = mutableListOf()
 
     // Detects if Multiverse-Core is installed
-    val foundMultiverse: Boolean
+    val isMultiverseInstalled: Boolean
         get() = server.pluginManager.getPlugin("Multiverse-Core") != null
 
     override fun onEnable() {
@@ -45,11 +43,11 @@ class Plugin : JavaPlugin() {
         f.saveConfig()
         rate.saveConfig()
         script.saveConfig()
-        if (foundMultiverse) worlds = DataConfigAccessor(this, File("plugins/Multiverse-Core"), "worlds.yml")
+        if (isMultiverseInstalled) worlds = DataConfigAccessor(this, File("plugins/Multiverse-Core"), "worlds.yml")
 
         // Connect to Discord
-        this.conn = Connection(this)
-        server.scheduler.runTaskAsynchronously(this, conn)
+        Connection.plugin = this //TODO: enforce this better
+        server.scheduler.runTaskAsynchronously(this, Connection)
         server.pluginManager.registerEvents(EventListener(this), this)
 
         // Register commands
@@ -61,11 +59,12 @@ class Plugin : JavaPlugin() {
 
         ConfigurationSerialization.registerClass(Respect::class.java, "Respect")
         ConfigurationSerialization.registerClass(Rating::class.java, "Rating")
+        ConfigurationSerialization.registerClass(Script::class.java, "Script")
     }
 
     override fun onDisable() {
-        if (cfg.ANNOUNCE_SERVER_START_STOP)
-            conn.send(cfg.TEMPLATES_DISCORD_SERVER_STOP, conn.getRelayChannel())
+        if (Config.ANNOUNCE_SERVER_START_STOP)
+            Connection.send(Config.TEMPLATES_DISCORD_SERVER_STOP, Connection.getRelayChannel())
 
         // Pretend like this does anything
         logger.log(Level.INFO, "Attempting to cancel tasks")
@@ -79,7 +78,7 @@ class Plugin : JavaPlugin() {
     // Send a message to Discord
     fun sendToDiscord(message: String, channel: MessageChannel?) {
         logDebug("Sending message to Discord - $message")
-        conn.send(message, channel)
+        Connection.send(message, channel)
     }
 
     // Send a message to Minecraft
@@ -100,9 +99,9 @@ class Plugin : JavaPlugin() {
         f.reloadConfig()
         rate.reloadConfig()
         script.reloadConfig()
-        if (foundMultiverse) worlds!!.reloadConfig()
-        cfg.load()
-        //conn?.reconnect()
+        if (isMultiverseInstalled) worlds!!.reloadConfig()
+        Config.load(this)
+        Connection.reconnect()
     }
 
     // Save default config
@@ -111,12 +110,12 @@ class Plugin : JavaPlugin() {
         config.options().copyDefaults(true)
         config.set("version", version)
         saveConfig()
-        cfg.load()
+        Config.load(this)
     }
 
     // Log only if debug config is true
     fun logDebug(msg: String) {
-        if (!cfg.DEBUG) return
+        if (!Config.DEBUG) return
         logger.info(msg)
     }
 
@@ -129,60 +128,60 @@ class Plugin : JavaPlugin() {
     }
 
     // Open a request to link a Minecraft user with a Discord user
-    fun registerUserRequest(player: Player, id: String): Boolean {
-        val users = conn.listUsers()
-        val found: Member = users.find { it.user.id == id } ?: return false
+    fun registerUserRequest(player: Player, discordId: String): Boolean {
+        val users = Connection.listUsers()
+        val found: Member = users.find { it.user.id == discordId } ?: return false
 
         val ua: UserAlias = UserAlias(player.name, player.uniqueId.toString(), found.effectiveName, found.user.id)
         requests.add(ua)
         val msg = "Minecraft user '${ua.mcUsername}' has requested to become associated with your Discord" +
-                " account. If this is you, respond '${conn.api!!.selfUser.asMention} confirm'. If this is not" +
-                " you, respond ${conn.api!!.selfUser.asMention} deny'."
-        conn.send(msg, conn.api!!.getUserById(ua.discordId).privateChannel)
+                " account. If this is you, respond '${Connection.JDA.selfUser.asMention} confirm'. If this is not" +
+                " you, respond ${Connection.JDA.selfUser.asMention} deny'."
+        Connection.send(msg, Connection.JDA.getUserById(ua.discordId).privateChannel)
         return true
     }
 
     // Return a formatted string listing the Discord IDs of all Discord users in the relay channel
     fun getDiscordIds(): String {
-        val users = conn.listUsers()
+        val users = Connection.listUsers()
 
         if (users.isEmpty())
-            return "${CC.YELLOW}No Discord members could be found. Either server is empty or an error has occurred."
+            return "${org.bukkit.ChatColor.YELLOW}No Discord members could be found. Either server is empty or an error has occurred."
 
-        var response = "${CC.YELLOW}Discord users:"
+        var response = "${org.bukkit.ChatColor.YELLOW}Discord users:"
         for (user in users) {
-            if (user.user.isBot) response += "\n${CC.GOLD}- ${user.effectiveName} (Bot), ${user.user.id}${CC.RESET}"
-            else response += "\n${CC.YELLOW}- ${user.effectiveName}, ${user.user.id}${CC.RESET}"
+            if (user.user.isBot) response += "\n${org.bukkit.ChatColor.GOLD}- ${user.effectiveName} (Bot), ${user.user.id}${org.bukkit.ChatColor.RESET}"
+            else response += "\n${org.bukkit.ChatColor.YELLOW}- ${user.effectiveName}, ${user.user.id}${org.bukkit.ChatColor.RESET}"
         }
         return response
     }
 
     // Return a formatted string listing all Discord users in the relay channel who are visibly available
     fun getDiscordOnline(): String {
-        val onlineUsers = conn.listOnline()
+        val onlineUsers = Connection.listOnline()
         if (onlineUsers.isEmpty())
-            return "${CC.YELLOW}No Discord members could be found. Either server is empty or an error has occurred."
+            return "${org.bukkit.ChatColor.YELLOW}No Discord members could be found. Either server is empty or an error has occurred."
 
         var response = ""
         if (onlineUsers.filter { it.onlineStatus == OnlineStatus.ONLINE }.isNotEmpty()) {
-            response += "\n${CC.DARK_GREEN}Online:${CC.RESET}"
+            response += "\n${org.bukkit.ChatColor.DARK_GREEN}Online:${org.bukkit.ChatColor.RESET}"
             for (user in onlineUsers.filter { it.onlineStatus == OnlineStatus.ONLINE }) {
-                if (user.user.isBot) response += "\n${CC.DARK_GREEN}- ${user.effectiveName} (Bot)${CC.RESET}"
-                else response += "\n${CC.DARK_GREEN}- ${user.effectiveName}${CC.RESET}"
+                if (user.user.isBot) response += "\n${org.bukkit.ChatColor.DARK_GREEN}- ${user.effectiveName} (Bot)${org.bukkit.ChatColor.RESET}"
+                else response += "\n${org.bukkit.ChatColor.DARK_GREEN}- ${user.effectiveName}${org.bukkit.ChatColor.RESET}"
             }
         }
         if (onlineUsers.filter { it.onlineStatus == OnlineStatus.IDLE }.isNotEmpty()) {
-            response += "\n${CC.YELLOW}Idle:${CC.RESET}"
+            response += "\n${org.bukkit.ChatColor.YELLOW}Idle:${org.bukkit.ChatColor.RESET}"
             for (user in onlineUsers.filter { it.onlineStatus == OnlineStatus.IDLE }) {
-                if (user.user.isBot) response += "\n${CC.YELLOW}- ${user.effectiveName} (Bot)${CC.RESET}"
-                else response += "\n${CC.YELLOW}- ${user.effectiveName}${CC.RESET}"
+                if (user.user.isBot) response += "\n${org.bukkit.ChatColor.YELLOW}- ${user.effectiveName} (Bot)${org.bukkit.ChatColor.RESET}"
+                else response += "\n${org.bukkit.ChatColor.YELLOW}- ${user.effectiveName}${org.bukkit.ChatColor.RESET}"
             }
         }
         if (onlineUsers.filter { it.onlineStatus == OnlineStatus.DO_NOT_DISTURB }.isNotEmpty()) {
-            response += "\n${CC.RED}Do Not Disturb:${CC.RESET}"
+            response += "\n${org.bukkit.ChatColor.RED}Do Not Disturb:${org.bukkit.ChatColor.RESET}"
             for (user in onlineUsers.filter { it.onlineStatus == OnlineStatus.DO_NOT_DISTURB }) {
-                if (user.user.isBot) response += "\n${CC.RED}- ${user.effectiveName} (Bot)${CC.RESET}"
-                else response += "\n&${CC.RED} ${user.effectiveName}${CC.RESET}"
+                if (user.user.isBot) response += "\n${org.bukkit.ChatColor.RED}- ${user.effectiveName} (Bot)${org.bukkit.ChatColor.RESET}"
+                else response += "\n&${org.bukkit.ChatColor.RED} ${user.effectiveName}${org.bukkit.ChatColor.RESET}"
             }
         }
 
@@ -210,7 +209,7 @@ class Plugin : JavaPlugin() {
     fun convertAtMentions(message: String): String {
         var newMessage = message
 
-        val discordusers = conn.listUsers()
+        val discordusers = Connection.listUsers()
         val discordaliases: MutableList<Pair<String, Member>> = mutableListOf()
         discordusers
                 .filter { users.data.isSet("discordaliases.${it.user.id}") }
@@ -250,32 +249,5 @@ class Plugin : JavaPlugin() {
         if (alias != null)
             newMessage = newMessage.replace(users.data.getString("discordaliases.$discordId.mcusername"), alias)
         return newMessage
-    }
-
-    fun toMinecraftChatMessage(message: String, alias: String): String {
-        return formatMessage(cfg.TEMPLATES_MINECRAFT_CHAT_MESSAGE, msg=message, u=alias)
-    }
-
-    fun toDiscordChatMessage(message: String, username: String, displayName: String, worldName: String): String {
-        return formatMessage(cfg.TEMPLATES_DISCORD_CHAT_MESSAGE, msg=message, u=username, d=displayName, w=worldName)
-    }
-
-    fun toDiscordPlayerJoin(username: String, displayName: String): String {
-        return formatMessage(cfg.TEMPLATES_DISCORD_PLAYER_JOIN, u=username, d=displayName)
-    }
-
-    fun toDiscordPlayerLeave(username: String, displayName: String): String {
-        return formatMessage(cfg.TEMPLATES_DISCORD_PLAYER_LEAVE, u=username, d=displayName)
-    }
-
-    fun toDiscordPlayerDeath(deathMessage: String, username: String, displayName: String): String {
-        return formatMessage(cfg.TEMPLATES_DISCORD_CHAT_MESSAGE, r=deathMessage, u=username, d=displayName)
-    }
-
-    private fun formatMessage(template: String, msg: String = "N/A", u: String = "N/A", d: String = "N/A",
-                              w: String = "N/A", r: String = "N/A"): String {
-        var out = CC.translateAlternateColorCodes('&', template)
-        out = out.replace("%u", u).replace("%m", msg).replace("%d", d).replace("%w", w).replace("%r", r)
-        return out
     }
 }

@@ -1,8 +1,11 @@
-package gg.obsidian.discordbridge.minecraft.commands
+package co.orre.discordbridge.minecraft.commands
 
-import gg.obsidian.discordbridge.CommandLogic
-import gg.obsidian.discordbridge.minecraft.Permissions
-import gg.obsidian.discordbridge.Plugin
+import co.orre.discordbridge.CommandLogic
+import co.orre.discordbridge.Config
+import co.orre.discordbridge.minecraft.Permissions
+import co.orre.discordbridge.Plugin
+import co.orre.discordbridge.discord.Connection
+import co.orre.discordbridge.utils.UtilFunctions.toMinecraftChatMessage
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -13,9 +16,9 @@ class F(val plugin: Plugin) : CommandExecutor {
         if (args == null || args.isEmpty()) {
             if (player is Player && Permissions.f.has(player)) {
                 var msg = CommandLogic.f(plugin, player.name)
-                plugin.sendToMinecraft(plugin.toMinecraftChatMessage(msg, plugin.cfg.BOT_MC_USERNAME))
+                plugin.sendToMinecraft(msg.toMinecraftChatMessage(Config.BOT_MC_USERNAME))
                 msg = plugin.translateAliasToDiscord(msg, player.uniqueId.toString())
-                plugin.sendToDiscord(msg, plugin.conn.getRelayChannel())
+                plugin.sendToDiscord(msg, Connection.getRelayChannel())
             }
             return true
         }

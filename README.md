@@ -33,7 +33,7 @@ username: 'DiscordBridge'
 username-color: ''
 
 # (Optional) Set this value with a valid Cleverbot API key to enable chatting with Cleverbot
-# Look at https://www.cleverbot.com/api/ for more info
+# Look at https://www.cleverbot.com/JDA/ for more info
 cleverbot-key: ''
 
 # If true, prints verbose log messages to the server console for every action

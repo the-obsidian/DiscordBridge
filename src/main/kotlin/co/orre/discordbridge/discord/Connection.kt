@@ -1,14 +1,16 @@
-package gg.obsidian.discordbridge.discord
+package co.orre.discordbridge.discord
 
-import gg.obsidian.discordbridge.Plugin
+import co.orre.discordbridge.Config
+import co.orre.discordbridge.Plugin
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
 import net.dv8tion.jda.core.entities.*
 
-class Connection(val plugin: Plugin) : Runnable {
-    var api: JDA? = null
-    var listener: Listener? = null
+object Connection: Runnable {
+    lateinit var plugin: Plugin
+    lateinit var JDA: JDA
+    lateinit var listener: Listener
     var server: Guild? = null
     var channel: TextChannel? = null
 
@@ -21,8 +23,8 @@ class Connection(val plugin: Plugin) : Runnable {
     }
 
     fun getRelayChannel(): TextChannel? {
-        server = if (server == null) getServerById(plugin.cfg.SERVER_ID) else server
-        channel = if (channel == null) getGroupByName(server!!, plugin.cfg.CHANNEL) else channel
+        server = if (server == null) getServerById(Config.SERVER_ID) else server
+        channel = if (channel == null) getGroupByName(server!!, Config.CHANNEL) else channel
         return channel
     }
 
@@ -52,19 +54,19 @@ class Connection(val plugin: Plugin) : Runnable {
     }
 
     private fun connect() {
-        var builder = JDABuilder(AccountType.BOT).setAudioEnabled(false)
-        builder = builder.setToken(plugin.cfg.TOKEN)
-        api = builder.buildBlocking()
-        listener = Listener(plugin, api as JDA, this)
-        api!!.addEventListener(listener)
-        if (plugin.cfg.ANNOUNCE_SERVER_START_STOP)
-            send(plugin.cfg.TEMPLATES_DISCORD_SERVER_START, getRelayChannel())
-        api!!.presence.game = Game.of("Minecraft ${plugin.server.bukkitVersion.split("-")[0]}")
+        var builder = JDABuilder(AccountType.BOT).setAudioEnabled(true)
+        builder = builder.setToken(Config.TOKEN)
+        JDA = builder.buildBlocking()
+        listener = Listener(plugin)
+        JDA.addEventListener(listener)
+        if (Config.ANNOUNCE_SERVER_START_STOP)
+            send(Config.TEMPLATES_DISCORD_SERVER_START, getRelayChannel())
+        JDA.presence.game = Game.of("Minecraft ${plugin.server.bukkitVersion.split("-")[0]}")
     }
 
     private fun disconnect() {
-        api?.removeEventListener(listener)
-        api?.shutdown(false)
+        JDA.removeEventListener(listener)
+        JDA.shutdown(false)
     }
 
     private fun getGroupByName(server: Guild, name: String): TextChannel? {
@@ -72,6 +74,6 @@ class Connection(val plugin: Plugin) : Runnable {
     }
 
     private fun getServerById(id: String): Guild? {
-        return api!!.guilds.firstOrNull { it.id.equals(id, true) }
+        return JDA.guilds.firstOrNull { it.id.equals(id, true) }
     }
 }

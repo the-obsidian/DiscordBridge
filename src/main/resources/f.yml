@@ -6,7 +6,10 @@ total-respects: 0
 # The responses that are returned by the F command
 # All entries must be prefixed with the "==: Respect" attribute, as shown in the default
 # message = the message to display
-#   '%u' = the name of the command sender
+#   '%u' = the name of the command sender.
+#       If this is not specified, the user's name will be prepended to the front of the message with a vertical bar
+#       like other commands.
+#   '%c' = the value of respects-paid for this response
 #   '%t' = the value of total-respects after adding respects-paid
 # respects-paid = how many respects are paid with this message
 # weight = the weighted chance of this response being displayed

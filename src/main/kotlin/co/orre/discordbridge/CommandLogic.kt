@@ -1,17 +1,17 @@
-package gg.obsidian.discordbridge
+package co.orre.discordbridge
 
 import com.michaelwflaherty.cleverbotapi.CleverBotQuery
-import gg.obsidian.discordbridge.Utils.Rating
-import gg.obsidian.discordbridge.Utils.Respect
+import co.orre.discordbridge.utils.Rating
+import co.orre.discordbridge.utils.Respect
 import java.io.IOException
 import java.util.*
 
 object CommandLogic {
 
-    fun askCleverbot(plugin: Plugin, message: String): String {
-        if (plugin.cfg.CLEVERBOT_KEY.isEmpty())
-            return "You do not have an API key. Go to https://www.cleverbot.com/api/ for more information."
-        val bot: CleverBotQuery = CleverBotQuery(plugin.cfg.CLEVERBOT_KEY, message)
+    fun askCleverbot(invokerName: String, query: String): String {
+        if (Config.CLEVERBOT_KEY.isEmpty())
+            return "You do not have an API key. Go to https://www.cleverbot.com/JDA/ for more information."
+        val bot: CleverBotQuery = CleverBotQuery(Config.CLEVERBOT_KEY, query)
         var response: String
         try {
             bot.sendRequest()
@@ -20,18 +20,24 @@ object CommandLogic {
             response = e.message!!
         }
 
-        return response
+        return "$invokerName | $response"
     }
 
-    fun eightBall(plugin: Plugin, name: String): String {
-        val responses = plugin.eightball.data.getStringList("responses")
+    fun choose(invokerName: String, query: String): String {
+        val choices = query.split(", or ", " or ", ",", "|")
+        val rand = Random().nextInt(choices.count())
+        return "$invokerName | I pick '${choices[rand]}'"
+    }
+
+    fun eightBall(p: Plugin, invokerName: String): String {
+        val responses = p.eightball.data.getStringList("responses")
         val rand = Random().nextInt(responses.count())
-        return "$name - ${responses[rand]}"
+        return "$invokerName | ${responses[rand]}"
     }
 
-    fun f(plugin: Plugin, sender_name: String): String {
-        var totalRespects = plugin.f.data.getInt("total-respects", 0)
-        val responses = plugin.f.data.getList("responses").checkItemsAre<Respect>()
+    fun f(p: Plugin, invokerName: String): String {
+        var totalRespects = p.f.data.getInt("total-respects", 0)
+        val responses = p.f.data.getList("responses").checkItemsAre<Respect>()
                 ?: return "ERROR: Responses for this command could not be read from the config."
         val totalWeight = responses.sumBy { it.weight }
         var rand = Random().nextInt(totalWeight) + 1
@@ -45,31 +51,31 @@ object CommandLogic {
         }
 
         totalRespects += found!!.count
-        val msg = found.message.replace("%u", sender_name).replace("%t", totalRespects.toString())
+        val msg = found.message.replace("%u", invokerName).replace("%t", totalRespects.toString())
                 .replace("%c", found.count.toString())
 
-        plugin.f.data.set("total-respects", totalRespects)
-        plugin.f.saveConfig()
+        p.f.data.set("total-respects", totalRespects)
+        p.f.saveConfig()
 
         return msg
     }
 
-    fun insult(plugin: Plugin, sender_name: String, arg: String): String {
-        val responses = plugin.insult.data.getStringList("responses")
+    fun insult(p: Plugin, invokerName: String, thingToBeInsulted: String): String {
+        val responses = p.insult.data.getStringList("responses")
         val rand = Random().nextInt(responses.count())
-        return plugin.insult.data.getString("template", "").replace("%u", sender_name)
-                .replace("%i", responses[rand]).replace("%t", arg)
+        return p.insult.data.getString("template", "").replace("%u", invokerName)
+                .replace("%i", responses[rand]).replace("%t", thingToBeInsulted)
     }
 
-    fun rate(plugin: Plugin, sender_name: String, arg: String): String {
-        val responses = plugin.rate.data.getList("responses").checkItemsAre<Rating>()
+    fun rate(p: Plugin, sender_name: String, arg: String): String {
+        val responses = p.rate.data.getList("responses").checkItemsAre<Rating>()
                 ?: return "ERROR: Responses for this command could not be read from the config."
 
-        var rateOutOf = plugin.rate.data.getInt("rate-out-of", 10)
+        var rateOutOf = p.rate.data.getInt("rate-out-of", 10)
         if (rateOutOf > 1000000) rateOutOf = 1000000
         if (rateOutOf < 0) rateOutOf = 0
 
-        var granularity = plugin.rate.data.getInt("granularity", 1)
+        var granularity = p.rate.data.getInt("granularity", 1)
         if (granularity > 2) granularity = 2
         if (granularity < 0) granularity = 0
 
@@ -81,7 +87,7 @@ object CommandLogic {
                 ?: return "ERROR: No response set for rating $rating"
 
         var thingToBeRated = arg
-        if (plugin.rate.data.getBoolean("translate-first-and-second-person", true)) {
+        if (p.rate.data.getBoolean("translate-first-and-second-person", true)) {
             val argArray = arg.split(" ").toMutableList()
             val iterate = argArray.listIterator()
             while (iterate.hasNext()) {
@@ -96,6 +102,15 @@ object CommandLogic {
         }
 
         return found.message.replace("%u", sender_name).replace("%m", thingToBeRated).replace("%r", "$rating/$rateOutOf")
+    }
+
+    fun roll(invokerName: String, sides: Int): String {
+        if (sides == 1)
+            return "$invokerName | You rolled... 1. Was it any surprise?"
+        if (sides > 100 || sides < 1)
+            return "$invokerName | I can't roll a die with $sides sides. It must have between 1 and 100 sides."
+        val rand = Random().nextInt(sides)
+        return "$invokerName | You rolled... $rand"
     }
 
     // UTIL

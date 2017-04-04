@@ -1,6 +1,7 @@
 # Script Config
 
 # A list of responses that are automatically triggered by special phrases
+# Special phrases that look exactly like syntax for bot commands will take precedence over those commands
 # trigger-minecraft: (optional) the phrase that triggers the response(s) in Minecraft
 # trigger-discord: (optional) the phrase that triggers the response(s) in Discord
 # response-minecraft: (optional) the message that is sent to Minecraft

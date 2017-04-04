@@ -14,6 +14,11 @@ username: 'DiscordBridge'
 # Use '&' in place of the formatting symbol.
 username-color: ''
 
+# (Optional) Define an alternate prefix for all of the bot's commands. These will work in addition to @mentions.
+# Will also work in Minecraft if the sender has the required permission for the command they try.
+# Leave blank to only allow @mentions to prefix commands
+command-prefix: ''
+
 # (Optional) Set this value with a valid Cleverbot API key to enable chatting with Cleverbot
 # Look at https://www.cleverbot.com/api/ for more info
 cleverbot-key: ''
@@ -41,18 +46,19 @@ if-vanished:
   player-leave: false
   player-death: false
 
-# Set the templates for relayed messages
-# %u - The sender's username
-# %m - The sender's message
-# %w - The name of the world the sender is in (Multiverse alias compatible)
-# %r - The death message (Death event only)
-# Use '&' in place of the formatting symbol to apply formatting codes.
+# Set the templates for various message types
+# %u - The username of the one who sent the message or invoked a command, if applicable
+# %m - The raw message that would normally display, if applicable
+# %w - The name of the world the sender is in
+#   - Applicable to messages from Minecraft only
+#   - Multiverse alias compatible
+# Use '&' in place of the formatting symbol to apply formatting codes to messages sent to Minecraft
 templates:
   discord:
     chat-message: '<**%u**> %m'
     player-join: '**%u** joined the server'
     player-leave: '**%u** left the server'
-    player-death: '%r'
+    player-death: '%m'
     server-start: 'Server started!'
     server-stop: 'Shutting down...'
   minecraft:

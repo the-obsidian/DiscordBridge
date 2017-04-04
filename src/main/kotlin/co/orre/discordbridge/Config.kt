@@ -1,14 +1,16 @@
-package gg.obsidian.discordbridge
+package co.orre.discordbridge
 
-import gg.obsidian.discordbridge.Utils.noSpace
+import org.bukkit.ChatColor
+import co.orre.discordbridge.utils.UtilFunctions.noSpace
 
-class Configuration(val plugin: Plugin) {
+object Config {
 
     var SERVER_ID: String = ""
     var CHANNEL: String = ""
     var USERNAME: String = ""
     var USERNAME_COLOR: String = ""
     var TOKEN: String = ""
+    var COMMAND_PREFIX: String = ""
     var CLEVERBOT_KEY: String = ""
     var DEBUG: Boolean = false
     var RELAY_CANCELLED_MESSAGES = true
@@ -40,7 +42,7 @@ class Configuration(val plugin: Plugin) {
     // misc
     var BOT_MC_USERNAME = ""
 
-    fun load() {
+    fun load(plugin: Plugin) {
         plugin.reloadConfig()
 
         SERVER_ID = plugin.config.getString("server-id")
@@ -48,6 +50,7 @@ class Configuration(val plugin: Plugin) {
         USERNAME = plugin.config.getString("username")
         USERNAME_COLOR = plugin.config.getString("username-color")
         TOKEN = plugin.config.getString("token", "")
+        COMMAND_PREFIX = plugin.config.getString("command-prefix", "")
         CLEVERBOT_KEY = plugin.config.getString("cleverbot-key", "")
         DEBUG = plugin.config.getBoolean("debug", false)
         RELAY_CANCELLED_MESSAGES = plugin.config.getBoolean("relay-cancelled-messages", true)
@@ -66,12 +69,12 @@ class Configuration(val plugin: Plugin) {
         TEMPLATES_DISCORD_CHAT_MESSAGE = plugin.config.getString("templates.discord.chat-message", "<**%u**> %m")
         TEMPLATES_DISCORD_PLAYER_JOIN = plugin.config.getString("templates.discord.player-join", "**%u** joined the server")
         TEMPLATES_DISCORD_PLAYER_LEAVE = plugin.config.getString("templates.discord.player-leave", "**%u** left the server")
-        TEMPLATES_DISCORD_PLAYER_DEATH = plugin.config.getString("templates.discord.player-death", "%r")
+        TEMPLATES_DISCORD_PLAYER_DEATH = plugin.config.getString("templates.discord.player-death", "%m")
         TEMPLATES_DISCORD_SERVER_START = plugin.config.getString("templates.discord.server-start", "Server started!")
         TEMPLATES_DISCORD_SERVER_STOP = plugin.config.getString("templates.discord.server_stop", "Shutting down...")
 
         TEMPLATES_MINECRAFT_CHAT_MESSAGE = plugin.config.getString("templates.minecraft.chat-message", "[&b&lDiscord&r]<%u> %m")
 
-        BOT_MC_USERNAME = USERNAME_COLOR + USERNAME.noSpace() + "&r"
+        BOT_MC_USERNAME = ChatColor.translateAlternateColorCodes('&', USERNAME_COLOR + USERNAME.noSpace() + "&r")
     }
 }
