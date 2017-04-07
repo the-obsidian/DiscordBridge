@@ -3,9 +3,10 @@ package co.orre.discordbridge.discord
 // TODO: Apache License
 
 import co.orre.discordbridge.Plugin
-import co.orre.discordbridge.discord.controllers.BotControllerManager
-import co.orre.discordbridge.discord.controllers.FunCommandsController
-import co.orre.discordbridge.discord.controllers.UtilCommandsController
+import co.orre.discordbridge.commands.controllers.BotControllerManager
+import co.orre.discordbridge.commands.controllers.FunCommandsController
+import co.orre.discordbridge.commands.MessageWrapper
+import co.orre.discordbridge.commands.controllers.UtilCommandsController
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 
@@ -14,8 +15,8 @@ class Listener(val plugin: Plugin) : ListenerAdapter() {
     val controllerManager = BotControllerManager(plugin)
 
     init {
-        controllerManager.registerController(FunCommandsController(plugin))
-        controllerManager.registerController(UtilCommandsController(plugin))
+        controllerManager.registerController(FunCommandsController(plugin), discordExclusive = true, chatExclusive = true)
+        controllerManager.registerController(UtilCommandsController(plugin), discordExclusive = true, chatExclusive = true)
     }
 
     override fun onMessageReceived(event: MessageReceivedEvent) {
@@ -27,7 +28,7 @@ class Listener(val plugin: Plugin) : ListenerAdapter() {
             return
         }
 
-        controllerManager.dispatchMessage(event.message)
+        controllerManager.dispatchMessage(MessageWrapper(event.message))
     }
 
 }

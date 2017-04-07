@@ -37,12 +37,6 @@ class Plugin : JavaPlugin() {
     override fun onEnable() {
         // Load configs
         updateConfig(description.version)
-        users.saveDefaultConfig()
-        eightball.saveDefaultConfig()
-        insult.saveDefaultConfig()
-        f.saveConfig()
-        rate.saveConfig()
-        script.saveConfig()
         if (isMultiverseInstalled) worlds = DataConfigAccessor(this, File("plugins/Multiverse-Core"), "worlds.yml")
 
         // Connect to Discord
@@ -101,6 +95,7 @@ class Plugin : JavaPlugin() {
         script.reloadConfig()
         if (isMultiverseInstalled) worlds!!.reloadConfig()
         Config.load(this)
+        UserAliasConfig.load(this)
         Connection.reconnect()
     }
 
@@ -110,7 +105,16 @@ class Plugin : JavaPlugin() {
         config.options().copyDefaults(true)
         config.set("version", version)
         saveConfig()
+
+        users.saveDefaultConfig()
+        eightball.saveDefaultConfig()
+        insult.saveDefaultConfig()
+        f.saveDefaultConfig()
+        rate.saveDefaultConfig()
+        script.saveDefaultConfig()
+
         Config.load(this)
+        UserAliasConfig.load(this)
     }
 
     // Log only if debug config is true
@@ -190,15 +194,15 @@ class Plugin : JavaPlugin() {
     }
 
     // Add an alias to the Users data
-    fun saveAlias(ua: UserAlias) {
-        users.data.set("mcaliases.${ua.mcUuid}.mcusername", ua.mcUsername)
-        users.data.set("mcaliases.${ua.mcUuid}.discordusername", ua.discordUsername)
-        users.data.set("mcaliases.${ua.mcUuid}.discordid", ua.discordId)
-        users.data.set("discordaliases.${ua.discordId}.mcuuid", ua.mcUuid)
-        users.data.set("discordaliases.${ua.discordId}.mcusername", ua.mcUsername)
-        users.data.set("discordaliases.${ua.discordId}.discordusername", ua.discordUsername)
-        users.saveConfig()
-    }
+//    fun saveAlias(ua: UserAlias) {
+//        users.data.set("mcaliases.${ua.mcUuid}.mcusername", ua.mcUsername)
+//        users.data.set("mcaliases.${ua.mcUuid}.discordusername", ua.discordUsername)
+//        users.data.set("mcaliases.${ua.mcUuid}.discordid", ua.discordId)
+//        users.data.set("discordaliases.${ua.discordId}.mcuuid", ua.mcUuid)
+//        users.data.set("discordaliases.${ua.discordId}.mcusername", ua.mcUsername)
+//        users.data.set("discordaliases.${ua.discordId}.discordusername", ua.discordUsername)
+//        users.saveConfig()
+//    }
 
     /*======================================
       Message Formatting Functions
@@ -235,8 +239,13 @@ class Plugin : JavaPlugin() {
     // to a registered Discord name, if it exists
     fun translateAliasToDiscord(message: String, uuid: String?): String {
         var newMessage = message
-        val alias = users.data.getString("mcaliases.$uuid.discordusername")
-        if (alias != null)
+        //val alias = users.data.getString("mcaliases.$uuid.discordusername")
+        val userAlias = UserAliasConfig.aliases.firstOrNull { it.mcUuid == uuid }
+        if (userAlias != null) {
+            val user = Connection.listUsers().firstOrNull { it.user.id == userAlias.discordId }
+            if (user != null) return newMessage.replace(users.data.getString("mcaliases.$uuid.mcusername"), alias)
+            val name = Connection.JDA.getUserById(userAlias.discordId).name
+        }
             newMessage = newMessage.replace(users.data.getString("mcaliases.$uuid.mcusername"), alias)
         return newMessage
     }

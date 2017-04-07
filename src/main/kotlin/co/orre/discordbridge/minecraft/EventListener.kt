@@ -51,24 +51,22 @@ class EventListener(val plugin: Plugin): Listener {
 
         controllerManager.dispatchMessage(event)
 
-//        var formattedMessage = message.toDiscordChatMessage(username, displayName, worldname)
-//        formattedMessage = plugin.convertAtMentions(formattedMessage)
-//        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, uuid)
-//        plugin.sendToDiscord(formattedMessage, Connection.getRelayChannel())
+        var formattedMessage = message.toDiscordChatMessage(username, displayName, worldname)
+        formattedMessage = plugin.convertAtMentions(formattedMessage)
+        formattedMessage = plugin.translateAliasToDiscord(formattedMessage, uuid)
+        plugin.sendToDiscord(formattedMessage, Connection.getRelayChannel())
 
         // If it was a @mention to the bot, treat it as a Cleverbot invocation
-//        if (message.startsWith("@" + Config.USERNAME.noSpace())) {
-//            val task = Runnable {
-//                if (Permissions.cleverbot.has(player)) {
-//                    val arg: String = message.removePrefix("@" + Config.USERNAME.noSpace()).trimStart()
-//                    val response = CommandLogic.askCleverbot(arg)
-//                    plugin.sendToMinecraft(response.toMinecraftChatMessage(Config.BOT_MC_USERNAME))
-//                    plugin.sendToDiscord(response, Connection.getRelayChannel())
-//                } else
-//                    player.sendMessage("${org.bukkit.ChatColor.RED}You do not have permission to talk to the bot.")
-//            }
-//            plugin.server.scheduler.runTaskAsynchronously(plugin, task)
-//        }
+        val task = Runnable {
+            if (Permissions.cleverbot.has(player)) {
+                val arg: String = message.removePrefix("@" + Config.USERNAME.noSpace()).trimStart()
+                val response = CommandLogic.askCleverbot(arg)
+                plugin.sendToMinecraft(response.toMinecraftChatMessage(Config.BOT_MC_USERNAME))
+                plugin.sendToDiscord(response, Connection.getRelayChannel())
+            } else
+                player.sendMessage("${org.bukkit.ChatColor.RED}You do not have permission to talk to the bot.")
+        }
+        plugin.server.scheduler.runTaskAsynchronously(plugin, task)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

@@ -1,0 +1,29 @@
+package co.orre.discordbridge.commands
+
+import co.orre.discordbridge.discord.Connection
+import net.dv8tion.jda.core.entities.MessageChannel
+import org.bukkit.command.Command
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import org.bukkit.plugin.Plugin
+
+class MinecraftCommandWrapper(val plugin: Plugin, val sender: CommandSender, val cmd: Command,
+                              val args: Array<out String>): IEventWrapper {
+    override val senderName: String
+        get() = if (sender is Player) sender.name else "Console"
+    override val message: String
+        get() = args.joinToString(separator = " ")
+    override val rawMessage: String
+        get() = args.joinToString(separator = " ")
+    override val senderAsMention: String
+        get() = "@${sender.name}"
+    override val channel: MessageChannel
+        get() = Connection.getRelayChannel()!!
+    override val senderId: String
+        get() = (sender as? Player)?.uniqueId?.toString() ?: ""
+    override val type: WrapperType
+        get() = WrapperType.MINECRAFT_COMMAND
+    override val isFromRelayChannel: Boolean
+        get() = true
+
+}
