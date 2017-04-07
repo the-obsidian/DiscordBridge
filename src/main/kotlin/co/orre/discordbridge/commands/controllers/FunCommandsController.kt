@@ -1,13 +1,15 @@
 package co.orre.discordbridge.commands.controllers
 
-import co.orre.discordbridge.CommandLogic
 import co.orre.discordbridge.Config
 import co.orre.discordbridge.Plugin
-import co.orre.discordbridge.commands.Annotations.BotCommand
 import co.orre.discordbridge.commands.IBotController
 import co.orre.discordbridge.commands.IEventWrapper
-import co.orre.discordbridge.utils.UtilFunctions.toMinecraftChatMessage
-import net.dv8tion.jda.core.entities.Message
+import co.orre.discordbridge.commands.annotations.BotCommand
+import co.orre.discordbridge.commands.annotations.TaggedResponse
+import co.orre.discordbridge.utils.Rating
+import co.orre.discordbridge.utils.Respect
+import com.michaelwflaherty.cleverbotapi.CleverBotQuery
+import java.util.*
 
 class FunCommandsController(val plugin: Plugin) : IBotController {
 
@@ -15,66 +17,134 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
 
     // 8BALL - consult the Magic 8-Ball to answer your yes or no questions
     @BotCommand(name = "8ball", usage = "<question>", description = "Consult the Magic 8 Ball")
-    private fun eightBall(event: IEventWrapper) : String {
+    @TaggedResponse
+    private fun eightBall(event: IEventWrapper): String {
         plugin.logDebug("user ${event.senderName} consults the Magic 8-Ball")
-        return CommandLogic.eightBall(plugin, event.senderAsMention)
-        //dispatchResponse(message, CommandLogic.eightBall(plugin, message.author.asMention))
+        val responses = plugin.eightball.data.getStringList("responses")
+        val rand = Random().nextInt(responses.count())
+        return responses[rand]
     }
 
     // CHOOSE - chooses between some number of options
     @BotCommand(name = "choose", usage = "<option>, <option>, ... (delimiters include ',', 'or', '|')",
             description = "Have the bot choose between given options")
-    private fun choose(event: IEventWrapper, query: String){
+    @TaggedResponse
+    private fun choose(event: IEventWrapper, query: String): String {
         plugin.logDebug("user ${event.senderName} needs a choice made")
-        //dispatchResponse(message, CommandLogic.choose(message.author.asMention, query))
+        val choices = query.split(", or ", " or ", ",", "|")
+        val rand = Random().nextInt(choices.count())
+        return "I pick '${choices[rand]}'"
     }
 
     // F - press F to pay respects!
     @BotCommand(usage="", description = "Press F to pay respects")
-    private fun f(event: IEventWrapper) {
+    private fun f(event: IEventWrapper): String {
         plugin.logDebug("user ${event.senderName}} pays respects")
-        //dispatchResponse(message, CommandLogic.f(plugin, message.author.asMention))
+        var totalRespects = plugin.f.data.getInt("total-respects", 0)
+        val responses = plugin.f.data.getList("responses").checkItemsAre<Respect>()
+                ?: return "ERROR: Responses for this command could not be read from the config."
+        val totalWeight = responses.sumBy { it.weight }
+        var rand = Random().nextInt(totalWeight) + 1
+        var found: Respect? = null
+        for(r in responses) {
+            rand -= r.weight
+            if (rand <= 0) {
+                found = r
+                break
+            }
+        }
+
+        totalRespects += found!!.count
+        val msg: String
+        if (found.message.contains("%u"))
+            msg = found.message.replace("%u", event.senderAsMention).replace("%t", totalRespects.toString())
+                .replace("%c", found.count.toString())
+        else
+            msg = "${event.senderAsMention} | ${found.message}".replace("%t", totalRespects.toString())
+                    .replace("%c", found.count.toString())
+
+        plugin.f.data.set("total-respects", totalRespects)
+        plugin.f.saveConfig()
+
+        return msg
     }
 
     // INSULT - the bot insults something
     @BotCommand(usage="<thing to insult>", description = "Make the bot insult something for you")
-    private fun insult(event: IEventWrapper, thingToInsult: String) {
+    private fun insult(event: IEventWrapper, thingToInsult: String): String {
         plugin.logDebug("user ${event.senderName} requests an insult against '$thingToInsult'")
-        //dispatchResponse(message, CommandLogic.insult(plugin, message.author.name, thingToInsult))
+        val responses = plugin.insult.data.getStringList("responses")
+        val rand = Random().nextInt(responses.count())
+        return "${event.senderAsMention} \uD83E\uDC52 $thingToInsult | ${responses[rand]}"
     }
 
     // RATE - the bot rates something
     @BotCommand(usage="<thing to be rated>", description = "Have the bot rate something for you")
-    private fun rate(event: IEventWrapper, thingToRate: String) {
+    @TaggedResponse
+    private fun rate(event: IEventWrapper, thingToRate: String): String {
         plugin.logDebug("user ${event.senderName} requests a rating")
-        //dispatchResponse(message, CommandLogic.rate(plugin, message.author.name, thingToRate))
+        val responses = plugin.rate.data.getList("responses").checkItemsAre<Rating>()
+                ?: return "ERROR: Responses for this command could not be read from the config."
+
+        var rateOutOf = plugin.rate.data.getInt("rate-out-of", 10)
+        if (rateOutOf > 1000000) rateOutOf = 1000000
+        if (rateOutOf < 0) rateOutOf = 0
+
+        var granularity = plugin.rate.data.getInt("granularity", 1)
+        if (granularity > 2) granularity = 2
+        if (granularity < 0) granularity = 0
+
+        val conversionFactor = Math.pow(10.0, granularity.toDouble())
+        val rating = Random().nextInt((rateOutOf * conversionFactor.toInt()) + 1) / conversionFactor
+
+
+        val found: Rating = responses.firstOrNull { rating <= it.high && rating >= it.low }
+                ?: return "ERROR: No response set for rating $rating"
+
+        var thingToBeRated = thingToRate
+        if (plugin.rate.data.getBoolean("translate-first-and-second-person", true)) {
+            val argArray = thingToRate.split(" ").toMutableList()
+            val iterate = argArray.listIterator()
+            while (iterate.hasNext()) {
+                val oldValue = iterate.next()
+                if (oldValue == "me") iterate.set("you")
+                if (oldValue == "myself") iterate.set("yourself")
+                if (oldValue == "my") iterate.set("your")
+                if (oldValue == "your") iterate.set("my")
+                if (oldValue == "yourself") iterate.set("myself")
+            }
+            thingToBeRated = argArray.joinToString(" ")
+        }
+
+        return found.message.replace("%m", thingToBeRated).replace("%r", "$rating/$rateOutOf")
     }
 
     // ROLL - roll a die for a random number
     @BotCommand(name = "roll", usage = "<sides>", description = "Roll a die for a random number")
-    private fun roll(event: IEventWrapper, sides: Int){
+    @TaggedResponse
+    private fun roll(event: IEventWrapper, sides: Int): String {
         plugin.logDebug("user ${event.senderName} needs a choice made")
-        //dispatchResponse(message, CommandLogic.roll(message.author.asMention, sides))
+        if (sides == 1)
+            return "You rolled... 1. Was it any surprise?"
+        if (sides > 100 || sides < 1)
+            return "I can't roll a die with $sides sides. It must have between 1 and 100 sides."
+        val rand = Random().nextInt(sides)
+        return "You rolled... $rand"
     }
 
     // TALK - directly speak to Cleverbot (useful for not accidentally invoking other commands)
+    @TaggedResponse
     @BotCommand(usage="<say something>", description = "Say something to Cleverbot")
-    private fun talk(event: IEventWrapper, query: String) {
+    private fun talk(event: IEventWrapper, query: String): String {
         plugin.logDebug("user ${event.senderName} invokes Cleverbot")
-        //dispatchResponse(message, CommandLogic.askCleverbot(message.author.asMention, query))
+
+        if (Config.CLEVERBOT_KEY.isEmpty())
+            return "You do not have an API key. Go to https://www.cleverbot.com/JDA/ for more information."
+        val bot: CleverBotQuery = CleverBotQuery(Config.CLEVERBOT_KEY, query)
+        bot.sendRequest()
+        return bot.response
     }
 
-    private fun dispatchResponse(event: IEventWrapper, response: String) {
-        plugin.sendToDiscord(response, event.channel)
-
-        if (message.isFromRelayChannel()) {
-            var response1 = plugin.translateAliasToMinecraft(response, message.author.id)
-            response1 = response1.toMinecraftChatMessage(Config.BOT_MC_USERNAME)
-            plugin.sendToMinecraft(response1)
-        }
-    }
-
-    private fun Message.isFromRelayChannel(): Boolean = guild.id == Config.SERVER_ID
-            && this.isFromType(net.dv8tion.jda.core.entities.ChannelType.TEXT)
-            && this.textChannel.name.equals(Config.CHANNEL, true)
+    @Suppress("UNCHECKED_CAST")
+    private inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
 }

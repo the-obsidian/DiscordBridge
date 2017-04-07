@@ -1,4 +1,4 @@
-package co.orre.discordbridge.commands.Annotations
+package co.orre.discordbridge.commands.annotations
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

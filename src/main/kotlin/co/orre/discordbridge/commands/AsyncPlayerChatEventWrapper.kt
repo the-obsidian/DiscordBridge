@@ -17,8 +17,6 @@ class AsyncPlayerChatEventWrapper(val event: AsyncPlayerChatEvent) : IEventWrapp
         get() = Connection.getRelayChannel()!!
     override val senderId: String
         get() = event.player.uniqueId.toString()
-    override val type: WrapperType
-        get() = WrapperType.ASYNC_PLAYER_CHAT_EVENT
     override val isFromRelayChannel: Boolean
         get() = true
 

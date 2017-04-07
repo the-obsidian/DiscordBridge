@@ -14,12 +14,12 @@ class CommandListener(val plugin: Plugin) : CommandExecutor {
     val controllerManager = BotControllerManager(plugin)
 
     init {
-        controllerManager.registerController(FunCommandsController(plugin), discordExclusive = true, chatExclusive = true)
-        controllerManager.registerController(UtilCommandsController(plugin), discordExclusive = true, chatExclusive = true)
+        controllerManager.registerController(FunCommandsController(plugin), minecraftExclusive = true)
+        controllerManager.registerController(UtilCommandsController(plugin), minecraftExclusive = true)
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        return controllerManager.dispatchMessage(MinecraftCommandWrapper(plugin, sender, command, args))
+        return controllerManager.dispatchMessage(MinecraftCommandWrapper(sender, command, args))
     }
 
 }

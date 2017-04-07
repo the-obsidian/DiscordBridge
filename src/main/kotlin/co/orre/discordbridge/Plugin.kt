@@ -1,11 +1,14 @@
 package co.orre.discordbridge
 
-import co.orre.discordbridge.utils.UserAlias
-import co.orre.discordbridge.utils.UtilFunctions.noSpace
-import co.orre.discordbridge.utils.*
 import co.orre.discordbridge.discord.Connection
 import co.orre.discordbridge.minecraft.EventListener
-import co.orre.discordbridge.minecraft.commands.*
+import co.orre.discordbridge.minecraft.commands.CommandListener
+import co.orre.discordbridge.minecraft.commands.Discord
+import co.orre.discordbridge.utils.Rating
+import co.orre.discordbridge.utils.Respect
+import co.orre.discordbridge.utils.Script
+import co.orre.discordbridge.utils.UserAlias
+import co.orre.discordbridge.utils.UtilFunctions.noSpace
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.MessageChannel
@@ -45,11 +48,15 @@ class Plugin : JavaPlugin() {
         server.pluginManager.registerEvents(EventListener(this), this)
 
         // Register commands
-        getCommand("discord").executor = Discord(this)
-        getCommand("f").executor = F(this)
-        getCommand("rate").executor = Rate(this)
-        getCommand("8ball").executor = EightBall(this)
-        getCommand("insult").executor = Insult(this)
+        //TODO: automate this?
+        getCommand("discord").executor = Discord(this) //TODO: move this to Reflection
+        getCommand("f").executor = CommandListener(this)
+        getCommand("rate").executor = CommandListener(this)
+        getCommand("8ball").executor = CommandListener(this)
+        getCommand("insult").executor = CommandListener(this)
+        getCommand("choose").executor = CommandListener(this)
+        getCommand("talk").executor = CommandListener(this)
+        getCommand("roll").executor = CommandListener(this)
 
         ConfigurationSerialization.registerClass(Respect::class.java, "Respect")
         ConfigurationSerialization.registerClass(Rating::class.java, "Rating")
@@ -136,9 +143,10 @@ class Plugin : JavaPlugin() {
         val users = Connection.listUsers()
         val found: Member = users.find { it.user.id == discordId } ?: return false
 
-        val ua: UserAlias = UserAlias(player.name, player.uniqueId.toString(), found.effectiveName, found.user.id)
+        //val ua: UserAlias = UserAlias(player.name, player.uniqueId.toString(), found.effectiveName, found.user.id)
+        val ua: UserAlias = UserAlias(player.uniqueId, found.user.id)
         requests.add(ua)
-        val msg = "Minecraft user '${ua.mcUsername}' has requested to become associated with your Discord" +
+        val msg = "Minecraft user '${server.getOfflinePlayer(ua.mcUuid)}' has requested to become associated with your Discord" +
                 " account. If this is you, respond '${Connection.JDA.selfUser.asMention} confirm'. If this is not" +
                 " you, respond ${Connection.JDA.selfUser.asMention} deny'."
         Connection.send(msg, Connection.JDA.getUserById(ua.discordId).privateChannel)
@@ -193,17 +201,6 @@ class Plugin : JavaPlugin() {
         return response
     }
 
-    // Add an alias to the Users data
-//    fun saveAlias(ua: UserAlias) {
-//        users.data.set("mcaliases.${ua.mcUuid}.mcusername", ua.mcUsername)
-//        users.data.set("mcaliases.${ua.mcUuid}.discordusername", ua.discordUsername)
-//        users.data.set("mcaliases.${ua.mcUuid}.discordid", ua.discordId)
-//        users.data.set("discordaliases.${ua.discordId}.mcuuid", ua.mcUuid)
-//        users.data.set("discordaliases.${ua.discordId}.mcusername", ua.mcUsername)
-//        users.data.set("discordaliases.${ua.discordId}.discordusername", ua.discordUsername)
-//        users.saveConfig()
-//    }
-
     /*======================================
       Message Formatting Functions
     ===================================== */
@@ -233,30 +230,40 @@ class Plugin : JavaPlugin() {
         return newMessage
     }
 
-    //TODO: De-convert @mentions
-
-    // Scans the string for occurrences of the Minecraft name matching the given UUID and attempts to translate it
-    // to a registered Discord name, if it exists
-    fun translateAliasToDiscord(message: String, uuid: String?): String {
-        var newMessage = message
-        //val alias = users.data.getString("mcaliases.$uuid.discordusername")
-        val userAlias = UserAliasConfig.aliases.firstOrNull { it.mcUuid == uuid }
-        if (userAlias != null) {
-            val user = Connection.listUsers().firstOrNull { it.user.id == userAlias.discordId }
-            if (user != null) return newMessage.replace(users.data.getString("mcaliases.$uuid.mcusername"), alias)
-            val name = Connection.JDA.getUserById(userAlias.discordId).name
+    fun deconvertAtMentions(message: String): String {
+        var modifiedMessage = message
+        for (match in Regex("""<@!(\d)+>""").findAll(message)) {
+            val discordUser = Connection.listUsers().firstOrNull{it.user.id == match.groupValues[1] }
+            val nameDis = if (discordUser != null) discordUser.effectiveName else Connection.JDA.getUserById(match.groupValues[1]).name
+            modifiedMessage = modifiedMessage.replace(match.value, nameDis)
         }
-            newMessage = newMessage.replace(users.data.getString("mcaliases.$uuid.mcusername"), alias)
-        return newMessage
+        return message
     }
 
-    // Scans the string for occurrences of the Minecraft name matching the given UUID and attempts to translate it
-    // to a registered Discord name, if it exists
-    fun translateAliasToMinecraft(message: String, discordId: String?): String {
-        var newMessage = message
-        val alias = users.data.getString("discordaliases.$discordId.mcusername")
-        if (alias != null)
-            newMessage = newMessage.replace(users.data.getString("discordaliases.$discordId.mcusername"), alias)
-        return newMessage
+    // Scans the string for occurrences of Minecraft names and attempts to translate them
+    // to registered Discord names, if they exist
+    fun translateAliasesToDiscord(message: String): String {
+        var modifiedMessage = message
+        for ((mcUuid, discordId) in UserAliasConfig.aliases) {
+            val nameMC = server.getOfflinePlayer(mcUuid).name
+            val discordUser = Connection.listUsers().firstOrNull{it.user.id == discordId }
+            val nameDis = if (discordUser != null) discordUser.effectiveName else Connection.JDA.getUserById(discordId).name
+            modifiedMessage = modifiedMessage.replace(nameMC, nameDis)
+        }
+        return modifiedMessage
+    }
+
+    // Scans the string for occurrences of Discord names and attempts to translate them
+    // to registered Minecraft names, if they exist
+    fun translateAliasesToMinecraft(message: String): String {
+        var modifiedMessage = message
+        for ((mcUuid, discordId) in UserAliasConfig.aliases) {
+            val nameMC = server.getOfflinePlayer(mcUuid).name
+            val nameDis = Connection.JDA.getUserById(discordId).name
+            modifiedMessage = modifiedMessage.replace(nameDis, nameMC)
+            val discordUser = Connection.listUsers().firstOrNull{it.user.id == discordId}
+            if (discordUser != null) modifiedMessage = modifiedMessage.replace(discordUser.effectiveName, nameMC)
+        }
+        return modifiedMessage
     }
 }

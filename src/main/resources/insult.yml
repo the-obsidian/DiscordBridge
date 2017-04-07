@@ -1,11 +1,5 @@
 # Insult Config
 
-# The template for the response of the Insult command
-# '%u' = the name of the command sender
-# '%t' = whatever is being insulted
-# '%i' = the insult message
-template: '%t - %i'
-
 # A list of possible responses to the Insult command
 responses:
 - "I hate you so much I can't even breathe."

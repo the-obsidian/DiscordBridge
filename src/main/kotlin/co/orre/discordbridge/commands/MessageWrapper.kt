@@ -1,15 +1,11 @@
 package co.orre.discordbridge.commands
 
 import co.orre.discordbridge.Config
-import co.orre.discordbridge.Plugin
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageChannel
 
 class MessageWrapper(val originalMessage: Message) : IEventWrapper {
-
-    override val type: WrapperType
-        get() = WrapperType.MESSAGE
 
     override val senderAsMention: String
         get() = originalMessage.author.asMention

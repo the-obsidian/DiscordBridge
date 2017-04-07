@@ -9,6 +9,5 @@ interface IEventWrapper {
     val senderAsMention : String
     val channel : MessageChannel
     val senderId : String
-    val type: WrapperType
     val isFromRelayChannel: Boolean
 }

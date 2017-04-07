@@ -1,6 +1,4 @@
-package co.orre.discordbridge.commands.Annotations
-
-// TODO: Apache License
+package co.orre.discordbridge.commands.annotations
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

@@ -1,52 +1,85 @@
 package co.orre.discordbridge.commands.controllers
 
 import co.orre.discordbridge.Plugin
-import co.orre.discordbridge.commands.Annotations.BotCommand
-import co.orre.discordbridge.commands.Annotations.ChatExclusiveCommand
-import co.orre.discordbridge.commands.Annotations.DiscordExclusiveCommand
+import co.orre.discordbridge.UserAliasConfig
+import co.orre.discordbridge.commands.AsyncPlayerChatEventWrapper
 import co.orre.discordbridge.commands.IBotController
 import co.orre.discordbridge.commands.IEventWrapper
 import co.orre.discordbridge.commands.MessageWrapper
+import co.orre.discordbridge.commands.annotations.BotCommand
+import co.orre.discordbridge.commands.annotations.ChatExclusiveCommand
+import co.orre.discordbridge.commands.annotations.DiscordExclusiveCommand
+import co.orre.discordbridge.commands.annotations.PrivateResponse
 import net.dv8tion.jda.core.entities.ChannelType
-import net.dv8tion.jda.core.entities.Message
+import org.bukkit.ChatColor as CC
 
 class UtilCommandsController(val plugin: Plugin) : IBotController {
 
     override fun getDescription(): String = ":wrench:  **UTIL** - Utility commands"
 
-    // CONFIRM - Confirm an alias
+    // CONFIRM - Confirm an alias request
     @BotCommand(usage="", description="Confirm an alias link request", relayTriggerMessage = false)
     @DiscordExclusiveCommand
-    private fun confirm(message: MessageWrapper) {
-        if (!message.originalMessage.isFromType(ChannelType.PRIVATE)) return
-        plugin.logDebug("user ${message.senderName} wants to confirm an alias")
+    @PrivateResponse
+    private fun confirm(message: MessageWrapper): String? {
+        if (!message.originalMessage.isFromType(ChannelType.PRIVATE)) return null
+        plugin.logDebug("user ${message.senderName} confirms an alias request")
 
-        val ua = plugin.requests.find { it.discordId == message.senderId }
-        if (ua == null) {
-            plugin.sendToDiscord("You have not requested an alias, or your request has expired!", message.channel)
-            return
-        }
+        val ua = plugin.requests.find { it.discordId == message.senderId } ?: return "You have no alias requests pending."
 
-        plugin.saveAlias(ua)
+        UserAliasConfig.add(plugin, ua)
         plugin.requests.remove(ua)
-        plugin.sendToDiscord("Successfully linked aliases!", message.channel)
+        return "Successfully linked aliases!"
+    }
+
+    // DENY - Deny an alias request
+    @BotCommand(usage="", description="Deny an alias link request", relayTriggerMessage = false)
+    @DiscordExclusiveCommand
+    @PrivateResponse
+    private fun deny(message: MessageWrapper): String? {
+        if (!message.originalMessage.isFromType(ChannelType.PRIVATE)) return null
+        plugin.logDebug("user ${message.senderName} denies an alias request")
+
+        val ua = plugin.requests.find { it.discordId == message.senderId } ?: return "You have no alias requests pending."
+
+        plugin.requests.remove(ua)
+        return "The alias link request has been cancelled."
     }
 
     @BotCommand(usage="", description="You just used it", relayTriggerMessage = false)
     @ChatExclusiveCommand
+    @PrivateResponse
     private fun help(event: IEventWrapper, commands: MutableMap<String, BotControllerManager.Command>,
                      instances: Map<Class<out IBotController>, IBotController>) {
         plugin.logDebug("user ${event.senderName} requested help")
-        //todo
-        plugin.sendToDiscord("**DiscordBridge** - Bridge your Minecraft and Discord chats\n**---**", message.channel)
-        var out: String
-        for (bc: IBotController in instances.values) {
-            out = bc.getDescription() + "\n```"
-            commands.values.sortedBy { (name) -> name }
-                    .filter { it.controllerClass == bc.javaClass }
-                    .forEach { out += "\n${it.name} ${it.usage}\n  ${it.description}\n" }
-            out += "```"
-            plugin.sendToDiscord(out, message.channel)
+        when (event) {
+            is AsyncPlayerChatEventWrapper -> {
+                val player = event.event.player
+                player.sendMessage("${CC.BOLD}${CC.AQUA}DiscordBridge${CC.RESET} - Bridge your Minecraft and Discord chats\n---")
+                var out: String
+                for (bc: IBotController in instances.values) {
+                    out = bc.getDescription() + "\n```"
+                    commands.values.sortedBy { (name) -> name }
+                            .filter { it.controllerClass == bc.javaClass }
+                            .forEach { out += "\n${it.name} ${it.usage}\n  ${it.description}\n" }
+                    out += "```"
+                    player.sendMessage(out)
+                }
+            }
+            is MessageWrapper -> {
+                event.originalMessage.author.openPrivateChannel()
+                val channel = event.originalMessage.author.privateChannel
+                channel.sendMessage("**DiscordBridge** - Bridge your Minecraft and Discord chats\n**---**")
+                var out: String
+                for (bc: IBotController in instances.values) {
+                    out = bc.getDescription() + "\n```"
+                    commands.values.sortedBy { (name) -> name }
+                            .filter { it.controllerClass == bc.javaClass }
+                            .forEach { out += "\n${it.name} ${it.usage}\n  ${it.description}\n" }
+                    out += "```"
+                    channel.sendMessage(out)
+                }
+            }
         }
     }
 

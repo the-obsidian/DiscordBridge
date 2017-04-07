@@ -1,11 +1,9 @@
 package co.orre.discordbridge.discord
 
-// TODO: Apache License
-
 import co.orre.discordbridge.Plugin
+import co.orre.discordbridge.commands.MessageWrapper
 import co.orre.discordbridge.commands.controllers.BotControllerManager
 import co.orre.discordbridge.commands.controllers.FunCommandsController
-import co.orre.discordbridge.commands.MessageWrapper
 import co.orre.discordbridge.commands.controllers.UtilCommandsController
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter

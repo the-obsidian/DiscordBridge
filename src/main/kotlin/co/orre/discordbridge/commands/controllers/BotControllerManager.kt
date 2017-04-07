@@ -1,25 +1,20 @@
 package co.orre.discordbridge.commands.controllers
 
-// TODO: Add Apache license
-
 import co.orre.discordbridge.Config
 import co.orre.discordbridge.Plugin
 import co.orre.discordbridge.commands.*
-import co.orre.discordbridge.commands.Annotations.BotCommand
-import co.orre.discordbridge.commands.Annotations.ChatExclusiveCommand
-import co.orre.discordbridge.commands.Annotations.DiscordExclusiveCommand
-import co.orre.discordbridge.commands.Annotations.MinecraftExclusiveCommand
+import co.orre.discordbridge.commands.annotations.*
 import co.orre.discordbridge.discord.Connection
 import co.orre.discordbridge.utils.Script
 import co.orre.discordbridge.utils.UtilFunctions.stripColor
+import co.orre.discordbridge.utils.UtilFunctions.toDiscordChatMessage
 import co.orre.discordbridge.utils.UtilFunctions.toMinecraftChatMessage
 import net.dv8tion.jda.core.entities.Message
-import org.bukkit.ChatColor
-import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.*
 import java.util.logging.Level
 import co.orre.discordbridge.Config as cfg
+import org.bukkit.ChatColor as CC
 
 class BotControllerManager(val plugin: Plugin) {
 
@@ -51,21 +46,27 @@ class BotControllerManager(val plugin: Plugin) {
 
         method.isAccessible = true
         val parameters = (1..methodParameters.size - 1).mapTo(ArrayList<Class<*>>()) { methodParameters[it].type }
+        val isTagged: Boolean = method.getAnnotation(TaggedResponse::class.java) != null
+        val isPrivate: Boolean = method.getAnnotation(PrivateResponse::class.java) != null
         val command = Command(commandName, usage, annotation.description, parameters, annotation.relayTriggerMessage,
-                annotation.ignoreExcessArguments, controllerClass, method)
+                annotation.ignoreExcessArguments, isTagged, isPrivate, controllerClass, method)
         commands.put(command.name, command)
     }
 
     fun dispatchMessage(event: IEventWrapper): Boolean {
 
+        // Short circuit if event was a Minecraft command
         if (event is MinecraftCommandWrapper) {
-            val command = commands[event.cmd.name] ?: return false
+            val command = commands[event.command.name]
+            if (command == null) {
+                commandNotFound(event, event.command.name)
+                return true
+            }
             val inputArguments = event.rawMessage.split("\\s+".toRegex(), command.parameters.size).toTypedArray()
             return invokeCommand(command, controllers, event, inputArguments)
         }
 
-        // SCRIPTED RESPONSE - The bot replies with a pre-programmed response if it detects
-        // a corresponding trigger string
+        // Short circuit scripted responses
         if (scriptedResponse(event)) return true
 
         val args = event.rawMessage.trim().split("\\s+".toRegex(), 2).toTypedArray()
@@ -82,7 +83,7 @@ class BotControllerManager(val plugin: Plugin) {
             }
 
             val inputArguments = if (args.size == 1) arrayOf<String>()
-                else args[1].split("\\s+".toRegex(), command.parameters.size).toTypedArray()
+            else args[1].split("\\s+".toRegex(), command.parameters.size).toTypedArray()
 
             return invokeCommand(command, controllers, event, inputArguments)
         }
@@ -123,7 +124,6 @@ class BotControllerManager(val plugin: Plugin) {
             return false
         }
         var response: Script? = null
-        // TODO: Switch if Minecraft or Discord
         for (r in responses) {
             var arg = event.rawMessage
             val triggerDis = r.triggerDis ?: ""
@@ -138,14 +138,14 @@ class BotControllerManager(val plugin: Plugin) {
                 else continue
             }
 
-            when (event.type) {
-                WrapperType.ASYNC_PLAYER_CHAT_EVENT -> {
+            when (event) {
+                is AsyncPlayerChatEventWrapper -> {
                     if (startswith)
                         if (triggerMC.isNotEmpty() && arg.startsWith(triggerMC, ignorecase)) response = r
                         else
                             if (triggerMC.isNotEmpty() && arg.equals(triggerMC, ignorecase)) response = r
                 }
-                WrapperType.MESSAGE -> {
+                is MessageWrapper -> {
                     if (startswith)
                         if (triggerDis.isNotEmpty() && arg.startsWith(triggerDis, ignorecase)) response = r
                         else
@@ -159,13 +159,19 @@ class BotControllerManager(val plugin: Plugin) {
         val responseDis: String? = response.responseDis
         val responseMC: String? = response.responseMC
         if (responseDis != null) {
-            val out = responseDis.replace("%u", event.senderAsMention)
+            var out = responseDis.replace("%u", event.senderAsMention)
+            if (event is AsyncPlayerChatEventWrapper) {
+                out = plugin.convertAtMentions(out)
+                out = plugin.translateAliasesToDiscord(out)
+            }
             plugin.sendToDiscord(out, event.channel)
         }
         if (responseMC != null && event.isFromRelayChannel) {
-            var alias = plugin.users.data.getString("discordaliases.${message.author.id}.mcusername")
-            if (alias == null) alias = message.author.name.noSpace()
-            val out = responseMC.replace("%u", alias)
+            var out = responseMC.replace("%u", event.senderAsMention)
+            if (event is MessageWrapper) {
+                out = plugin.deconvertAtMentions(out)
+                out = plugin.translateAliasesToMinecraft(out)
+            }
             plugin.sendToMinecraft(out.toMinecraftChatMessage(Config.BOT_MC_USERNAME))
         }
         return true
@@ -173,82 +179,159 @@ class BotControllerManager(val plugin: Plugin) {
 
     private fun invokeCommand(command: Command, instances: Map<Class<out IBotController>, IBotController>,
                               event: IEventWrapper, inputArguments: Array<String>): Boolean {
+        // Relay the trigger if applicable
         if (command.relayTriggerMessage) relay(event, false)
 
-        if (command.name == "help") {
-            try {
-                command.commandMethod.invoke(instances[command.controllerClass], event, commands, instances)
+        when {
+            // Check for permission
+            event is AsyncPlayerChatEventWrapper && !event.event.player.hasPermission("discordbridge.${command.name}") -> {
+                commandRestricted(event)
                 return true
-            } catch (e: InvocationTargetException) {
-                commandException(event, e.cause)
+            }
+            event is MinecraftCommandWrapper && !event.sender.hasPermission("discordbridge.${command.name}") -> {
+                commandRestricted(event)
+                return true
+            }
+
+            // Short circuit "help"
+            command.name == "help" -> {
+                try {
+                    val response = command.commandMethod.invoke(instances[command.controllerClass], event, commands, instances) as? String ?: return true
+                    respond(event, command, response)
+                    return true
+                } catch (e: IllegalArgumentException) {
+                    commandWrongParameterCount(event, command.name, command.usage, 2, command.parameters.size)
+                    return false
+                } catch (e: Exception) {
+                    commandException(event, e.cause)
+                    return true
+                }
+            }
+
+            // Fail if not enough arguments
+            inputArguments.size < command.parameters.size -> {
+                commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
                 return false
-            } catch (e: IllegalAccessException) {
-                throw RuntimeException(e)
-            } catch (e: IllegalArgumentException) {
-                commandWrongParameterCount(event, command.name, command.usage, 2, command.parameters.size)
+            }
+
+            // Fail if command forces exact argument count AND the supplied argument count does not match expected
+            inputArguments.size != command.parameters.size && !command.ignoreExcessArguments -> {
+                commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
                 return false
             }
         }
 
-        if (inputArguments.size < command.parameters.size) {
-            commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
-            return false
-        }
-        if (inputArguments.size != command.parameters.size && !command.ignoreExcessArguments) {
-            commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
-            return false
-        }
-
+        // Package arguments to send to method
         val arguments = arrayOfNulls<Any>(command.parameters.size + 1)
         arguments[0] = event
-
-        var paramRange = command.parameters.indices
-
-        if (command.ignoreExcessArguments && inputArguments.size > command.parameters.size)
-            paramRange = IntRange(0, command.parameters.size - 1)
-
+        val paramRange = if (command.ignoreExcessArguments && inputArguments.size > command.parameters.size)
+            IntRange(0, command.parameters.size - 1) else command.parameters.indices
         for (i in paramRange) {
             val parameterClass = command.parameters[i]
 
             try {
                 arguments[i + 1] = parseArgument(parameterClass, inputArguments[i])
             } catch (ignored: IllegalArgumentException) {
-                commandWrongParameterType(event, command.name, command.usage, i,
-                        inputArguments[i].javaClass, parameterClass)
+                commandWrongParameterType(event, command.name, command.usage, i, inputArguments[i].javaClass, parameterClass)
                 return false
             }
         }
 
+        // Invoke the method
         try {
-            command.commandMethod.invoke(instances[command.controllerClass], *arguments)
+            val response = command.commandMethod.invoke(instances[command.controllerClass], *arguments) as? String ?: return true
+            respond(event, command, response)
             return true
-        } catch (e: InvocationTargetException) {
-            commandException(event, e.cause)
-            return false
-        } catch (e: IllegalAccessException) {
-            throw RuntimeException(e)
         } catch (e: IllegalArgumentException) {
             commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
             return false
+        } catch (e: Exception) {
+            commandException(event, e.cause)
+            return true
+        }
+
+    }
+
+    private fun respond(event: IEventWrapper, command: Command, response: String) {
+        var modifiedResponse = response
+        when (event) {
+            is AsyncPlayerChatEventWrapper -> {
+                if (command.isPrivate) {
+                    modifiedResponse = "${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                            modifiedResponse
+                    event.event.player.sendMessage(modifiedResponse)
+                    return
+                }
+                if (command.isTagged) modifiedResponse = "${event.senderAsMention} | $modifiedResponse"
+                plugin.sendToMinecraft(modifiedResponse.toMinecraftChatMessage(Config.BOT_MC_USERNAME))
+
+                modifiedResponse = plugin.convertAtMentions(modifiedResponse)
+                modifiedResponse = plugin.translateAliasesToDiscord(modifiedResponse)
+                plugin.sendToDiscord(modifiedResponse, event.channel)
+                return
+            }
+            is MessageWrapper -> {
+                if (command.isPrivate) {
+                    event.originalMessage.author.openPrivateChannel()
+                    event.originalMessage.author.privateChannel.sendMessage(modifiedResponse)
+                    return
+                }
+                if (command.isTagged) modifiedResponse = "${event.senderAsMention} | $modifiedResponse"
+                plugin.sendToDiscord(modifiedResponse, event.channel)
+
+                modifiedResponse = modifiedResponse.toMinecraftChatMessage(Config.BOT_MC_USERNAME)
+                modifiedResponse = plugin.deconvertAtMentions(modifiedResponse)
+                modifiedResponse = plugin.translateAliasesToMinecraft(modifiedResponse)
+                plugin.sendToMinecraft(modifiedResponse)
+                return
+            }
+            is MinecraftCommandWrapper -> {
+                if (command.isPrivate || command.isTagged) {
+                    modifiedResponse = "${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                            modifiedResponse
+                    event.sender.sendMessage(modifiedResponse)
+                    return
+                }
+                plugin.sendToMinecraft(modifiedResponse.toMinecraftChatMessage(Config.BOT_MC_USERNAME))
+
+                modifiedResponse = plugin.convertAtMentions(modifiedResponse)
+                modifiedResponse = plugin.translateAliasesToDiscord(modifiedResponse)
+                plugin.sendToDiscord(modifiedResponse, event.channel)
+                return
+            }
         }
     }
 
     private fun relay(event: IEventWrapper, logIgnore: Boolean) {
-        when (event.type) {
-            WrapperType.ASYNC_PLAYER_CHAT_EVENT -> {
+        when (event) {
+            is AsyncPlayerChatEventWrapper -> {
+                var worldname = event.event.player.world.name
 
+                // Get world alias if Multiverse is installed
+                if (plugin.isMultiverseInstalled) {
+                    val worldProperties = plugin.worlds!!.data.get("worlds.$worldname")
+                    val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
+                    val meth: Method = cls.getMethod("getAlias")
+                    val alias = meth.invoke(worldProperties)
+                    if (alias is String) worldname = alias
+                }
+
+                var formattedMessage = event.message.toDiscordChatMessage(event.senderName, worldname)
+                formattedMessage = plugin.convertAtMentions(formattedMessage)
+                formattedMessage = plugin.translateAliasesToDiscord(formattedMessage)
+                plugin.sendToDiscord(formattedMessage, Connection.getRelayChannel())
             }
-            WrapperType.MESSAGE -> {
+            is MessageWrapper -> {
                 if (event.isFromRelayChannel) {
                     plugin.logDebug("Broadcasting message from Discord to Minecraft as user ${event.senderName}")
-                    //var alias = plugin.users.data.getString("discordaliases.${message.author.id}.mcusername")
-                    //if (alias == null) alias = message.author.name.noSpace()
-                    plugin.sendToMinecraft(message.content.toMinecraftChatMessage(alias))
-                } else if (logIgnore) plugin.logDebug("Not relaying message ${message.id} from Discord: channel does not match")
+                    var formattedMessage = event.message.toMinecraftChatMessage(event.senderName)
+                    formattedMessage = plugin.deconvertAtMentions(formattedMessage)
+                    formattedMessage = plugin.translateAliasesToMinecraft(formattedMessage)
+                    plugin.sendToMinecraft(formattedMessage)
+                } else if (logIgnore) plugin.logDebug("Not relaying message from Discord: channel does not match")
             }
-            else -> return
+            else -> return // slash commands do not get relayed
         }
-
     }
 
     private fun parseArgument(parameterClass: Class<*>, value: String): Any {
@@ -288,13 +371,17 @@ class BotControllerManager(val plugin: Plugin) {
     private fun commandNotFound(event: IEventWrapper, commandName: String) {
         when (event) {
             is MessageWrapper ->
-                    event.channel.sendMessage(
+                event.channel.sendMessage(
                         "${event.senderAsMention} | I don't seem to have a command called '$commandName'. " +
-                        "See '${Connection.JDA.selfUser.asMention} help' ${orPrefixHelp()}for the commands I do have.").queue()
+                                "See '${Connection.JDA.selfUser.asMention} help' ${orPrefixHelp()}for the commands I do have.").queue()
             is AsyncPlayerChatEventWrapper ->
-                    event.event.player.sendMessage("${ChatColor.ITALIC}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
-                    "I don't seem to have a command called '$commandName'. " +
-                    "See '@${Config.BOT_MC_USERNAME.stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
+                event.event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                        "I don't seem to have a command called '$commandName'. " +
+                        "See '@${Config.BOT_MC_USERNAME.stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
+            is MinecraftCommandWrapper ->
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                        "I don't seem to have a command called '$commandName'. " +
+                        "See '@${Config.BOT_MC_USERNAME.stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
         }
 
     }
@@ -307,7 +394,12 @@ class BotControllerManager(val plugin: Plugin) {
                                 "I got $given from you, but I need $required. " +
                                 "(Usage: $commandName $usage)").queue()
             is AsyncPlayerChatEventWrapper ->
-                event.event.player.sendMessage("${ChatColor.ITALIC}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                event.event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                        "I didn't seem to get the correct number of arguments for that command. " +
+                        "I got $given from you, but I need $required. " +
+                        "(Usage: $commandName $usage)")
+            is MinecraftCommandWrapper ->
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
                         "I didn't seem to get the correct number of arguments for that command. " +
                         "I got $given from you, but I need $required. " +
                         "(Usage: $commandName $usage)")
@@ -323,21 +415,28 @@ class BotControllerManager(val plugin: Plugin) {
                                 "Argument $index seems like ${actualType.simpleName}, but I need ${expectedType.simpleName}. " +
                                 "(Usage: $name $usage)").queue()
             is AsyncPlayerChatEventWrapper ->
-                event.event.player.sendMessage("${ChatColor.ITALIC}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                event.event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                        "One of the arguments for that command doesn't seem to be the right type. " +
+                        "Argument $index seems like ${actualType.simpleName}, but I need ${expectedType.simpleName}. " +
+                        "(Usage: $name $usage)")
+            is MinecraftCommandWrapper ->
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
                         "One of the arguments for that command doesn't seem to be the right type. " +
                         "Argument $index seems like ${actualType.simpleName}, but I need ${expectedType.simpleName}. " +
                         "(Usage: $name $usage)")
         }
     }
 
-    @Suppress("unused")
     private fun commandRestricted(event: IEventWrapper) {
         when (event) {
             is MessageWrapper ->
-                event.channel.sendMessage("${event.senderAsMention} | Sorry, that command is not permitted.").queue()
+                event.channel.sendMessage("${event.senderAsMention} | Sorry, you don't have permission to use that command.").queue()
             is AsyncPlayerChatEventWrapper ->
-                event.event.player.sendMessage("${ChatColor.ITALIC}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
-                        "Sorry, that command is not permitted.")
+                event.event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                        "Sorry, you don't have permission to use that command.")
+            is MinecraftCommandWrapper ->
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                        "Sorry, you don't have permission to use that command.")
         }
     }
 
@@ -346,10 +445,16 @@ class BotControllerManager(val plugin: Plugin) {
         when (event) {
             is MessageWrapper ->
                 event.channel.sendMessage(
-                        "${event.senderAsMention} | Ouch! That command threw an exception. Sorry about that...").queue()
+                        "${event.senderAsMention} | Ouch! That command threw an exception. Sorry about that..." +
+                                "Have an admin check the logs for more info.").queue()
             is AsyncPlayerChatEventWrapper ->
-                event.event.player.sendMessage("${ChatColor.ITALIC}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
-                        "Ouch! That command threw an exception. Sorry about that...")
+                event.event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                        "Ouch! That command threw an exception. Sorry about that..." +
+                        "Have an admin check the logs for more info.")
+            is MinecraftCommandWrapper ->
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
+                        "Ouch! That command threw an exception. Sorry about that..." +
+                        "Have an admin check the logs for more info.")
         }
     }
 
@@ -362,6 +467,8 @@ class BotControllerManager(val plugin: Plugin) {
             val parameters: List<Class<*>>,
             val relayTriggerMessage: Boolean,
             val ignoreExcessArguments: Boolean,
+            val isTagged: Boolean,
+            val isPrivate: Boolean,
             val controllerClass: Class<*>,
             val commandMethod: Method
     )
