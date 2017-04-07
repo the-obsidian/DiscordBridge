@@ -146,7 +146,7 @@ class Plugin : JavaPlugin() {
         //val ua: UserAlias = UserAlias(player.name, player.uniqueId.toString(), found.effectiveName, found.user.id)
         val ua: UserAlias = UserAlias(player.uniqueId, found.user.id)
         requests.add(ua)
-        val msg = "Minecraft user '${server.getOfflinePlayer(ua.mcUuid)}' has requested to become associated with your Discord" +
+        val msg = "Minecraft user '${server.getOfflinePlayer(ua.mcUuid).name}' has requested to become associated with your Discord" +
                 " account. If this is you, respond '${Connection.JDA.selfUser.asMention} confirm'. If this is not" +
                 " you, respond ${Connection.JDA.selfUser.asMention} deny'."
         Connection.send(msg, Connection.JDA.getUserById(ua.discordId).privateChannel)

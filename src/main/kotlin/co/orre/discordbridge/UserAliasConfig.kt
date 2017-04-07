@@ -6,8 +6,10 @@ object UserAliasConfig {
     var aliases: List<UserAlias> = mutableListOf()
 
     fun load(plugin: Plugin) {
-        aliases = plugin.users.data.getList("aliases").checkItemsAre<UserAlias>()
-            ?: throw IllegalStateException("usernames.yml could not be read - list items are not properly formatted")
+        val list = plugin.users.data.getList("aliases")
+        if (list != null) aliases = list.checkItemsAre<UserAlias>() ?:
+                throw IllegalStateException("usernames.yml could not be read - list items are not properly formatted")
+        else mutableListOf<UserAlias>()
     }
 
     fun add(plugin: Plugin, ua: UserAlias) {

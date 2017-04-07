@@ -9,7 +9,6 @@ import co.orre.discordbridge.utils.Script
 import co.orre.discordbridge.utils.UtilFunctions.stripColor
 import co.orre.discordbridge.utils.UtilFunctions.toDiscordChatMessage
 import co.orre.discordbridge.utils.UtilFunctions.toMinecraftChatMessage
-import net.dv8tion.jda.core.entities.Message
 import java.lang.reflect.Method
 import java.util.*
 import java.util.logging.Level
@@ -42,7 +41,7 @@ class BotControllerManager(val plugin: Plugin) {
         val usage = annotation.usage
         val methodParameters = method.parameters
 
-        if (methodParameters.isEmpty() || !methodParameters[0].type.isAssignableFrom(Message::class.java)) return
+        if (methodParameters.isEmpty() || !methodParameters[0].type.isAssignableFrom(IEventWrapper::class.java)) return
 
         method.isAccessible = true
         val parameters = (1..methodParameters.size - 1).mapTo(ArrayList<Class<*>>()) { methodParameters[it].type }
@@ -54,7 +53,6 @@ class BotControllerManager(val plugin: Plugin) {
     }
 
     fun dispatchMessage(event: IEventWrapper): Boolean {
-
         // Short circuit if event was a Minecraft command
         if (event is MinecraftCommandWrapper) {
             val command = commands[event.command.name]
@@ -89,6 +87,7 @@ class BotControllerManager(val plugin: Plugin) {
         }
 
         // @<mention> command
+        //TODO: Support bot mentions from Minecraft
         if (args[0] == Connection.JDA.selfUser.asMention && args.count() == 2) {
             val args2 = args[1].split("\\s+".toRegex(), 2).toTypedArray()
             val commandName = args2[0].toLowerCase()
@@ -203,7 +202,7 @@ class BotControllerManager(val plugin: Plugin) {
                     commandWrongParameterCount(event, command.name, command.usage, 2, command.parameters.size)
                     return false
                 } catch (e: Exception) {
-                    commandException(event, e.cause)
+                    commandException(event, e)
                     return true
                 }
             }
@@ -246,7 +245,7 @@ class BotControllerManager(val plugin: Plugin) {
             commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
             return false
         } catch (e: Exception) {
-            commandException(event, e.cause)
+            commandException(event, e)
             return true
         }
 
@@ -440,20 +439,20 @@ class BotControllerManager(val plugin: Plugin) {
         }
     }
 
-    private fun commandException(event: IEventWrapper, throwable: Throwable?) {
+    private fun commandException(event: IEventWrapper, throwable: Throwable) {
         plugin.logger.log(Level.SEVERE, "Command with content ${event.rawMessage} threw an exception.", throwable)
         when (event) {
             is MessageWrapper ->
                 event.channel.sendMessage(
-                        "${event.senderAsMention} | Ouch! That command threw an exception. Sorry about that..." +
+                        "${event.senderAsMention} | Ouch! That command threw an exception. Sorry about that... " +
                                 "Have an admin check the logs for more info.").queue()
             is AsyncPlayerChatEventWrapper ->
                 event.event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
-                        "Ouch! That command threw an exception. Sorry about that..." +
+                        "Ouch! That command threw an exception. Sorry about that... " +
                         "Have an admin check the logs for more info.")
             is MinecraftCommandWrapper ->
                 event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${Config.BOT_MC_USERNAME.stripColor()} whispers to you: " +
-                        "Ouch! That command threw an exception. Sorry about that..." +
+                        "Ouch! That command threw an exception. Sorry about that... " +
                         "Have an admin check the logs for more info.")
         }
     }

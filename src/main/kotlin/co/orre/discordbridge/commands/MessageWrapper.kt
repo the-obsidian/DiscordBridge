@@ -14,7 +14,8 @@ class MessageWrapper(val originalMessage: Message) : IEventWrapper {
         get() = originalMessage.channel
 
     override val isFromRelayChannel: Boolean
-        get() = originalMessage.guild.id == Config.SERVER_ID
+        get() = if (originalMessage.isFromType(ChannelType.PRIVATE)) false
+                else originalMessage.guild.id == Config.SERVER_ID
                 && originalMessage.isFromType(ChannelType.TEXT)
                 && originalMessage.textChannel.name.equals(Config.CHANNEL, true)
 

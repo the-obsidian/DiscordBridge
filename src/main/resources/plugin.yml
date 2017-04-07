@@ -14,7 +14,7 @@ permissions:
   discordbridge.reload:
     description: Reload the Discord Bridge
     default: op
-  discordbridge.cleverbot:
+  discordbridge.talk:
     description: Determines whether this user can talk to Cleverbot
     default: true
   discordbridge.f:
@@ -29,6 +29,12 @@ permissions:
   discordbridge.insult:
     description: Determines whether this user can use the insult command
     default: op
+  discordbridge.choose:
+    description: Determines whether this user can use the choose command
+    default: true
+  discordbridge.roll:
+    description: Determines whether this user can use the roll command
+    default: true
 
 commands:
   8ball:
@@ -44,5 +50,14 @@ commands:
     description: Have the bot rate something for you
     usage: /rate <thing to be rated>
   insult:
-    description: Have the bot insult someone for your
+    description: Have the bot insult someone for you
     usage: /insult <thing to insult>
+  choose:
+    description: Have the bot make a choice for you
+    usage: /choose <option1> or <option2> or ...
+  roll:
+    description: The bot rolls a die with a specified number of sides
+    usage: /roll <sides>
+  talk:
+    description: Talk to Cleverbot!
+    usage: /talk <say something>
