@@ -36,9 +36,18 @@ object Connection: Runnable {
         toChannel.sendMessage(message).queue()
     }
 
-    fun reconnect() {
-        disconnect()
+    fun reconnect(callback: Runnable) {
+        //disconnect
+        if (Config.ANNOUNCE_SERVER_START_STOP)
+            send("Refreshing Discord connection...", getRelayChannel())
+        JDA.removeEventListener(listener)
+        server = null
+        channel = null
+        JDA.shutdown(false)
+
+        //reconnect
         connect()
+        callback.run()
     }
 
     fun listUsers(): List<Member> {
@@ -62,11 +71,6 @@ object Connection: Runnable {
         if (Config.ANNOUNCE_SERVER_START_STOP)
             send(Config.TEMPLATES_DISCORD_SERVER_START, getRelayChannel())
         JDA.presence.game = Game.of("Minecraft ${plugin.server.bukkitVersion.split("-")[0]}")
-    }
-
-    private fun disconnect() {
-        JDA.removeEventListener(listener)
-        JDA.shutdown(false)
     }
 
     private fun getGroupByName(server: Guild, name: String): TextChannel? {

@@ -1,4 +1,4 @@
-package co.orre.discordbridge.minecraft.commands
+package co.orre.discordbridge.minecraft
 
 import co.orre.discordbridge.Plugin
 import co.orre.discordbridge.commands.MinecraftCommandWrapper

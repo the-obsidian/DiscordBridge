@@ -11,9 +11,18 @@ softdepend: [Multiverse-Core]
 main: co.orre.discordbridge.Plugin
 
 permissions:
-  discordbridge.reload:
-    description: Reload the Discord Bridge
+  discordbridge.discord:
+    description: Give the ability to use any command in of the /discord subcommand tree
+    default: true
+  discordbridge.discord.reload:
+    description: Reload configs and JDA
     default: op
+  discordbridge.discord.listmembers:
+    description: Returns a list of members in the Discord channel
+    default: true
+  discordbridge.discord.linkalias:
+    description: Sends a request to a Discord member to set up alias translation
+    default: true
   discordbridge.talk:
     description: Determines whether this user can talk to Cleverbot
     default: true
@@ -42,7 +51,7 @@ commands:
     usage: /8ball <question>
   discord:
     description: Issue a command to the bot
-    usage: /discord <command>
+    usage: /discord <reload|get|alias> [arguments]...
   f:
     description: Press f to pay respects
     usage: /f

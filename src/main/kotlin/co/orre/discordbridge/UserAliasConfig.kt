@@ -16,6 +16,14 @@ object UserAliasConfig {
         aliases = aliases.plus(ua)
         plugin.users.data.set("aliases", aliases)
         plugin.users.saveConfig()
+        plugin.users.reloadConfig()
+    }
+
+    fun remove(plugin: Plugin, ua: UserAlias) {
+        aliases = aliases.minus(ua)
+        plugin.users.data.set("aliases", aliases)
+        plugin.users.saveConfig()
+        plugin.users.reloadConfig()
     }
 
     @Suppress("UNCHECKED_CAST")

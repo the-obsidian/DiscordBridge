@@ -6,6 +6,7 @@ import co.orre.discordbridge.commands.*
 import co.orre.discordbridge.commands.annotations.*
 import co.orre.discordbridge.discord.Connection
 import co.orre.discordbridge.utils.Script
+import co.orre.discordbridge.utils.UtilFunctions.noSpace
 import co.orre.discordbridge.utils.UtilFunctions.stripColor
 import co.orre.discordbridge.utils.UtilFunctions.toDiscordChatMessage
 import co.orre.discordbridge.utils.UtilFunctions.toMinecraftChatMessage
@@ -53,13 +54,18 @@ class BotControllerManager(val plugin: Plugin) {
     }
 
     fun dispatchMessage(event: IEventWrapper): Boolean {
+        plugin.logger.info("Entered dispatchMessage()")
+        plugin.logger.info("Known commands: ${commands.keys}")
+
         // Short circuit if event was a Minecraft command
         if (event is MinecraftCommandWrapper) {
+            plugin.logger.info("MinecraftCommandWrapper detected!")
             val command = commands[event.command.name]
             if (command == null) {
                 commandNotFound(event, event.command.name)
                 return true
             }
+            plugin.logger.info("Command found: '${command.name}'")
             val inputArguments = event.rawMessage.split("\\s+".toRegex(), command.parameters.size).toTypedArray()
             return invokeCommand(command, controllers, event, inputArguments)
         }
@@ -71,7 +77,9 @@ class BotControllerManager(val plugin: Plugin) {
 
         // <prefix>command
         if (Config.COMMAND_PREFIX.isNotBlank() && args[0].startsWith(Config.COMMAND_PREFIX)) {
+            plugin.logger.info("Prefixed command detected!")
             val commandName = args[0].substring(Config.COMMAND_PREFIX.length).toLowerCase()
+            plugin.logger.info("Searching for command '$commandName'...")
             if (commandName == "") return true
             val command = commands[commandName]
 
@@ -79,6 +87,7 @@ class BotControllerManager(val plugin: Plugin) {
                 commandNotFound(event, commandName)
                 return false
             }
+            plugin.logger.info("Command found: '${command.name}'")
 
             val inputArguments = if (args.size == 1) arrayOf<String>()
             else args[1].split("\\s+".toRegex(), command.parameters.size).toTypedArray()
@@ -87,10 +96,12 @@ class BotControllerManager(val plugin: Plugin) {
         }
 
         // @<mention> command
-        //TODO: Support bot mentions from Minecraft
-        if (args[0] == Connection.JDA.selfUser.asMention && args.count() == 2) {
+        if ((event is AsyncPlayerChatEventWrapper && args[0] == "@"+Config.USERNAME.noSpace() ||
+                args[0] == Connection.JDA.selfUser.asMention) && args.count() == 2) {
+            plugin.logger.info("Bot Mention command detected!")
             val args2 = args[1].split("\\s+".toRegex(), 2).toTypedArray()
             val commandName = args2[0].toLowerCase()
+            plugin.logger.info("Searching for command '$commandName'...")
             if (commandName == "") return true
             var params = if (args2.size > 1) args2[1] else ""
             var command = commands[commandName]
@@ -104,6 +115,7 @@ class BotControllerManager(val plugin: Plugin) {
                 }
                 params = args[1]
             }
+            plugin.logger.info("Command found: '${command.name}'")
 
             val inputArguments = if (params == "") arrayOf<String>()
             else params.split("\\s+".toRegex(), command.parameters.size).toTypedArray()
@@ -138,26 +150,21 @@ class BotControllerManager(val plugin: Plugin) {
             }
 
             when (event) {
-                is AsyncPlayerChatEventWrapper -> {
-                    if (startswith)
-                        if (triggerMC.isNotEmpty() && arg.startsWith(triggerMC, ignorecase)) response = r
-                        else
-                            if (triggerMC.isNotEmpty() && arg.equals(triggerMC, ignorecase)) response = r
-                }
-                is MessageWrapper -> {
-                    if (startswith)
-                        if (triggerDis.isNotEmpty() && arg.startsWith(triggerDis, ignorecase)) response = r
-                        else
-                            if (triggerDis.isNotEmpty() && arg.equals(triggerDis, ignorecase)) response = r
-                }
+                is AsyncPlayerChatEventWrapper -> if (startswith)
+                    if (triggerMC.isNotEmpty() && arg.startsWith(triggerMC, ignorecase)) response = r
+                    else if (triggerMC.isNotEmpty() && arg.equals(triggerMC, ignorecase)) response = r
+                is MessageWrapper -> if (startswith)
+                    if (triggerDis.isNotEmpty() && arg.startsWith(triggerDis, ignorecase)) response = r
+                    else if (triggerDis.isNotEmpty() && arg.equals(triggerDis, ignorecase)) response = r
                 else -> return false
             }
         }
         if (response == null) return false
+        plugin.logger.info("A scripted response was found!")
         plugin.logDebug("user ${event.senderName} has triggered a scripted response")
         val responseDis: String? = response.responseDis
         val responseMC: String? = response.responseMC
-        if (responseDis != null) {
+        if (responseDis != null && responseDis.isNotBlank()) {
             var out = responseDis.replace("%u", event.senderAsMention)
             if (event is AsyncPlayerChatEventWrapper) {
                 out = plugin.convertAtMentions(out)
@@ -165,7 +172,7 @@ class BotControllerManager(val plugin: Plugin) {
             }
             plugin.sendToDiscord(out, event.channel)
         }
-        if (responseMC != null && event.isFromRelayChannel) {
+        if (responseMC != null && responseMC.isNotBlank() && event.isFromRelayChannel) {
             var out = responseMC.replace("%u", event.senderAsMention)
             if (event is MessageWrapper) {
                 out = plugin.deconvertAtMentions(out)
@@ -178,6 +185,7 @@ class BotControllerManager(val plugin: Plugin) {
 
     private fun invokeCommand(command: Command, instances: Map<Class<out IBotController>, IBotController>,
                               event: IEventWrapper, inputArguments: Array<String>): Boolean {
+        plugin.logger.info("Entered invokeCommand()")
         // Relay the trigger if applicable
         if (command.relayTriggerMessage) relay(event, false)
 
@@ -194,6 +202,7 @@ class BotControllerManager(val plugin: Plugin) {
 
             // Short circuit "help"
             command.name == "help" -> {
+                plugin.logger.info("Short-circuiting command 'help'")
                 try {
                     val response = command.commandMethod.invoke(instances[command.controllerClass], event, commands, instances) as? String ?: return true
                     respond(event, command, response)
@@ -237,6 +246,7 @@ class BotControllerManager(val plugin: Plugin) {
         }
 
         // Invoke the method
+        plugin.logger.info("Attempting to invoke command...")
         try {
             val response = command.commandMethod.invoke(instances[command.controllerClass], *arguments) as? String ?: return true
             respond(event, command, response)
@@ -271,8 +281,7 @@ class BotControllerManager(val plugin: Plugin) {
             }
             is MessageWrapper -> {
                 if (command.isPrivate) {
-                    event.originalMessage.author.openPrivateChannel()
-                    event.originalMessage.author.privateChannel.sendMessage(modifiedResponse)
+                    event.originalMessage.author.openPrivateChannel().queue({ p -> p.sendMessage(modifiedResponse).queue() })
                     return
                 }
                 if (command.isTagged) modifiedResponse = "${event.senderAsMention} | $modifiedResponse"
@@ -302,6 +311,7 @@ class BotControllerManager(val plugin: Plugin) {
     }
 
     private fun relay(event: IEventWrapper, logIgnore: Boolean) {
+        plugin.logger.info("Entered relay()")
         when (event) {
             is AsyncPlayerChatEventWrapper -> {
                 var worldname = event.event.player.world.name

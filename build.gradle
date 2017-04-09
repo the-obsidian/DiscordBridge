@@ -42,6 +42,7 @@ dependencies {
     compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '1.0.0-rc-1036'
     compile group: 'net.dv8tion', name: 'JDA', version: '3.0.BETA2_108'
     compile group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'
+    compile group: 'org.pegdown', name:'pegdown', version: '1.6.0'
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 

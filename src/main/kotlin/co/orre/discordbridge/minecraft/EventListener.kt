@@ -5,6 +5,7 @@ import co.orre.discordbridge.Plugin
 import co.orre.discordbridge.commands.AsyncPlayerChatEventWrapper
 import co.orre.discordbridge.commands.controllers.BotControllerManager
 import co.orre.discordbridge.commands.controllers.FunCommandsController
+import co.orre.discordbridge.commands.controllers.UtilCommandsController
 import co.orre.discordbridge.discord.Connection
 import co.orre.discordbridge.utils.UtilFunctions.stripColor
 import co.orre.discordbridge.utils.UtilFunctions.toDiscordPlayerDeath
@@ -23,7 +24,10 @@ class EventListener(val plugin: Plugin): Listener {
 
     val controllerManager = BotControllerManager(plugin)
 
-    init { controllerManager.registerController(FunCommandsController(plugin), chatExclusive = true) }
+    init {
+        controllerManager.registerController(FunCommandsController(plugin), chatExclusive = true)
+        controllerManager.registerController(UtilCommandsController(plugin), chatExclusive = true)
+    }
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onChat(event: AsyncPlayerChatEvent) {

@@ -75,7 +75,7 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
         plugin.logDebug("user ${event.senderName} requests an insult against '$thingToInsult'")
         val responses = plugin.insult.data.getStringList("responses")
         val rand = Random().nextInt(responses.count())
-        return "${event.senderAsMention} \uD83E\uDC52 $thingToInsult | ${responses[rand]}"
+        return "${event.senderAsMention} \u27A4 $thingToInsult | ${responses[rand]}"
     }
 
     // RATE - the bot rates something
