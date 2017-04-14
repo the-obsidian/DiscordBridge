@@ -7,6 +7,7 @@ import co.orre.discordbridge.commands.controllers.BotControllerManager
 import co.orre.discordbridge.commands.controllers.FunCommandsController
 import co.orre.discordbridge.commands.controllers.UtilCommandsController
 import co.orre.discordbridge.discord.Connection
+import co.orre.discordbridge.utils.MarkdownToMinecraftSeralizer
 import co.orre.discordbridge.utils.UtilFunctions.stripColor
 import co.orre.discordbridge.utils.UtilFunctions.toDiscordPlayerDeath
 import co.orre.discordbridge.utils.UtilFunctions.toDiscordPlayerJoin
@@ -37,7 +38,26 @@ class EventListener(val plugin: Plugin): Listener {
         if (event.player.hasMetadata("vanished") && event.player.getMetadata("vanished")[0].asBoolean() &&
                 !Config.IF_VANISHED_CHAT) return
 
+        event.message = event.message.replace(":lenny:", "( \u0361\u00B0 \u035C\u0296 \u0361\u00B0)")
+                .replace(":tableflip:", "(\u256F\u00B0\u25A1\u00B0\uFF09\u256F\uFE35 \u253B\u2501\u253B")
+                .replace(":unflip:", "\u252C\u2500\u2500\u252C \u30CE( \u309C-\u309C\u30CE)")
+                .replace(":shrug:", "\u00AF\\_(\u30C4)_/\u00AF")
+                .replace(":donger:", "\u30FD\u0F3C\u0E88\u0644\u035C\u0E88\u0F3D\uFF89")
+                .replace(":disapproval:", "\u0CA0_\u0CA0")
+                .replace(":kawaii:", "(\uFF89\u25D5\u30EE\u25D5)\uFF89*:\uFF65\uFF9F\u2727")
+                .replace(":amendo:", "\u0F3C \u3064 \u25D5_\u25D5 \u0F3D\u3064")
+                .replace(":yuno:", "\u10DA(\u0CA0\u76CA\u0CA0\u10DA)")
+                .replace(":fingerguns:", "(\u261E\uFF9F\u30EE\uFF9F)\u261E")
+                .replace(":fingergunsr:", "(\u261E\uFF9F\u30EE\uFF9F)\u261E")
+                .replace(":fingergunsl:", "\u261C(\uFF9F\u30EE\uFF9F\u261C)")
+                .replace(":fight:", "(\u0E07 \u2022\u0300_\u2022\u0301)\u0E07")
+                .replace(":happygary:", "\u1555(\u141B)\u1557")
+                .replace(":denko:", "(\u00B4\uFF65\u03C9\uFF65`)")
+                .replace(":masteryourdonger:", "(\u0E07 \u0360\u00B0 \u0644\u035C \u00B0)\u0E07")
+
         plugin.server.scheduler.runTaskAsynchronously(plugin, { controllerManager.dispatchMessage(AsyncPlayerChatEventWrapper(event)) })
+
+        event.message = MarkdownToMinecraftSeralizer().toMinecraft(plugin.pegDownProc.parseMarkdown(event.message.toCharArray()))
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

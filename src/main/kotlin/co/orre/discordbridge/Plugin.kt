@@ -14,6 +14,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
 import org.bukkit.configuration.serialization.ConfigurationSerialization
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
+import org.pegdown.PegDownProcessor
 import java.io.File
 import java.util.logging.Level
 import org.bukkit.ChatColor as CC
@@ -28,6 +29,9 @@ class Plugin : JavaPlugin() {
     var rate: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "rate.yml")
     var script: DataConfigAccessor = DataConfigAccessor(this, dataFolder, "script.yml")
     var worlds: DataConfigAccessor? = null
+
+    // Markdown deserializer
+    var pegDownProc = PegDownProcessor()
 
     // Temporary storage for alias linking requests
     var requests: MutableList<UserAlias> = mutableListOf()
