@@ -1,8 +1,10 @@
-Attempt to add Minecraft in-chat formatting
-Unfuck !!help in Minecraft
-Consider making !!help and !!serverlist reply using embeds
+Things to fix:
+- Unfuck !!help in Minecraft
+- Make util data classes null safe
 
-markdown parser is sending selector symbols to Discord
-markdown parser is removing the square brackets from "[Discord]" when relaying Discord chat messages
+Things to try:
+- Consider making !!help and !!serverlist reply using embeds
 
-remove logging when done
+Things to add:
+- Fix image embeds
+- Admin commands

@@ -5,6 +5,12 @@ import org.bukkit.configuration.serialization.SerializableAs
 import java.util.*
 
 //TODO: make null safe
+/**
+ * Represents a UserAlias entry in usernames.yml
+ *
+ * @param mcUuid the UUID of the Minecraft account linked to this alias
+ * @param discordId the unique Discord ID of the Discord account linked to this alias
+ */
 @SerializableAs("UserAlias")
 data class UserAlias(val mcUuid: UUID, val discordId: String): ConfigurationSerializable {
     @Suppress("unused")

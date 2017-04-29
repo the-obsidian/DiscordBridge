@@ -4,10 +4,20 @@ import org.parboiled.common.Preconditions
 import org.pegdown.Printer
 import org.pegdown.ast.*
 
+/**
+ * This class will descend the parse tree created by pegdown and convert basic Discord Markdown syntax into equivalent
+ * Minecraft formatting codes
+ */
 class MarkdownToMinecraftSeralizer : Visitor {
 
     private var printer = Printer()
 
+    /**
+     * Descends a parse tree and returns a formatted string
+     *
+     * @param astRoot = the root node of the parse tree
+     * @return a string formatted with Minecraft formatting symbols
+     */
     fun toMinecraft(astRoot: RootNode): String {
         Preconditions.checkArgNotNull<Any>(astRoot, "astRoot")
         astRoot.accept(this)

@@ -21,8 +21,14 @@ import org.bukkit.event.player.AsyncPlayerChatEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.dynmap.DynmapWebChatEvent
+import java.lang.reflect.Method
 import org.bukkit.ChatColor as CC
 
+/**
+ * Listens for the various event triggers passed through Bukkit
+ *
+ * @param plugin a reference to the base Plugin object
+ */
 class EventListener(val plugin: Plugin): Listener {
 
     val controllerManager = BotControllerManager(plugin)
@@ -32,6 +38,11 @@ class EventListener(val plugin: Plugin): Listener {
         controllerManager.registerController(UtilCommandsController(plugin), chatExclusive = true)
     }
 
+    /**
+     * Callback for when a chat event is received
+     *
+     * @param event the AsyncPlayerChatEvent
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     fun onChat(event: AsyncPlayerChatEvent) {
         plugin.logDebug("Received a chat event from ${event.player.name}: ${event.message}")
@@ -40,6 +51,7 @@ class EventListener(val plugin: Plugin): Listener {
         if (event.player.hasMetadata("vanished") && event.player.getMetadata("vanished")[0].asBoolean() &&
                 !Config.IF_VANISHED_CHAT) return
 
+        // Emoticons!
         event.message = event.message.replace(":lenny:", "( \u0361\u00B0 \u035C\u0296 \u0361\u00B0)")
                 .replace(":tableflip:", "(\u256F\u00B0\u25A1\u00B0\uFF09\u256F\uFE35 \u253B\u2501\u253B")
                 .replace(":unflip:", "\u252C\u2500\u2500\u252C \u30CE( \u309C-\u309C\u30CE)")
@@ -64,53 +76,103 @@ class EventListener(val plugin: Plugin): Listener {
         plugin.logger.info("Seralized! (synchronous)")
     }
 
+    /**
+     * Callback for when a chat event is received from Dynmap, if a Dynmap is running
+     *
+     * @param event the DynmapWebChatEvent
+     */
     @EventHandler(priority = EventPriority.MONITOR)
     fun onDynmapCatEvent(event: DynmapWebChatEvent) {
         plugin.sendToDiscord(plugin.translateAliasesToDiscord(event.message.toDiscordChatMessage(event.name, "Dynmap")), Connection.getRelayChannel())
     }
 
+    /**
+     * Callback for when a player logs in to the server
+     *
+     * @param event the PlayerJoinEvent
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
         val username = event.player.name.stripColor()
+        var worldname = event.player.world.name
 
         plugin.logDebug("Received a join event for $username")
         if (!Config.MESSAGES_JOIN) return
         if (player.hasMetadata("vanished") && player.getMetadata("vanished")[0].asBoolean() &&
                 !Config.IF_VANISHED_JOIN) return
 
-        var formattedMessage = player.toDiscordPlayerJoin()
+        // Get world alias if Multiverse is installed
+        if (plugin.isMultiverseInstalled) {
+            val worldProperties = plugin.worlds!!.data.get("worlds.$worldname")
+            val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
+            val meth: Method = cls.getMethod("getAlias")
+            val alias = meth.invoke(worldProperties)
+            if (alias is String) worldname = alias
+        }
+
+        var formattedMessage = player.toDiscordPlayerJoin(worldname)
         formattedMessage = plugin.translateAliasesToDiscord(formattedMessage)
         plugin.sendToDiscord(formattedMessage, Connection.getRelayChannel())
     }
 
+    /**
+     * Callback for when a player logs out of the server
+     *
+     * @param event the PlayerQuitEvent
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
         val username = event.player.name.stripColor()
+        var worldname = event.player.world.name
 
         plugin.logDebug("Received a leave event for $username")
         if (!Config.MESSAGES_LEAVE) return
         if (player.hasMetadata("vanished") && player.getMetadata("vanished")[0].asBoolean() &&
                 !Config.IF_VANISHED_LEAVE) return
 
-        var formattedMessage = player.toDiscordPlayerLeave()
+        // Get world alias if Multiverse is installed
+        if (plugin.isMultiverseInstalled) {
+            val worldProperties = plugin.worlds!!.data.get("worlds.$worldname")
+            val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
+            val meth: Method = cls.getMethod("getAlias")
+            val alias = meth.invoke(worldProperties)
+            if (alias is String) worldname = alias
+        }
+
+        var formattedMessage = player.toDiscordPlayerLeave(worldname)
         formattedMessage = plugin.translateAliasesToDiscord(formattedMessage)
         plugin.sendToDiscord(formattedMessage, Connection.getRelayChannel())
     }
 
+    /**
+     * Callback for when a player dies
+     *
+     * @param event the PlayerDeathEvent
+     */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val player = event.entity
         val username = event.entity.name.stripColor()
         val deathMessage = event.deathMessage
+        var worldname = event.entity.world.name
 
         plugin.logDebug("Received a death event for $username")
         if (!Config.MESSAGES_DEATH) return
         if (player.hasMetadata("vanished") && player.getMetadata("vanished")[0].asBoolean() &&
                 !Config.IF_VANISHED_DEATH) return
 
-        var formattedMessage = deathMessage.toDiscordPlayerDeath(username)
+        // Get world alias if Multiverse is installed
+        if (plugin.isMultiverseInstalled) {
+            val worldProperties = plugin.worlds!!.data.get("worlds.$worldname")
+            val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
+            val meth: Method = cls.getMethod("getAlias")
+            val alias = meth.invoke(worldProperties)
+            if (alias is String) worldname = alias
+        }
+
+        var formattedMessage = deathMessage.toDiscordPlayerDeath(username, worldname)
         formattedMessage = plugin.translateAliasesToDiscord(formattedMessage)
         plugin.sendToDiscord(formattedMessage, Connection.getRelayChannel())
     }

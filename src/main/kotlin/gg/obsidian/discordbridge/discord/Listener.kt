@@ -8,6 +8,11 @@ import gg.obsidian.discordbridge.commands.controllers.UtilCommandsController
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
 import net.dv8tion.jda.core.hooks.ListenerAdapter
 
+/**
+ * Listens for events from Discord
+ *
+ * @param plugin a reference to the base Plugin object
+ */
 class Listener(val plugin: Plugin) : ListenerAdapter() {
 
     val controllerManager = BotControllerManager(plugin)
@@ -17,6 +22,11 @@ class Listener(val plugin: Plugin) : ListenerAdapter() {
         controllerManager.registerController(UtilCommandsController(plugin), discordExclusive = true, chatExclusive = true)
     }
 
+    /**
+     * Callback for captured messages
+     *
+     * @param event the MessageReceivedEvent object
+     */
     override fun onMessageReceived(event: MessageReceivedEvent) {
         plugin.logDebug("Received message ${event.message.id} from Discord - ${event.message.rawContent}")
 

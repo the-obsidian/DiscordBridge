@@ -20,6 +20,8 @@ package gg.obsidian.discordbridge
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
+*
+* NOTE: This code has been modified from Java to Kotlin. The functionality is largely identical.
 */
 
 import org.bukkit.configuration.file.FileConfiguration
@@ -29,6 +31,13 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.logging.Level
 
+/**
+ * Acts as an interface between the plugin and a target config file
+ *
+ * @param plugin a reference to the base Plugin object
+ * @param filepath the path to the config file
+ * @param fileName the name of the config file plus its extension
+ */
 class DataConfigAccessor(val plugin: Plugin, filepath: File, private val fileName: String) {
 
     private val configFile: File?
@@ -39,6 +48,11 @@ class DataConfigAccessor(val plugin: Plugin, filepath: File, private val fileNam
         this.configFile = File(filepath, fileName)
     }
 
+    /**
+     * Reloads the data from the config file into memory
+     *
+     * If the file is null, the default file from within the jar file is loaded instead
+     */
     fun reloadConfig() {
         try {
             fileConfiguration = YamlConfiguration.loadConfiguration(configFile)
@@ -59,6 +73,9 @@ class DataConfigAccessor(val plugin: Plugin, filepath: File, private val fileNam
             return fileConfiguration!!
         }
 
+    /**
+     * Writes the current memory contents of the config back to file
+     */
     fun saveConfig() {
         if (fileConfiguration == null || configFile == null)
             return
@@ -71,6 +88,9 @@ class DataConfigAccessor(val plugin: Plugin, filepath: File, private val fileNam
         }
     }
 
+    /**
+     * Saves the default config file within the jar to its own file, if it does not already exist
+     */
     @Suppress("unused")
     fun saveDefaultConfig() {
         if (!configFile!!.exists())

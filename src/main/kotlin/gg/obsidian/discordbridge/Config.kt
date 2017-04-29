@@ -3,6 +3,9 @@ package gg.obsidian.discordbridge
 import gg.obsidian.discordbridge.utils.UtilFunctions.noSpace
 import org.bukkit.ChatColor
 
+/**
+ * Caches primary config information
+ */
 object Config {
 
     var SERVER_ID: String = ""
@@ -42,6 +45,10 @@ object Config {
     // misc
     var BOT_MC_USERNAME = ""
 
+    /**
+     * Load values into memory from the config file
+     * @param plugin the base Plugin object
+     */
     fun load(plugin: Plugin) {
         plugin.reloadConfig()
 

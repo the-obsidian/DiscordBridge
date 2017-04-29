@@ -19,6 +19,9 @@ import java.io.File
 import java.util.logging.Level
 import org.bukkit.ChatColor as CC
 
+/**
+ * The primary Plugin class that maintains the plugin's connection with Bukkit
+ */
 class Plugin : JavaPlugin() {
 
     // Configs
@@ -36,12 +39,17 @@ class Plugin : JavaPlugin() {
     // Temporary storage for alias linking requests
     var requests: MutableList<UserAlias> = mutableListOf()
 
-    // Detects if Multiverse-Core is installed
+    /**
+     * Returns whether Multiverse-Core is installed
+     */
     val isMultiverseInstalled: Boolean
         get() = server.pluginManager.getPlugin("Multiverse-Core") != null
 
+    /**
+     * Runs at plugin startup
+     */
     override fun onEnable() {
-
+        // Register data class types to the config deserializer
         ConfigurationSerialization.registerClass(Respect::class.java, "Respect")
         ConfigurationSerialization.registerClass(Rating::class.java, "Rating")
         ConfigurationSerialization.registerClass(Script::class.java, "Script")
@@ -68,6 +76,9 @@ class Plugin : JavaPlugin() {
         getCommand("roll").executor = CommandListener(this)
     }
 
+    /**
+     * Runs cleanup when the plugin is disabled
+     */
     override fun onDisable() {
         if (Config.ANNOUNCE_SERVER_START_STOP)
             Connection.send(Config.TEMPLATES_DISCORD_SERVER_STOP, Connection.getRelayChannel())
@@ -81,13 +92,22 @@ class Plugin : JavaPlugin() {
       Messaging Functions
     ===================================== */
 
-    // Send a message to Discord
+    /**
+     * Sends a message to the specified Discord channel
+     *
+     * @param message the message to send
+     * @param channel the channel to send the message to
+     */
     fun sendToDiscord(message: String, channel: MessageChannel?) {
         logDebug("Sending message to Discord - $message")
         Connection.send(message, channel)
     }
 
-    // Send a message to Minecraft
+    /**
+     * Broadcast a message on the Minecraft server
+     *
+     * @param message the message to send
+     */
     fun sendToMinecraft(message: String) {
         server.broadcastMessage(message)
     }
@@ -96,7 +116,9 @@ class Plugin : JavaPlugin() {
       Util
     ===========================================*/
 
-    // Reloads everything
+    /**
+     * Reloads all configs and the JDA connection
+     */
     fun reload(callback: Runnable) {
         reloadConfig()
         users.reloadConfig()
@@ -111,7 +133,9 @@ class Plugin : JavaPlugin() {
         Connection.reconnect(callback)
     }
 
-    // Save default config
+    /**
+     * Saves all default configs where configs do not exist and reloads data from file into memory
+     */
     fun updateConfig(version: String) {
         this.saveDefaultConfig()
         config.options().copyDefaults(true)
@@ -129,13 +153,17 @@ class Plugin : JavaPlugin() {
         UserAliasConfig.load(this)
     }
 
-    // Log only if debug config is true
+    /**
+     * Sends a log message to console if the DEBUG flag in config.yml is true
+     */
     fun logDebug(msg: String) {
         if (!Config.DEBUG) return
-        logger.info(msg)
+        logger.info("[DiscordBridge] $msg")
     }
 
-    // Get a list of usernames of players who are online
+    /**
+     * @return a list of names of all players currently on the Minecraft server
+     */
     fun getOnlinePlayers(): List<String> {
         val names: MutableList<String> = mutableListOf()
         val players = server.onlinePlayers.toTypedArray()
@@ -143,7 +171,13 @@ class Plugin : JavaPlugin() {
         return names.toList()
     }
 
-    // Open a request to link a Minecraft user with a Discord user
+    /**
+     * Opens an alias link request and sends it to the target Discord user
+     *
+     * @param player the Minecraft player that initiated the request
+     * @param discriminator the Discord username+discriminator of the target Discord user
+     * @return a Discord Member object, or null if no matching member was found
+     */
     fun registerUserRequest(player: Player, discriminator: String): Member? {
         val users = Connection.listUsers()
         val found: Member = users.find { it.user.name + "#" + it.user.discriminator == discriminator } ?: return null
@@ -158,7 +192,9 @@ class Plugin : JavaPlugin() {
         return found
     }
 
-    // Return a formatted string listing the Discord IDs of all Discord users in the relay channel
+    /**
+     * @return a formatted string listing the Discord IDs of all Discord users in the relay channel
+     */
     fun getDiscordMembersAll(): String {
         val users = Connection.listUsers()
 
@@ -173,7 +209,9 @@ class Plugin : JavaPlugin() {
         return response.trim()
     }
 
-    // Return a formatted string listing all Discord users in the relay channel who are visibly available
+    /**
+     * @return a formatted string listing all Discord users in the relay channel who are online along with their statuses
+     */
     fun getDiscordMembersOnline(): String {
         val onlineUsers = Connection.listOnline()
         if (onlineUsers.isEmpty())
@@ -210,8 +248,18 @@ class Plugin : JavaPlugin() {
       Message Formatting Functions
     ===================================== */
 
-    // Converts attempted @mentions to real ones wherever possible
-    // Mentionable names MUST NOT contain spaces!
+    /**
+     * Attempts to convert all instances of "@name" into Discord @tag mentions
+     *
+     * This should work for "@<Discord server name>", "@<Minecraft username>" (if an alias is linked),
+     * and "@<Discord name + #discrminator>"
+     *
+     * NOTE: If the Discord name contains spaces, that name must be typed in this string without spaces.
+     * e.g. a member named "Discord Bridge" must be tagged as "@DiscordBridge"
+     *
+     * @param message the message to format
+     * @return the formatted message
+     */
     fun convertAtMentions(message: String): String {
         var newMessage = message
 
@@ -239,6 +287,12 @@ class Plugin : JavaPlugin() {
         return newMessage
     }
 
+    /**
+     * Attempts to de-convert all instances of Discord @tag mentions back into simple "@name" syntax
+     *
+     * @param message the message to format
+     * @return the formatted message
+     */
     fun deconvertAtMentions(message: String): String {
         var modifiedMessage = message
         for (match in Regex("""<@!(\d+)>|<@(\d+)>""").findAll(message)) {
@@ -248,8 +302,13 @@ class Plugin : JavaPlugin() {
         return modifiedMessage
     }
 
-    // Scans the string for occurrences of Minecraft names and attempts to translate them
-    // to registered Discord names, if they exist
+    /**
+     * Scans the input string for occurrences of Minecraft names in the alias registry and replaces them with
+     * their corresponding Discord aliases
+     *
+     * @param message the message to format
+     * @return the formatted message
+     */
     fun translateAliasesToDiscord(message: String): String {
         var modifiedMessage = message
         for ((mcUuid, discordId) in UserAliasConfig.aliases) {
@@ -261,8 +320,13 @@ class Plugin : JavaPlugin() {
         return modifiedMessage
     }
 
-    // Scans the string for occurrences of Discord names and attempts to translate them
-    // to registered Minecraft names, if they exist
+    /**
+     * Scans the input string for occurrences of Discord names in the alias registry and replaces them with
+     * their corresponding Minecraft aliases
+     *
+     * @param message the message to format
+     * @return the formatted message
+     */
     fun translateAliasesToMinecraft(message: String): String {
         var modifiedMessage = message
         for ((mcUuid, discordId) in UserAliasConfig.aliases) {

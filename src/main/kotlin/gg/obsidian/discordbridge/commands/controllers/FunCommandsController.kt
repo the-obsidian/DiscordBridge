@@ -11,11 +11,24 @@ import gg.obsidian.discordbridge.utils.Rating
 import gg.obsidian.discordbridge.utils.Respect
 import java.util.*
 
+/**
+ * Controller for fun commands that have no purpose outside of amusement
+ *
+ * @param plugin a reference to the base Plugin object
+ */
 class FunCommandsController(val plugin: Plugin) : IBotController {
 
+    /**
+     * @return a description of this class of commands, used in the Help command
+     */
     override fun getDescription(): String = ":balloon:  **FUN** - Every bot has to have them!"
 
-    // 8BALL - consult the Magic 8-Ball to answer your yes or no questions
+    /**
+     * Answers a yes/no question
+     *
+     * @param event the incoming event object
+     * @return the response string
+     */
     @BotCommand(name = "8ball", usage = "<question>", description = "Consult the Magic 8 Ball")
     @TaggedResponse
     private fun eightBall(event: IEventWrapper): String {
@@ -25,7 +38,13 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
         return responses[rand]
     }
 
-    // CHOOSE - chooses between some number of options
+    /**
+     * Makes a selection among an arbitrary number of supplied choices
+     *
+     * @param event the incoming event object
+     * @param query a delimited string of the options to choose from
+     * @return the response string
+     */
     @BotCommand(name = "choose", usage = "<option>, <option>, ... (delimiters include ',', 'or', '|')",
             description = "Have the bot choose between given options")
     @TaggedResponse
@@ -36,7 +55,12 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
         return "I pick '${choices[rand]}'"
     }
 
-    // F - press F to pay respects!
+    /**
+     * Press F to pay respects
+     *
+     * @param event the incoming event object
+     * @return the response string
+     */
     @BotCommand(usage="", description = "Press F to pay respects")
     private fun f(event: IEventWrapper): String {
         plugin.logDebug("user ${event.senderName}} pays respects")
@@ -69,7 +93,13 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
         return msg
     }
 
-    // INSULT - the bot insults something
+    /**
+     * Insult someone or something
+     *
+     * @param event the incoming event object
+     * @param thingToInsult the target of the insult
+     * @return the response string
+     */
     @BotCommand(usage="<thing to insult>", description = "Make the bot insult something for you")
     private fun insult(event: IEventWrapper, thingToInsult: String): String {
         plugin.logDebug("user ${event.senderName} requests an insult against '$thingToInsult'")
@@ -78,7 +108,13 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
         return "${event.senderAsMention} \u27A4 $thingToInsult | ${responses[rand]}"
     }
 
-    // RATE - the bot rates something
+    /**
+     * Rate something on a scale specified by the config
+     *
+     * @param event the incoming event object
+     * @param thingToRate the thing that will receive the rating
+     * @return the response string
+     */
     @BotCommand(usage="<thing to be rated>", description = "Have the bot rate something for you")
     @TaggedResponse
     private fun rate(event: IEventWrapper, thingToRate: String): String {
@@ -119,7 +155,13 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
         return found.message.replace("%m", thingToBeRated).replace("%r", "$rating/$rateOutOf")
     }
 
-    // ROLL - roll a die for a random number
+    /**
+     * Roll a die with a specified number of sides
+     *
+     * @param event the incoming event object
+     * @param sides the number of sides of the die
+     * @return the response string
+     */
     @BotCommand(name = "roll", usage = "<sides>", description = "Roll a die for a random number")
     @TaggedResponse
     private fun roll(event: IEventWrapper, sides: Int): String {
@@ -132,7 +174,13 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
         return "You rolled... $rand"
     }
 
-    // TALK - directly speak to Cleverbot (useful for not accidentally invoking other commands)
+    /**
+     * Talk to Cleverbot
+     *
+     * @param event the incoming event object
+     * @param query the message to send to Cleverbot
+     * @return the response string
+     */
     @TaggedResponse
     @BotCommand(usage="<say something>", description = "Say something to Cleverbot")
     private fun talk(event: IEventWrapper, query: String): String {
@@ -145,6 +193,9 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
         return bot.response
     }
 
+    /**
+     * Shortcut method for adding "or <prefix>help " to the CommandNotFound output if a COMMAND_PREFIX is set in config
+     */
     @Suppress("UNCHECKED_CAST")
     private inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
 }

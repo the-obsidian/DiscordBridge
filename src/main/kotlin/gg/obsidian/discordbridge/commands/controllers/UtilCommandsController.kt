@@ -11,11 +11,24 @@ import net.dv8tion.jda.core.entities.ChannelType
 import org.bukkit.entity.Player
 import org.bukkit.ChatColor as CC
 
+/**
+ * Controller for utility commands that configure the way the bot works
+ *
+ * @param plugin a reference to the base Plugin object
+ */
 class UtilCommandsController(val plugin: Plugin) : IBotController {
 
+    /**
+     * @return a short description of this IBotController's methods as seen in the Help command
+     */
     override fun getDescription(): String = ":wrench:  **UTIL** - Utility commands"
 
-    // CONFIRM - Confirm an alias request
+    /**
+     * Confirms an open request to link aliases with a Minecraft account
+     *
+     * @param event the incoming event object
+     * @return a status message if the event is type MessageWrapper and is sent via DM, null otherwise
+     */
     @BotCommand(usage="", description="Confirm an alias link request", relayTriggerMessage = false)
     @DiscordExclusiveCommand
     @PrivateResponse
@@ -34,7 +47,12 @@ class UtilCommandsController(val plugin: Plugin) : IBotController {
         return "Successfully linked aliases!"
     }
 
-    // DENY - Deny an alias request
+    /**
+     * Denies an open request to link aliases with a Minecraft account
+     *
+     * @param event the incoming event object
+     * @return a status message if the event is type MessageWrapper and is sent via DM, null otherwise
+     */
     @BotCommand(usage="", description="Deny an alias link request", relayTriggerMessage = false)
     @DiscordExclusiveCommand
     @PrivateResponse
@@ -52,7 +70,23 @@ class UtilCommandsController(val plugin: Plugin) : IBotController {
         return "The alias link request has been cancelled."
     }
 
-    @BotCommand(usage="<reload|get|alias> [args...]", description = "For in-game functions", relayTriggerMessage = false)
+    /**
+     * A supercommand for utility functions available within Minecraft
+     *
+     * reload - Refreshes the JDA connection and reloads configs
+     *
+     * linkalias - sends a request to a specified Discord user to link aliases for username translation
+     *
+     * listmembers - lists all the members in the Discord relay channel. Can specify "all" to get all members, or
+     * "online" to list only online members and their availability statuses
+     *
+     * unlinkalias - silently breaks an alias link with a Discord user if one exists
+     *
+     * @param event the incoming event object
+     * @param argString a space-delimited string of subcommands to execute
+     * @return this command always returns null
+     */
+    @BotCommand(usage="<reload|linkalias|listmembers|unlinkalias> [args...]", description = "For in-game functions", relayTriggerMessage = false)
     @MinecraftExclusiveCommand
     @PrivateResponse
     private fun discord(event: IEventWrapper, argString: String): String? {
@@ -146,6 +180,13 @@ class UtilCommandsController(val plugin: Plugin) : IBotController {
         return null
     }
 
+    /**
+     * Displays a pretty list of available commands to the invoker
+     *
+     * @param event the incoming event object
+     * @param commands a map of all commands that can be called by the invoker in the given medium indexed by name
+     * @param instances a map of IBotController instances accessed by their Java classes
+     */
     @BotCommand(usage="", description="You just used it", relayTriggerMessage = false)
     @ChatExclusiveCommand
     @PrivateResponse
@@ -187,7 +228,11 @@ class UtilCommandsController(val plugin: Plugin) : IBotController {
         }
     }
 
-    // SERVERLIST - List all players currently online on the server
+    /**
+     * Displays a pretty list of all currently logged-in Minecraft players
+     *
+     * @param event the incoming event object
+     */
     @DiscordExclusiveCommand
     @BotCommand(usage="", description = "List all Minecraft players currently online on the server",
             relayTriggerMessage = false)
