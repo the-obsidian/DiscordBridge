@@ -1,26 +1,65 @@
-settings:
-  server-id: '00000000'
-  channel: 'test'
-  username: 'username'
-  email: 'email@example.com'
-  password: 'password'
-  debug: false
-  relay_cancelled_messages: true
-  messages:
-    chat: true
-    join: true
-    leave: true
-    death: false
-  if_vanished:
-    chat: false
-    join: false
-    leave: false
-    death: false
-  templates:
-    discord:
-      chat_message: '<%u> %m'
-      player_join: '%u joined the server'
-      player_leave: '%u left the server'
-      player_death: '%r'
-    minecraft:
-      chat_message: '<%u&b(discord)&r> %m'
+# DiscordBridge Config
+
+# The bot's Discord API access token
+token: ''
+
+# These values will control which channel the bot will watch to relay messages to and from the server.
+server-id: '00000000'
+channel: 'channel-name'
+
+# The bot's Discord username
+username: 'DiscordBridge'
+
+# (Optional) Apply formatting codes to the bot's name in Minecraft chat.
+# Use '&' in place of the formatting symbol.
+username-color: ''
+
+# (Optional) Define an alternate prefix for all of the bot's commands. These will work in addition to @mentions.
+# Will also work in Minecraft if the sender has the required permission for the command they try.
+# Leave blank to only allow @mentions to prefix commands
+command-prefix: ''
+
+# (Optional) Set this value with a valid Cleverbot API key to enable chatting with Cleverbot
+# Look at https://www.cleverbot.com/api/ for more info
+cleverbot-key: ''
+
+# If true, prints verbose log messages to the server console for every action
+debug: false
+
+# If true, Minecraft chat events that are cancelled will still be relayed to Discord.
+relay-cancelled-messages: true
+
+# Controls which events in general are relayed to Discord
+messages:
+  player-chat: true
+  player-join: true
+  player-leave: true
+  player-death: false
+  server-start: true
+  server-stop: true
+
+# Controls which events caused by vanished players are relayed to Discord
+# NOTE: If set to true, it will only have effect if the corresponding message above is also set to true
+if-vanished:
+  player-chat: false
+  player-join: false
+  player-leave: false
+  player-death: false
+
+# Set the templates for various message types
+# %u - The username of the one who sent the message or invoked a command, if applicable
+# %m - The raw message that would normally display, if applicable
+# %w - The name of the world the sender is in
+#   - Applicable to messages from Minecraft only
+#   - Multiverse alias compatible
+# Use '&' in place of the formatting symbol to apply formatting codes to messages sent to Minecraft
+templates:
+  discord:
+    chat-message: '<**%u**> %m'
+    player-join: '**%u** joined the server'
+    player-leave: '**%u** left the server'
+    player-death: '%m'
+    server-start: 'Server started!'
+    server-stop: 'Shutting down...'
+  minecraft:
+    chat-message: '[&b&lDiscord&r]<%u> %m'

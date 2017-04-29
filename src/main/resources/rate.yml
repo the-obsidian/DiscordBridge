@@ -1,0 +1,78 @@
+# Rate config
+
+# Determines the max rating of the Rate command
+# Ratings given by the bot will be expressed on a scale from 0 to this number inclusive
+# Must be an integer between 1 and 1000000
+rate-out-of: 10
+
+# Determines how many decimal places the rating should be accurate to
+# Must be an integer between 0 and 2
+rate-granularity: 1
+
+# If true, the bot will make the following replacements in the rating argument to make it feel more conversational:
+#   me -> you
+#   my -> your
+#   myself -> yourself
+#   your -> my
+#   yourself -> myself
+# Example: "rate my build" with a template of "I rate %m..." will become "I rate your build..."
+translate-first-and-second-person: true
+
+# The responses that are returned by the Rate command
+# A message will be displayed if the random number rolled between 0 and rate-out-of falls within the range of
+# [low, high] inclusive. For ratings that should appear only for specific values, set low and high to the same value.
+# All entries must be prefixed with the "==: Rating" attribute, as shown in the default
+# message = the message to display
+#   '%m' = the thing that is being rated
+#   '%r' = the rating itself, expressed in the form <rating>/<max>
+# low = the lower bound at which this message will display, inclusive
+# high = the higher bound at which this message will display, inclusive
+responses:
+- ==: Rating
+  message: 'I rate %m 0/10, absolutely awful'
+  low: 0
+  high: 0
+- ==: Rating
+  message: 'I rate %m a shitty %r'
+  low: 0.1
+  high: 0.9
+- ==: Rating
+  message: 'I rate %m a very low %r'
+  low: 1.0
+  high: 1.9
+- ==: Rating
+  message: 'I rate %m a low %r'
+  low: 2.0
+  high: 2.9
+- ==: Rating
+  message: 'I rate %m a paltry %r'
+  low: 3.0
+  high: 3.9
+- ==: Rating
+  message: 'I rate %m a meh %r'
+  low: 4.0
+  high: 4.9
+- ==: Rating
+  message: 'I rate %m a solid %r'
+  low: 5.0
+  high: 5.9
+- ==: Rating
+  message: 'I rate %m a somewhat good %r'
+  low: 6.0
+  high: 6.9
+- ==: Rating
+  message: 'I rate %m a good %r'
+  low: 7.0
+  high: 7.9
+- ==: Rating
+  message: 'I rate %m a great %r'
+  low: 8.0
+  high: 8.9
+- ==: Rating
+  message: 'I rate %m a fantastic %r'
+  low: 9.0
+  high: 9.9
+- ==: Rating
+  message: 'I rate %m a perfect 10/10'
+  low: 10
+  high: 10

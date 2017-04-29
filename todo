@@ -1,0 +1,10 @@
+Things to fix:
+- Unfuck !!help in Minecraft
+- Make util data classes null safe
+
+Things to try:
+- Consider making !!help and !!serverlist reply using embeds
+
+Things to add:
+- Fix image embeds
+- Admin commands

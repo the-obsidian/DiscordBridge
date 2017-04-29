@@ -1,7 +1,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
-    ext.kotlin_version = '1.0.0'
+    ext.kotlin_version = '1.1.2'
 
     repositories {
         mavenCentral()
@@ -14,25 +14,21 @@ buildscript {
     }
 }
 
-
 plugins {
     id 'java'
-    id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'com.github.johnrengelman.shadow' version '1.2.4'
 }
 
 apply plugin: 'kotlin'
 
 group = 'gg.obsidian'
-version = '1.7.1'
+version = '1.8.0'
 description = """Bridge chat between Minecraft and Discord"""
 ext.url = 'https://github.com/the-obsidian/DiscordBridge'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
 repositories {
     maven { url 'https://maven-central.storage.googleapis.com' }
-    maven { url 'https://hub.spigotmc.org/nexus/content/groups/public/' }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url 'http://lutece.paris.fr/nexus/content/repositories/lutece_third_party' }
     maven { url 'https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo' }
@@ -41,24 +37,32 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.spigotmc', name: 'spigot-api', version:'1.8.8-R0.1-SNAPSHOT'
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version:'1.0.0-rc-1036'
-    compile group: 'net.dv8tion', name: 'JDA', version:'1.4.0_238'
+    compile group: 'org.spigotmc', name: 'spigot-api', version: '1.11.2-R0.1-SNAPSHOT'
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '1.0.0-rc-1036'
+    compile group: 'net.dv8tion', name: 'JDA', version: '3.0.BETA2_108'
+    compile group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'
+    compile group: 'org.pegdown', name:'pegdown', version: '1.6.0'
+
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile files('libraries/dynmap-api-2.5-SNAPSHOT.jar')
 }
 
 processResources {
     filter ReplaceTokens, tokens: [
             'DESCRIPTION': project.property('description'),
-            'URL': project.property('url'),
-            'VERSION': project.property('version')
+            'URL'        : project.property('url'),
+            'VERSION'    : project.property('version')
     ]
 }
 
+//noinspection GroovyAssignabilityCheck
 build.finalizedBy(shadowJar)
 
 shadowJar {
+    relocate 'org.apache', 'shadow.apache'
     classifier 'dist'
     dependencies {
+        //noinspection GroovyAssignabilityCheck
         exclude(dependency('org.spigotmc:.*:.*'))
     }
     exclude '.cache'
@@ -74,3 +78,6 @@ task copyFinalJar(type: Copy) {
 }
 
 shadowJar.finalizedBy(copyFinalJar)
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
