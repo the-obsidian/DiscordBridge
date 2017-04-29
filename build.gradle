@@ -22,7 +22,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group = 'gg.obsidian'
-version = '1.8.0'
+version = '2.0.0'
 description = """Bridge chat between Minecraft and Discord"""
 ext.url = 'https://github.com/the-obsidian/DiscordBridge'
 
