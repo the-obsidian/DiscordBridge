@@ -5,7 +5,7 @@ Bridges chat between Discord and Minecraft (Bukkit/Spigot).
 ## Requirements
 
 * Java 8
-* Spigot 1.11.2
+* Spigot 1.12
 
 ## Installation
 
@@ -98,7 +98,7 @@ templates:
 * `relay_cancelled_messages` will relay chat messages even if they are cancelled
 * `messages` enables or disables certain kinds of messages
 * `if_vanished` enables or disables messages if the user is vanished (applies after `messages`)
-* `templates` - customize the message text 
+* `templates` - customize the message text
 
 **Templates**
 
