@@ -65,7 +65,7 @@ object Connection: Runnable {
         JDA.removeEventListener(listener)
         server = null
         channel = null
-        JDA.shutdown(false)
+        JDA.shutdown()
 
         //reconnect
         connect()
