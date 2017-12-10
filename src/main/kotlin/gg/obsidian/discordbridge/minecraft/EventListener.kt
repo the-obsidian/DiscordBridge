@@ -73,7 +73,6 @@ class EventListener(val plugin: Plugin): Listener {
         plugin.server.scheduler.runTaskAsynchronously(plugin, { controllerManager.dispatchMessage(wrapper) })
 
         event.message = MarkdownToMinecraftSeralizer().toMinecraft(plugin.pegDownProc.parseMarkdown(event.message.toCharArray()))
-        plugin.logger.info("Seralized! (synchronous)")
     }
 
     /**

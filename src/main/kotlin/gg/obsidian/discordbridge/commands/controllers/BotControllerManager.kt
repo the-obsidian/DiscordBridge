@@ -11,6 +11,7 @@ import gg.obsidian.discordbridge.utils.UtilFunctions.noSpace
 import gg.obsidian.discordbridge.utils.UtilFunctions.stripColor
 import gg.obsidian.discordbridge.utils.UtilFunctions.toDiscordChatMessage
 import gg.obsidian.discordbridge.utils.UtilFunctions.toMinecraftChatMessage
+import org.bukkit.Bukkit
 import java.lang.reflect.Method
 import java.util.*
 import java.util.logging.Level
@@ -110,6 +111,12 @@ class BotControllerManager(val plugin: Plugin) {
             val command = commands[commandName]
 
             if (command == null) {
+                // Attempt to run as a server command
+                val serverCommandSuccess = Bukkit.getServer().dispatchCommand(Bukkit.getServer().consoleSender, args.joinToString(" ").substring(Config.COMMAND_PREFIX.length))
+                if (serverCommandSuccess)
+                    return true
+
+
                 commandNotFound(event, commandName)
                 return false
             }
@@ -361,7 +368,6 @@ class BotControllerManager(val plugin: Plugin) {
      * message is not relayed to Minecraft
      */
     private fun relay(event: IEventWrapper, logIgnore: Boolean) {
-        plugin.logger.info("Entered relay. event: ${event.message}")
         when (event) {
             is AsyncPlayerChatEventWrapper -> {
                 var worldname = event.event.player.world.name
