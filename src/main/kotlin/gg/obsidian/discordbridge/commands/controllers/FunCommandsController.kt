@@ -29,7 +29,7 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
      * @param event the incoming event object
      * @return the response string
      */
-    @BotCommand(name = "8ball", usage = "<question>", description = "Consult the Magic 8 Ball")
+    @BotCommand(name = "8ball", usage = "<question>", description = "Consult the Magic 8 Ball", squishExcessArgs = true)
     @TaggedResponse
     private fun eightBall(event: IEventWrapper): String {
         plugin.logDebug("user ${event.senderName} consults the Magic 8-Ball")
@@ -46,7 +46,7 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
      * @return the response string
      */
     @BotCommand(name = "choose", usage = "<option>, <option>, ... (delimiters include ',', 'or', '|')",
-            description = "Have the bot choose between given options")
+            description = "Have the bot choose between given options", squishExcessArgs = true)
     @TaggedResponse
     private fun choose(event: IEventWrapper, query: String): String {
         plugin.logDebug("user ${event.senderName} needs a choice made")
@@ -100,7 +100,7 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
      * @param thingToInsult the target of the insult
      * @return the response string
      */
-    @BotCommand(usage="<thing to insult>", description = "Make the bot insult something for you")
+    @BotCommand(usage="<thing to insult>", description = "Make the bot insult something for you", squishExcessArgs = true)
     private fun insult(event: IEventWrapper, thingToInsult: String): String {
         plugin.logDebug("user ${event.senderName} requests an insult against '$thingToInsult'")
         val responses = plugin.insult.data.getStringList("responses")
@@ -115,7 +115,7 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
      * @param thingToRate the thing that will receive the rating
      * @return the response string
      */
-    @BotCommand(usage="<thing to be rated>", description = "Have the bot rate something for you")
+    @BotCommand(usage="<thing to be rated>", description = "Have the bot rate something for you", squishExcessArgs = true)
     @TaggedResponse
     private fun rate(event: IEventWrapper, thingToRate: String): String {
         plugin.logDebug("user ${event.senderName} requests a rating")
@@ -182,7 +182,7 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
      * @return the response string
      */
     @TaggedResponse
-    @BotCommand(usage="<say something>", description = "Say something to Cleverbot")
+    @BotCommand(usage="<say something>", description = "Say something to Cleverbot", squishExcessArgs = true)
     private fun talk(event: IEventWrapper, query: String): String {
         plugin.logDebug("user ${event.senderName} invokes Cleverbot")
 
