@@ -73,7 +73,7 @@ class BotControllerManager(val plugin: Plugin) {
         if (methodParameters.isEmpty() || !methodParameters[0].type.isAssignableFrom(IEventWrapper::class.java)) return
 
         method.isAccessible = true
-        val parameters = (1..methodParameters.size - 1).mapTo(ArrayList<Class<*>>()) { methodParameters[it].type }
+        val parameters = (1 until methodParameters.size).mapTo(ArrayList<Class<*>>()) { methodParameters[it].type }
         val isTagged: Boolean = method.getAnnotation(TaggedResponse::class.java) != null
         val isPrivate: Boolean = method.getAnnotation(PrivateResponse::class.java) != null
         val command = Command(commandName, usage, annotation.description, parameters, annotation.relayTriggerMessage,
@@ -256,11 +256,11 @@ class BotControllerManager(val plugin: Plugin) {
 
             // If command is squishy, pack excess args into final string
             command.squishExcessArgs -> {
-                if (args.size == 1)
+                if (command.parameters.size == 1)
                     squishedArgs = arrayOf(args.joinToString(" "))
                 else {
-                    squishedArgs = args.sliceArray(0 until command.parameters.size)
-                    squishedArgs[command.parameters.size-1] = args.sliceArray(command.parameters.size until args.size).joinToString(" ")
+                    squishedArgs = args.sliceArray(0 until command.parameters.size-1)
+                    squishedArgs[command.parameters.size-1] = args.sliceArray(command.parameters.size-1 until args.size).joinToString(" ")
                 }
             }
 
