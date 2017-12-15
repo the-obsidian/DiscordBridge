@@ -11,6 +11,8 @@ import gg.obsidian.discordbridge.utils.UtilFunctions.noSpace
 import gg.obsidian.discordbridge.utils.UtilFunctions.stripColor
 import gg.obsidian.discordbridge.utils.UtilFunctions.toDiscordChatMessage
 import gg.obsidian.discordbridge.utils.UtilFunctions.toMinecraftChatMessage
+import net.dv8tion.jda.core.Permission
+import org.bukkit.Bukkit
 import java.lang.reflect.Method
 import java.util.*
 import java.util.logging.Level
@@ -28,6 +30,9 @@ class BotControllerManager(val plugin: Plugin) {
 
     private val commands: MutableMap<String, Command> = mutableMapOf()
     private val controllers: MutableMap<Class<out IBotController>, IBotController> = mutableMapOf()
+
+    // =============================================
+    // =============== SETUP METHODS ===============
 
     /**
      * Adds an IBotController to the manager.
@@ -71,13 +76,16 @@ class BotControllerManager(val plugin: Plugin) {
         if (methodParameters.isEmpty() || !methodParameters[0].type.isAssignableFrom(IEventWrapper::class.java)) return
 
         method.isAccessible = true
-        val parameters = (1..methodParameters.size - 1).mapTo(ArrayList<Class<*>>()) { methodParameters[it].type }
+        val parameters = (1 until methodParameters.size).mapTo(ArrayList<Class<*>>()) { methodParameters[it].type }
         val isTagged: Boolean = method.getAnnotation(TaggedResponse::class.java) != null
         val isPrivate: Boolean = method.getAnnotation(PrivateResponse::class.java) != null
         val command = Command(commandName, usage, annotation.description, parameters, annotation.relayTriggerMessage,
-                annotation.ignoreExcessArguments, isTagged, isPrivate, controllerClass, method)
+                annotation.squishExcessArgs, isTagged, isPrivate, controllerClass, method)
         commands.put(command.name, command)
     }
+
+    // =============================================
+    // ============== MESSAGE HANDLING =============
 
     /**
      * Reads an incoming message and attempts to parse and execute a command.
@@ -94,58 +102,31 @@ class BotControllerManager(val plugin: Plugin) {
                 commandNotFound(event, event.command.name)
                 return true
             }
-            val inputArguments = event.rawMessage.split("\\s+".toRegex(), command.parameters.size).toTypedArray()
-            return invokeCommand(command, controllers, event, inputArguments)
+            return invokeBotCommand(command, controllers, event, event.args.asList().toTypedArray())
         }
 
         // Short circuit scripted responses
-        if (scriptedResponse(event)) return true
-
-        val args = event.rawMessage.trim().split("\\s+".toRegex(), 2).toTypedArray()
+        if (sendScriptedResponse(event)) return true
 
         // <prefix>command
-        if (Config.COMMAND_PREFIX.isNotBlank() && args[0].startsWith(Config.COMMAND_PREFIX)) {
-            val commandName = args[0].substring(Config.COMMAND_PREFIX.length).toLowerCase()
-            if (commandName == "") return true
-            val command = commands[commandName]
-
-            if (command == null) {
-                commandNotFound(event, commandName)
-                return false
-            }
-
-            val inputArguments = if (args.size == 1) arrayOf<String>()
-            else args[1].split("\\s+".toRegex(), command.parameters.size).toTypedArray()
-
-            return invokeCommand(command, controllers, event, inputArguments)
+        if (Config.COMMAND_PREFIX.isNotBlank() && event.rawMessage.startsWith(Config.COMMAND_PREFIX)) {
+            val split = event.rawMessage.replaceFirst(Config.COMMAND_PREFIX, "").trim().split("\\s+".toRegex()).toTypedArray()
+            return parseCommand(event, split, false)
         }
 
-        // @<mention> command
-        if ((event is AsyncPlayerChatEventWrapper && args[0] == "@"+Config.USERNAME.noSpace() ||
-                args[0] == Connection.JDA.selfUser.asMention) && args.count() == 2) {
-            val args2 = args[1].split("\\s+".toRegex(), 2).toTypedArray()
-            val commandName = args2[0].toLowerCase()
-            if (commandName == "") return true
-            var params = if (args2.size > 1) args2[1] else ""
-            var command = commands[commandName]
-
-            if (command == null) {
-                // Assume user wants to talk to Cleverbot
-                command = commands["talk"]
-                if (command == null) {
-                    commandNotFound(event, commandName)
-                    return false
-                }
-                params = args[1]
-            }
-
-            val inputArguments = if (params == "") arrayOf<String>()
-            else params.split("\\s+".toRegex(), command.parameters.size).toTypedArray()
-
-            return invokeCommand(command, controllers, event, inputArguments)
+        // @<mention> command from Minecraft
+        if (event is AsyncPlayerChatEventWrapper && event.rawMessage.startsWith("@${Config.USERNAME.noSpace()} ")) {
+            val split = event.rawMessage.replaceFirst("@${Config.USERNAME.noSpace()} ", "").trim().split("\\s+".toRegex()).toTypedArray()
+            return parseCommand(event, split, true)
         }
 
-        // Just relay the message if it is neither
+        // @<mention> command from Discord
+        if (event is MessageWrapper && event.rawMessage.startsWith(Connection.JDA.selfUser.asMention + " ")) {
+            val split = event.rawMessage.replaceFirst(Connection.JDA.selfUser.asMention + " ", "").trim().split("\\s+".toRegex()).toTypedArray()
+            return parseCommand(event, split, true)
+        }
+
+        // Just relay the message if no command is found
         relay(event, true)
         return true
     }
@@ -156,7 +137,7 @@ class BotControllerManager(val plugin: Plugin) {
      * @param event the incoming event object
      * @return true if a trigger was found and successfully responded to, false otherwise
      */
-    private fun scriptedResponse(event: IEventWrapper): Boolean {
+    private fun sendScriptedResponse(event: IEventWrapper): Boolean {
         val responses = plugin.script.data.getList("responses").checkItemsAre<Script>() ?: return false
 
         var response: Script? = null
@@ -209,18 +190,49 @@ class BotControllerManager(val plugin: Plugin) {
     }
 
     /**
-     * Attempts to invoke a discovered command
+     * Attempt to parse and execute a command from an input string
+     *
+     * @param event the original event object
+     * @param args the input string broken up into an array of words, with the command as the first element
+     * @param defaultToTalk if true, failure to find a command to execute will execute Talk with Cleverbot using the
+     * full string as an argument. If false, failure will do nothing and the method call will return false.
+     */
+    private fun parseCommand(event: IEventWrapper, args: Array<String>, defaultToTalk: Boolean): Boolean {
+        val commandName = args[0].toLowerCase()
+        if (commandName == "") return true
+        var command = commands[commandName]
+
+        if (command == null) {
+            // Attempt to run as a server command if sent from Discord
+            if (event is MessageWrapper && event.originalMessage.member.hasPermission(Permission.ADMINISTRATOR))
+                if (invokeServerCommand(event, args)) return true
+
+            if (defaultToTalk) command = commands["talk"]
+            if (command == null) {
+                commandNotFound(event, commandName)
+                return false
+            }
+        }
+
+        val slicedArgs = if (args.size > 1) args.slice(1 until args.size).toTypedArray() else arrayOf()
+        return invokeBotCommand(command, controllers, event, slicedArgs)
+    }
+
+    /**
+     * Attempts to run a DiscordBridge command
      *
      * @param command the command to invoke
      * @param instances a map of IBotController instances accessed by their Java classes
      * @param event the incoming event object
-     * @param inputArguments an array of String arguments to pass to the command method
+     * @param args an array of String arguments to pass to the command method
      * @return false if the command invocation has invalid arguments, true otherwise
      */
-    private fun invokeCommand(command: Command, instances: Map<Class<out IBotController>, IBotController>,
-                              event: IEventWrapper, inputArguments: Array<String>): Boolean {
+    private fun invokeBotCommand(command: Command, instances: Map<Class<out IBotController>, IBotController>,
+                                 event: IEventWrapper, args: Array<String>): Boolean {
         // Relay the trigger if applicable
         if (command.relayTriggerMessage) relay(event, false)
+
+        var squishedArgs = args
 
         when {
             // Check for permission
@@ -237,7 +249,7 @@ class BotControllerManager(val plugin: Plugin) {
             command.name == "help" -> {
                 try {
                     val response = command.commandMethod.invoke(instances[command.controllerClass], event, commands, instances) as? String ?: return true
-                    respond(event, command, response)
+                    sendBotCommandOutput(event, command, response)
                     return true
                 } catch (e: IllegalArgumentException) {
                     commandWrongParameterCount(event, command.name, command.usage, 2, command.parameters.size)
@@ -248,15 +260,19 @@ class BotControllerManager(val plugin: Plugin) {
                 }
             }
 
-            // Fail if not enough arguments
-            inputArguments.size < command.parameters.size -> {
-                commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
-                return false
+            // If command is squishy, pack excess args into final string
+            command.squishExcessArgs -> {
+                if (command.parameters.size == 1)
+                    squishedArgs = arrayOf(args.joinToString(" "))
+                else {
+                    squishedArgs = args.sliceArray(0 until command.parameters.size-1)
+                    squishedArgs[command.parameters.size-1] = args.sliceArray(command.parameters.size-1 until args.size).joinToString(" ")
+                }
             }
 
-            // Fail if command forces exact argument count AND the supplied argument count does not match expected
-            inputArguments.size != command.parameters.size && !command.ignoreExcessArguments -> {
-                commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
+            // Fail if wrong number of arguments
+            squishedArgs.size != command.parameters.size -> {
+                commandWrongParameterCount(event, command.name, command.usage, squishedArgs.size, command.parameters.size)
                 return false
             }
         }
@@ -264,15 +280,15 @@ class BotControllerManager(val plugin: Plugin) {
         // Package arguments to send to method
         val arguments = arrayOfNulls<Any>(command.parameters.size + 1)
         arguments[0] = event
-        val paramRange = if (command.ignoreExcessArguments && inputArguments.size > command.parameters.size)
+        val paramRange = if (command.squishExcessArgs && squishedArgs.size > command.parameters.size)
             IntRange(0, command.parameters.size - 1) else command.parameters.indices
         for (i in paramRange) {
             val parameterClass = command.parameters[i]
 
             try {
-                arguments[i + 1] = parseArgument(parameterClass, inputArguments[i])
+                arguments[i + 1] = parseArgument(parameterClass, squishedArgs[i])
             } catch (ignored: IllegalArgumentException) {
-                commandWrongParameterType(event, command.name, command.usage, i, inputArguments[i].javaClass, parameterClass)
+                commandWrongParameterType(event, command.name, command.usage, i, squishedArgs[i].javaClass, parameterClass)
                 return false
             }
         }
@@ -280,10 +296,10 @@ class BotControllerManager(val plugin: Plugin) {
         // Invoke the method
         try {
             val response = command.commandMethod.invoke(instances[command.controllerClass], *arguments) as? String ?: return true
-            respond(event, command, response)
+            sendBotCommandOutput(event, command, response)
             return true
         } catch (e: IllegalArgumentException) {
-            commandWrongParameterCount(event, command.name, command.usage, inputArguments.size, command.parameters.size)
+            commandWrongParameterCount(event, command.name, command.usage, squishedArgs.size, command.parameters.size)
             return false
         } catch (e: Exception) {
             commandException(event, e)
@@ -293,13 +309,13 @@ class BotControllerManager(val plugin: Plugin) {
     }
 
     /**
-     * Sends the response of a successful command invocation to its respective medium
+     * Sends the response of a successful bot command invocation to its respective medium
      *
      * @param event the incoming event object
      * @param command the command that was invoked
      * @param response the output string of the invoked command
      */
-    private fun respond(event: IEventWrapper, command: Command, response: String) {
+    private fun sendBotCommandOutput(event: IEventWrapper, command: Command, response: String) {
         var modifiedResponse = response
         when (event) {
             is AsyncPlayerChatEventWrapper -> {
@@ -354,6 +370,46 @@ class BotControllerManager(val plugin: Plugin) {
     }
 
     /**
+     * Attempts to run a Spigot command
+     *
+     * @param event the incoming event object
+     * @param args the arguments associated with the command, space-delimited
+     */
+    private fun invokeServerCommand(event: IEventWrapper, args: Array<String>): Boolean {
+            val sender = DiscordCommandSender(event.channel)
+            val commandName = args[0].toLowerCase()
+            when {
+                DefaultCommands.minecraft.contains(commandName) -> {
+                    plugin.logDebug("Discord user ${event.senderName} invoked Minecraft command '${args.joinToString(" ")}'")
+                    Bukkit.getServer().dispatchCommand(sender, args.joinToString(" "))
+                    return true
+                }
+
+                DefaultCommands.bukkit.contains(commandName) -> {
+                    plugin.logDebug("Discord user ${event.senderName} invoked Bukkit command '${args.joinToString(" ")}'")
+                    Bukkit.getServer().dispatchCommand(sender, args.joinToString(" "))
+                    return true
+                }
+
+                DefaultCommands.spigot.contains(commandName) -> {
+                    plugin.logDebug("Discord user ${event.senderName} invoked Spigot command '${args.joinToString(" ")}'")
+                    Bukkit.getServer().dispatchCommand(sender, args.joinToString(" "))
+                    return true
+                }
+
+                else -> {
+                    val pluginCommand = Bukkit.getServer().getPluginCommand(commandName)
+                    if (pluginCommand != null) {
+                        plugin.logDebug("Discord user ${event.senderName} invoked ${pluginCommand.plugin.name} command '${args.joinToString(" ")}'")
+                        pluginCommand.execute(sender, commandName, args.sliceArray(1 until args.size))
+                        return true
+                    }
+                }
+            }
+        return false
+    }
+
+    /**
      * Attempts to relay the message between Minecraft and Discord, if applicable
      *
      * @param event the incoming event object
@@ -361,7 +417,6 @@ class BotControllerManager(val plugin: Plugin) {
      * message is not relayed to Minecraft
      */
     private fun relay(event: IEventWrapper, logIgnore: Boolean) {
-        plugin.logger.info("Entered relay. event: ${event.message}")
         when (event) {
             is AsyncPlayerChatEventWrapper -> {
                 var worldname = event.event.player.world.name
@@ -394,53 +449,8 @@ class BotControllerManager(val plugin: Plugin) {
         }
     }
 
-    /**
-     * Attempts to parse a string parameter to an expected value type
-     *
-     * @param parameterClass the expected type of the parameter
-     * @param value a string representation of the value to be parsed
-     */
-    private fun parseArgument(parameterClass: Class<*>, value: String): Any {
-        try {
-            when (parameterClass) {
-                String::class.java -> return value
-                Int::class.javaPrimitiveType, Int::class.java -> return Integer.valueOf(value)
-                Long::class.javaPrimitiveType, Long::class.java -> return java.lang.Long.valueOf(value)
-                Boolean::class.javaPrimitiveType, Boolean::class.java -> return parseBooleanArgument(value)
-                Float::class.javaPrimitiveType, Float::class.java -> return java.lang.Float.valueOf(value)
-                Double::class.javaPrimitiveType, Double::class.java -> return java.lang.Double.valueOf(value)
-                else -> throw IllegalArgumentException()
-            }
-        } catch (ignored: NumberFormatException) {
-            throw IllegalArgumentException()
-        }
-    }
-
-    /**
-     * Attempts to parse a string parameter to a Boolean type
-     *
-     * @param value a string representation of the value to be parsed
-     */
-    private fun parseBooleanArgument(value: String): Boolean {
-        when (value.toLowerCase()) {
-            "yes", "true" -> return true
-            "no", "false" -> return false
-            else -> {
-                val integerValue = Integer.valueOf(value)!!
-                when (integerValue) {
-                    1 -> return true
-                    0 -> return false
-                    else -> throw IllegalArgumentException()
-                }
-            }
-        }
-    }
-
-    /**
-     * A function to assert that all the items in a given list are of a specific type
-     */
-    @Suppress("UNCHECKED_CAST")
-    private inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
+    // =============================================
+    // ============= Exception Handling ============
 
     /**
      * Handler for if command syntax is given but no matching command is found
@@ -568,10 +578,62 @@ class BotControllerManager(val plugin: Plugin) {
         }
     }
 
+    // =============================================
+    // ============== HELPER FUNCTIONS =============
+
+    /**
+     * Attempts to parse a string parameter to an expected value type
+     *
+     * @param parameterClass the expected type of the parameter
+     * @param value a string representation of the value to be parsed
+     */
+    private fun parseArgument(parameterClass: Class<*>, value: String): Any {
+        return try {
+            when (parameterClass) {
+                String::class.java -> value
+                Int::class.javaPrimitiveType, Int::class.java -> Integer.valueOf(value)
+                Long::class.javaPrimitiveType, Long::class.java -> java.lang.Long.valueOf(value)
+                Boolean::class.javaPrimitiveType, Boolean::class.java -> parseBooleanArgument(value)
+                Float::class.javaPrimitiveType, Float::class.java -> java.lang.Float.valueOf(value)
+                Double::class.javaPrimitiveType, Double::class.java -> java.lang.Double.valueOf(value)
+                else -> throw IllegalArgumentException()
+            }
+        } catch (ignored: NumberFormatException) {
+            throw IllegalArgumentException()
+        }
+    }
+
+    /**
+     * Attempts to parse a string parameter to a Boolean type
+     *
+     * @param value a string representation of the value to be parsed
+     */
+    private fun parseBooleanArgument(value: String): Boolean = when (value.toLowerCase()) {
+        "yes", "true" -> true
+        "no", "false" -> false
+        else -> {
+            val integerValue = Integer.valueOf(value)!!
+            when (integerValue) {
+                1 -> true
+                0 -> false
+                else -> throw IllegalArgumentException()
+            }
+        }
+    }
+
     /**
      * Shortcut method for adding "or <prefix>help " to the CommandNotFound output if a COMMAND_PREFIX is set in config
      */
     private fun orPrefixHelp(): String = if (Config.COMMAND_PREFIX != "") "or ${Config.COMMAND_PREFIX}help " else ""
+
+    /**
+     * A function to assert that all the items in a given list are of a specific type
+     */
+    @Suppress("UNCHECKED_CAST")
+    private inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
+
+    // =============================================
+    // =============== HELPER OBJECTS ==============
 
     /**
      * Represents a command that the bot can execute
@@ -581,7 +643,7 @@ class BotControllerManager(val plugin: Plugin) {
      * @param description a description of the command's function
      * @param parameters a List of the command arguments' expected Java class types
      * @param relayTriggerMessage whether the message that triggered this command should be relayed
-     * @param ignoreExcessArguments whether this command should ignore excess arguments
+     * @param squishExcessArgs whether this command should combine excess arguments into one
      * @param isTagged if the output of this command should be prepended with "@invokerName | "
      * @param isPrivate if the output of this command should be sent via DM/PM to the invoker
      * @param controllerClass the Java class type of the IBotController that defines this command
@@ -593,10 +655,101 @@ class BotControllerManager(val plugin: Plugin) {
             val description: String,
             val parameters: List<Class<*>>,
             val relayTriggerMessage: Boolean,
-            val ignoreExcessArguments: Boolean,
+            val squishExcessArgs: Boolean,
             val isTagged: Boolean,
             val isPrivate: Boolean,
             val controllerClass: Class<*>,
             val commandMethod: Method
     )
+
+    /**
+     * A simple list of all commands native to Minecraft, Bukkit, and Spigot
+     *
+     * TODO: Can this list be attained programmatically??
+     */
+    private object DefaultCommands {
+        val minecraft : List<String> = listOf(
+                "advancement",
+                "ban",
+                "blockdata",
+                "clear",
+                "clone",
+                //"data",
+                //"datapack",
+                "debug",
+                "defaultgamemode",
+                "deop",
+                "difficulty",
+                "effect",
+                "enchant",
+                "entitydata",
+                //"experience",
+                "execute",
+                "fill",
+                "function",
+                "gamemode",
+                "gamerule",
+                "give",
+                "help",
+                "kick",
+                "kill",
+                "list",
+                "locate",
+                "me",
+                "op",
+                "pardon",
+                "particle",
+                "playsound",
+                "publish",
+                "recipe",
+                "reload",
+                "replaceitem",
+                "save",
+                "say",
+                "scoreboard",
+                "seed",
+                "setblock",
+                "setidletimeout",
+                "setmaxplayers",
+                "setworldspawn",
+                "spawnpoint",
+                "spreadplayers",
+                "stats",
+                "stop",
+                "stopsound",
+                "summon",
+                "teleport",
+                "tell",
+                //"tag",
+                //"team",
+                "tellraw",
+                "testfor",
+                "testforblock",
+                "testforblocks",
+                "tickingarea",
+                "time",
+                "title",
+                "toggledownfall",
+                "tp",
+                "transferserver",
+                "trigger",
+                "weather",
+                "whitelist",
+                "worldborder",
+                "wsserver"
+        )
+
+        val bukkit : List<String> = listOf(
+                "version",
+                "plugins",
+                "help",
+                "reload",
+                "timings"
+        )
+
+        val spigot:List<String> = listOf(
+                "restart",
+                "tps"
+        )
+    }
 }

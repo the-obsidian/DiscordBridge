@@ -31,7 +31,7 @@ import org.bukkit.ChatColor as CC
  */
 class EventListener(val plugin: Plugin): Listener {
 
-    val controllerManager = BotControllerManager(plugin)
+    private val controllerManager = BotControllerManager(plugin)
 
     init {
         controllerManager.registerController(FunCommandsController(plugin), chatExclusive = true)
@@ -73,7 +73,6 @@ class EventListener(val plugin: Plugin): Listener {
         plugin.server.scheduler.runTaskAsynchronously(plugin, { controllerManager.dispatchMessage(wrapper) })
 
         event.message = MarkdownToMinecraftSeralizer().toMinecraft(plugin.pegDownProc.parseMarkdown(event.message.toCharArray()))
-        plugin.logger.info("Seralized! (synchronous)")
     }
 
     /**

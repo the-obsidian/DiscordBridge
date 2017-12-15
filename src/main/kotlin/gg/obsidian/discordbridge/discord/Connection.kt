@@ -15,7 +15,7 @@ import net.dv8tion.jda.core.entities.*
 object Connection: Runnable {
     lateinit var plugin: Plugin
     lateinit var JDA: JDA
-    lateinit var listener: Listener
+    private lateinit var listener: Listener
     var server: Guild? = null
     var channel: TextChannel? = null
 

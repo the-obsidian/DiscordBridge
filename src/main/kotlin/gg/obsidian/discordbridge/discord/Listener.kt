@@ -15,7 +15,7 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter
  */
 class Listener(val plugin: Plugin) : ListenerAdapter() {
 
-    val controllerManager = BotControllerManager(plugin)
+    private val controllerManager = BotControllerManager(plugin)
 
     init {
         controllerManager.registerController(FunCommandsController(plugin), discordExclusive = true, chatExclusive = true)

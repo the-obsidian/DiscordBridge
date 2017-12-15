@@ -16,7 +16,7 @@ import org.bukkit.command.CommandSender
  */
 class CommandListener(val plugin: Plugin) : CommandExecutor {
 
-    val controllerManager = BotControllerManager(plugin)
+    private val controllerManager = BotControllerManager(plugin)
 
     init {
         controllerManager.registerController(FunCommandsController(plugin), minecraftExclusive = true)
