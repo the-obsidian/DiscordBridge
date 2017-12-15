@@ -13,7 +13,7 @@ object UserAliasConfig {
      */
     fun load(plugin: Plugin) {
         val list = plugin.users.data.getList("aliases")
-        if (list != null) aliases = list.checkItemsAre<UserAlias>() ?:
+        if (list != null) aliases = list.checkItemsAre() ?:
                 throw IllegalStateException("usernames.yml could not be read - list items are not properly formatted")
         else mutableListOf<UserAlias>()
     }
@@ -42,5 +42,5 @@ object UserAliasConfig {
      * A function to assert that all the items in a given list are of a specific type
      */
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
+    private inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
 }

@@ -31,7 +31,7 @@ import org.bukkit.ChatColor as CC
  */
 class EventListener(val plugin: Plugin): Listener {
 
-    val controllerManager = BotControllerManager(plugin)
+    private val controllerManager = BotControllerManager(plugin)
 
     init {
         controllerManager.registerController(FunCommandsController(plugin), chatExclusive = true)

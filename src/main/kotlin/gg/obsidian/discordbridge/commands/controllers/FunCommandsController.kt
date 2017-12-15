@@ -80,11 +80,11 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
 
         totalRespects += found!!.count
         val msg: String
-        if (found.message.contains("%u"))
-            msg = found.message.replace("%u", event.senderAsMention).replace("%t", totalRespects.toString())
-                .replace("%c", found.count.toString())
+        msg = if (found.message.contains("%u"))
+            found.message.replace("%u", event.senderAsMention).replace("%t", totalRespects.toString())
+                    .replace("%c", found.count.toString())
         else
-            msg = "${event.senderAsMention} | ${found.message}".replace("%t", totalRespects.toString())
+            "${event.senderAsMention} | ${found.message}".replace("%t", totalRespects.toString())
                     .replace("%c", found.count.toString())
 
         plugin.f.data.set("total-respects", totalRespects)
@@ -188,7 +188,7 @@ class FunCommandsController(val plugin: Plugin) : IBotController {
 
         if (Config.CLEVERBOT_KEY.isEmpty())
             return "You do not have an API key. Go to https://www.cleverbot.com/JDA/ for more information."
-        val bot: CleverBotQuery = CleverBotQuery(Config.CLEVERBOT_KEY, query)
+        val bot = CleverBotQuery(Config.CLEVERBOT_KEY, query)
         bot.sendRequest()
         return bot.response
     }

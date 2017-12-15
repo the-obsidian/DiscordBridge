@@ -136,7 +136,7 @@ class Plugin : JavaPlugin() {
     /**
      * Saves all default configs where configs do not exist and reloads data from file into memory
      */
-    fun updateConfig(version: String) {
+    private fun updateConfig(version: String) {
         this.saveDefaultConfig()
         config.options().copyDefaults(true)
         config.set("version", version)
@@ -182,7 +182,7 @@ class Plugin : JavaPlugin() {
         val users = Connection.listUsers()
         val found: Member = users.find { it.user.name + "#" + it.user.discriminator == discriminator } ?: return null
 
-        val ua: UserAlias = UserAlias(player.uniqueId, found.user.id)
+        val ua = UserAlias(player.uniqueId, found.user.id)
         requests.add(ua)
         val msg = "Minecraft user '${server.getOfflinePlayer(ua.mcUuid).name}' has requested to become associated with your Discord" +
                 " account. If this is you, respond '${Connection.JDA.selfUser.asMention} confirm'. If this is not" +
@@ -203,8 +203,8 @@ class Plugin : JavaPlugin() {
 
         var response = "${CC.YELLOW}Discord users:"
         for (user in users) {
-            if (user.user.isBot) response += "\n${CC.GOLD}- ${user.effectiveName} (Bot) | ${user.user.name}#${user.user.discriminator}${CC.RESET}"
-            else response += "\n${CC.YELLOW}- ${user.effectiveName} | ${user.user.name}#${user.user.discriminator}${CC.RESET}"
+            response += if (user.user.isBot) "\n${CC.GOLD}- ${user.effectiveName} (Bot) | ${user.user.name}#${user.user.discriminator}${CC.RESET}"
+            else "\n${CC.YELLOW}- ${user.effectiveName} | ${user.user.name}#${user.user.discriminator}${CC.RESET}"
         }
         return response.trim()
     }
@@ -218,25 +218,25 @@ class Plugin : JavaPlugin() {
             return "${CC.YELLOW}No Discord members could be found. Either server is empty or an error has occurred."
 
         var response = ""
-        if (onlineUsers.filter { it.onlineStatus == OnlineStatus.ONLINE }.isNotEmpty()) {
+        if (onlineUsers.any { it.onlineStatus == OnlineStatus.ONLINE }) {
             response += "\n${CC.DARK_GREEN}Online:${CC.RESET}"
             for (user in onlineUsers.filter { it.onlineStatus == OnlineStatus.ONLINE }) {
-                if (user.user.isBot) response += "\n${CC.DARK_GREEN}- ${user.effectiveName} (Bot)${CC.RESET}"
-                else response += "\n${CC.DARK_GREEN}- ${user.effectiveName}${CC.RESET}"
+                response += if (user.user.isBot) "\n${CC.DARK_GREEN}- ${user.effectiveName} (Bot)${CC.RESET}"
+                else "\n${CC.DARK_GREEN}- ${user.effectiveName}${CC.RESET}"
             }
         }
-        if (onlineUsers.filter { it.onlineStatus == OnlineStatus.IDLE }.isNotEmpty()) {
+        if (onlineUsers.any { it.onlineStatus == OnlineStatus.IDLE }) {
             response += "\n${CC.YELLOW}Idle:${CC.RESET}"
             for (user in onlineUsers.filter { it.onlineStatus == OnlineStatus.IDLE }) {
-                if (user.user.isBot) response += "\n${CC.YELLOW}- ${user.effectiveName} (Bot)${CC.RESET}"
-                else response += "\n${CC.YELLOW}- ${user.effectiveName}${CC.RESET}"
+                response += if (user.user.isBot) "\n${CC.YELLOW}- ${user.effectiveName} (Bot)${CC.RESET}"
+                else "\n${CC.YELLOW}- ${user.effectiveName}${CC.RESET}"
             }
         }
-        if (onlineUsers.filter { it.onlineStatus == OnlineStatus.DO_NOT_DISTURB }.isNotEmpty()) {
+        if (onlineUsers.any { it.onlineStatus == OnlineStatus.DO_NOT_DISTURB }) {
             response += "\n${CC.RED}Do Not Disturb:${CC.RESET}"
             for (user in onlineUsers.filter { it.onlineStatus == OnlineStatus.DO_NOT_DISTURB }) {
-                if (user.user.isBot) response += "\n${CC.RED}- ${user.effectiveName} (Bot)${CC.RESET}"
-                else response += "\n${CC.RED}- ${user.effectiveName}${CC.RESET}"
+                response += if (user.user.isBot) "\n${CC.RED}- ${user.effectiveName} (Bot)${CC.RESET}"
+                else "\n${CC.RED}- ${user.effectiveName}${CC.RESET}"
             }
         }
 
