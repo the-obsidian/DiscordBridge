@@ -125,6 +125,7 @@ templates:
 * Cleverbot integration - chat with the bot using `@<bot name>` or `/talk`. Works in Discord AND Minecraft! (requires Cleverbot API key)
 * The bot can use any of its commands in any channel it can read (including DMs!) allowing it to function as a general-purpose Discord bot on the side
 * Command permissions affect both Minecraft slash command and Minecraft in-chat commands
+* Use any other command on your server, built-in or from a plugin, from Discord (must have the permission `admin` on Discord server)
 
 ## Permissions
 
@@ -157,7 +158,6 @@ templates:
 
 ## Upcoming Features
 
-* Vanilla Minecraft admin commands (kick, ban, start, stop, give, etc) usable from Discord
 * Add support for a URL shortening service so attachment URLs aren't so flipping long
 * Add support for relaying embeds
 * Make Discord responses for certain commands return in pretty embeds
