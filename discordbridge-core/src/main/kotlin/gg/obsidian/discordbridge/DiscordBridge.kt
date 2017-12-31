@@ -203,7 +203,7 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
 
         val ua = UserAlias(player.getUUID(), found.user.id)
         requests.add(ua)
-        val msg = "Minecraft user '${server.getPlayer(ua.mcUuid).getName()}' has requested to become associated with your Discord" +
+        val msg = "Minecraft user '${player.getName()}' has requested to become associated with your Discord" +
                 " account. If this is you, respond '${Connection.JDA.selfUser.asMention} confirm'. If this is not" +
                 " you, respond ${Connection.JDA.selfUser.asMention} deny'."
         val member = Connection.JDA.getUserById(ua.discordId)
@@ -287,7 +287,10 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
 
         for (du in discordusers)
             for ((mcUuid, discordId) in UserAliasConfig.aliases)
-                if (discordId == du.user.id) discordaliases.add(Pair(server.getPlayer(mcUuid).getName(), du))
+                if (discordId == du.user.id) {
+                    val player = server.getPlayer(mcUuid)
+                    if (player != null) discordaliases.add(Pair(player.getName(), du))
+                }
 
         for (match in Regex("""(?:^| )@(\w+)""").findAll(message)) {
             val found: Member? = discordusers.firstOrNull {
@@ -331,10 +334,13 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
     fun translateAliasesToDiscord(message: String): String {
         var modifiedMessage = message
         for ((mcUuid, discordId) in UserAliasConfig.aliases) {
-            val nameMC = server.getPlayer(mcUuid).getName()
-            val discordUser = Connection.listUsers().firstOrNull{it.user.id == discordId }
-            val nameDis = if (discordUser != null) discordUser.effectiveName else Connection.JDA.getUserById(discordId).name
-            modifiedMessage = modifiedMessage.replace(nameMC, nameDis)
+            val player = server.getPlayer(mcUuid)
+            if (player != null) {
+                val nameMC = player.getName()
+                val discordUser = Connection.listUsers().firstOrNull { it.user.id == discordId }
+                val nameDis = if (discordUser != null) discordUser.effectiveName else Connection.JDA.getUserById(discordId).name
+                modifiedMessage = modifiedMessage.replace(nameMC, nameDis)
+            }
         }
         return modifiedMessage
     }
@@ -349,11 +355,14 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
     fun translateAliasesToMinecraft(message: String): String {
         var modifiedMessage = message
         for ((mcUuid, discordId) in UserAliasConfig.aliases) {
-            val nameMC = server.getPlayer(mcUuid).getName()
-            val nameDis = Connection.JDA.getUserById(discordId).name
-            modifiedMessage = modifiedMessage.replace(nameDis, nameMC)
-            val discordUser = Connection.listUsers().firstOrNull{it.user.id == discordId}
-            if (discordUser != null) modifiedMessage = modifiedMessage.replace(discordUser.effectiveName, nameMC)
+            val player = server.getPlayer(mcUuid)
+            if (player != null) {
+                val nameMC = player.getName()
+                val nameDis = Connection.JDA.getUserById(discordId).name
+                modifiedMessage = modifiedMessage.replace(nameDis, nameMC)
+                val discordUser = Connection.listUsers().firstOrNull { it.user.id == discordId }
+                if (discordUser != null) modifiedMessage = modifiedMessage.replace(discordUser.effectiveName, nameMC)
+            }
         }
         return modifiedMessage
     }
@@ -361,9 +370,9 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
     fun handlePlayerChat(player: IPlayer, message: String, isCancelled: Boolean): String {
         // TODO: the order of these if statements may produce undesired behavior
         logDebug("Received a chat event from ${player.getName()}: $message")
-        if (!getConfig().getBoolean("messages.chat", true)) return message
+        if (!getConfig().getBoolean("player-messages.chat", true)) return message
         if (isCancelled && !getConfig().getBoolean("relay-cancelled-messages", true)) return message
-        if (player.isVanished() && !getConfig().getBoolean("if-vanished.chat", false)) return message
+        if (player.isVanished() && !getConfig().getBoolean("if-vanished.player-chat", false)) return message
 
         // Emoticons!
         var newMessage = message.replace(":lenny:", "( \u0361\u00B0 \u035C\u0296 \u0361\u00B0)")
@@ -394,8 +403,8 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
         val username = player.getName()
         val worldname = player.getWorld().getName()
         logDebug("Received a join event for $username")
-        if (!getConfig().getBoolean("messages.join", true)) return
-        if (player.isVanished() && !getConfig().getBoolean("if-vanished.join", false)) return
+        if (!getConfig().getBoolean("messages.player-join", true)) return
+        if (player.isVanished() && !getConfig().getBoolean("if-vanished.player-join", false)) return
 
         // Get world alias if Multiverse is installed
 //        if (plugin.isMultiverseInstalled) {
@@ -415,8 +424,8 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
         val username = player.getName()
         val worldname = player.getWorld().getName()
         logDebug("Received a leave event for $username")
-        if (!getConfig().getBoolean("messages.leave", true)) return
-        if (player.isVanished() && !getConfig().getBoolean("if-vanished.leave", false)) return
+        if (!getConfig().getBoolean("messages.player-leave", true)) return
+        if (player.isVanished() && !getConfig().getBoolean("if-vanished.player-leave", false)) return
 
         // Get world alias if Multiverse is installed
 //        if (plugin.isMultiverseInstalled) {
@@ -436,9 +445,8 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
         val username = player.getName()
         val worldname = player.getWorld().getName()
 
-        logDebug("Received a death event for $username")
-        if (!getConfig().getBoolean("messages.death", false)) return
-        if (player.isVanished() && !getConfig().getBoolean("if-vanished.death", false)) return
+        if (!getConfig().getBoolean("messages.player-death", false)) return
+        if (player.isVanished() && !getConfig().getBoolean("if-vanished.player-death", false)) return
 
         // Get world alias if Multiverse is installed
 //        if (plugin.isMultiverseInstalled) {

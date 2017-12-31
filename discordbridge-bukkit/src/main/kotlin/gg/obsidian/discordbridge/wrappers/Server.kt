@@ -24,11 +24,11 @@ class Server(val plugin: DiscordBridgePlugin, val bukkitServer: Server) : IServe
         return bukkitServer.bukkitVersion.split("-")[0]
     }
 
-    override fun getPlayer(uuid: UUID): IPlayer {
+    override fun getPlayer(uuid: UUID): IPlayer? {
         return Player(bukkitServer.getPlayer(uuid))
     }
 
-    override fun getPlayer(name: String): IPlayer {
+    override fun getPlayer(name: String): IPlayer? {
         return Player(bukkitServer.getPlayer(name))
     }
 

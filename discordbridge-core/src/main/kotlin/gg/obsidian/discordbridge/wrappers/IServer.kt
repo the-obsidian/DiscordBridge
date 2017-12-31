@@ -12,9 +12,9 @@ interface IServer {
 
     fun getMinecraftShortVersion(): String
 
-    fun getPlayer(uuid: UUID): IPlayer
+    fun getPlayer(uuid: UUID): IPlayer?
 
-    fun getPlayer(name: String): IPlayer
+    fun getPlayer(name: String): IPlayer?
 
     fun getOnlinePlayers(): List<IPlayer>
 

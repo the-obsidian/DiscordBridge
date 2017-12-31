@@ -1,4 +1,5 @@
 rootProject.name = 'DiscordBridge'
 include 'discordbridge-core'
 include 'discordbridge-bukkit'
+include 'discordbridge-sponge'
 
