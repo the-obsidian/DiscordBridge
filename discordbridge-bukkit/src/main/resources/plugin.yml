@@ -1,0 +1,72 @@
+name: DiscordBridge
+version: '@VERSION@'
+description: '@DESCRIPTION@'
+
+authors: [Jacob Gillespie, Adam Hart]
+website: '@URL@'
+
+loadbefore: [SpaceBukkit, RemoteToolkitPlugin]
+softdepend: [Multiverse-Core]
+
+main: gg.obsidian.discordbridge.DiscordBridgePlugin
+
+permissions:
+  discordbridge.discord:
+    description: Give the ability to use any command in of the /discord subcommand tree
+    default: true
+  discordbridge.discord.reload:
+    description: Reload configs and JDA
+    default: op
+  discordbridge.discord.listmembers:
+    description: Returns a list of members in the Discord channel
+    default: true
+  discordbridge.discord.linkalias:
+    description: Sends a request to a Discord member to set up alias translation
+    default: true
+  discordbridge.talk:
+    description: Determines whether this user can talk to Cleverbot
+    default: true
+  discordbridge.f:
+    description: Determines whether this user can use the f command
+    default: true
+  discordbridge.rate:
+    description: Determines whether this user can use the rate command
+    default: true
+  discordbridge.eightball:
+    description: Determines whether this user can use the 8ball command
+    default: true
+  discordbridge.insult:
+    description: Determines whether this user can use the insult command
+    default: op
+  discordbridge.choose:
+    description: Determines whether this user can use the choose command
+    default: true
+  discordbridge.roll:
+    description: Determines whether this user can use the roll command
+    default: true
+
+commands:
+  8ball:
+    description: Consult the Magic 8-Ball to answer your yes/no questions
+    usage: /8ball <question>
+  discord:
+    description: Issue a command to the bot
+    usage: <reload|linkalias|listmembers|unlinkalias> [args...]
+  f:
+    description: Press f to pay respects
+    usage: /f
+  rate:
+    description: Have the bot rate something for you
+    usage: /rate <thing to be rated>
+  insult:
+    description: Have the bot insult someone for you
+    usage: /insult <thing to insult>
+  choose:
+    description: Have the bot make a choice for you
+    usage: /choose <option1> or <option2> or ...
+  roll:
+    description: The bot rolls a die with a specified number of sides
+    usage: /roll <sides>
+  talk:
+    description: Talk to Cleverbot!
+    usage: /talk <say something>

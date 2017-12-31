@@ -11,84 +11,65 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
     }
 }
 
-plugins {
-    id 'java'
-    id 'com.github.johnrengelman.shadow' version '1.2.4'
+allprojects {
+    group = 'gg.obsidian'
+    version = '3.1.0'
+    description = """Bridge chat between Minecraft and Discord"""
+    ext.url = 'https://github.com/the-obsidian/DiscordBridge'
 }
 
-apply plugin: 'kotlin'
-
-group = 'gg.obsidian'
-version = '3.1.0'
-description = """Bridge chat between Minecraft and Discord"""
-ext.url = 'https://github.com/the-obsidian/DiscordBridge'
+apply plugin: 'java'
 
 repositories {
     mavenCentral()
-    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-    maven { url 'http://lutece.paris.fr/nexus/content/repositories/lutece_third_party' }
-    maven { url 'https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo' }
-
-    jcenter()
 }
 
 dependencies {
-    compile group: 'org.spigotmc', name: 'spigot-api', version: '1.12-R0.1-SNAPSHOT'
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: '1.1.3-2'
-    compile group: 'net.dv8tion', name: 'JDA', version: '3.3.1_286'
-    compile group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'
-    compile group: 'org.pegdown', name:'pegdown', version: '1.6.0'
-    compile group: 'org.json', name: 'json', version: '20160810'
-
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile files('libraries/dynmap-api-2.5-SNAPSHOT.jar')
+    compile project('discordbridge-bukkit')
+    compile project('discordbridge-core')
 }
 
-compileKotlin {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
-
-processResources {
-    filter ReplaceTokens, tokens: [
-            'DESCRIPTION': project.property('description'),
-            'URL'        : project.property('url'),
-            'VERSION'    : project.property('version')
-    ]
-}
-
-//noinspection GroovyAssignabilityCheck
-build.finalizedBy(shadowJar)
-
-shadowJar {
-    relocate 'org.apache', 'shadow.apache'
-    relocate 'org.json', 'shadow.json'
-    classifier 'dist'
-    dependencies {
-        //noinspection GroovyAssignabilityCheck
-        exclude(dependency('org.spigotmc:.*:.*'))
-    }
-    exclude '.cache'
-}
-
-task copyFinalJar(type: Copy) {
-    from "build/libs/${shadowJar.archiveName}"
-    into "build"
-    rename(
-            shadowJar.archiveName,
-            "${project.property('name')}-${project.property('version')}.jar"
-    )
-}
-
-shadowJar.finalizedBy(copyFinalJar)
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+    processResources {
+        filter ReplaceTokens, tokens: [
+                'DESCRIPTION': project.property('description'),
+                'URL'        : project.property('url'),
+                'VERSION'    : project.property('version')
+        ]
+    }
+
+    shadowJar {
+        dependencies {
+            include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"))
+            include(dependency('net.dv8tion:JDA:3.3.1_286'))
+            include(dependency(group: 'org.yaml', name: 'snakeyaml', version: '1.19'))
+            include(dependency(group: 'org.pegdown', name:'pegdown', version: '1.6.0'))
+            include(dependency(group: 'commons-lang', name:'commons-lang', version: '2.3'))
+            include(dependency(group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'))
+            include(dependency('org.parboiled:parboiled-core'))
+            include(dependency('org.parboiled:parboiled-java'))
+            include(dependency('org.ow2.asm:asm'))
+            include(dependency('org.ow2.asm:asm-analysis'))
+            include(dependency('org.ow2.asm:asm-tree'))
+            include(dependency('org.ow2.asm:asm-util'))
+            include(dependency('com.squareup.okhttp3:okhttp:'))
+            include(dependency('com.squareup.okio:okio'))
+            include(dependency('com.neovisionaries:nv-websocket-client'))
+            include(dependency('org.slf4j:slf4j-api'))
+            include(dependency('org.json:json'))
+        }
+    }
+
 }

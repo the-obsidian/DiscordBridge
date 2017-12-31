@@ -1,0 +1,84 @@
+package gg.obsidian.discordbridge.commands
+
+import gg.obsidian.discordbridge.wrappers.IConsoleSender
+import net.dv8tion.jda.core.entities.MessageChannel
+
+class DiscordCommandSender(val sender: IConsoleSender, val channel: MessageChannel) {
+
+    //private val sender:ConsoleCommandSender = Bukkit.getServer().consoleSender
+
+    init {
+
+    }
+
+    fun sendMessage(message: String?) {
+        channel.sendMessage(message).queue()
+    }
+
+    fun sendMessage(messages: Array<out String>?) {
+        if (messages != null)
+            for (m in messages) channel.sendMessage(m)
+    }
+
+//    override fun addAttachment(plugin: Plugin?): PermissionAttachment {
+//        return sender.addAttachment(plugin)
+//    }
+//
+//    override fun addAttachment(plugin: Plugin?, ticks: Int): PermissionAttachment {
+//        return sender.addAttachment(plugin, ticks)
+//    }
+//
+//    override fun addAttachment(plugin: Plugin?, name: String?, value: Boolean): PermissionAttachment {
+//        return sender.addAttachment(plugin, name, value)
+//    }
+//
+//    override fun addAttachment(plugin: Plugin?, name: String?, value: Boolean, ticks: Int): PermissionAttachment {
+//        return sender.addAttachment(plugin, name, value, ticks)
+//    }
+//
+//    override fun getEffectivePermissions(): MutableSet<PermissionAttachmentInfo> {
+//        return sender.effectivePermissions
+//    }
+
+//    fun getName(): String {
+//        return sender.name
+//    }
+//
+//    override fun getServer(): Server {
+//        return sender.server
+//    }
+//
+//    override fun hasPermission(name: String?): Boolean {
+//        return sender.hasPermission(name)
+//    }
+//
+//    override fun hasPermission(perm: Permission?): Boolean {
+//        return sender.hasPermission(perm)
+//    }
+//
+//    override fun isOp(): Boolean {
+//        return sender.isOp
+//    }
+//
+//    override fun isPermissionSet(name: String?): Boolean {
+//        return sender.isPermissionSet(name)
+//    }
+//
+//    override fun isPermissionSet(perm: Permission?): Boolean {
+//        return sender.isPermissionSet(perm)
+//    }
+//
+//    override fun recalculatePermissions() {
+//        return sender.recalculatePermissions()
+//    }
+//
+//    override fun removeAttachment(attachment: PermissionAttachment?) {
+//        return sender.removeAttachment(attachment)
+//    }
+//
+//    override fun setOp(value: Boolean) {
+//        return sender.setOp(value)
+//    }
+
+
+}
