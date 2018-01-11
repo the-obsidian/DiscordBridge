@@ -9,6 +9,12 @@ buildscript {
         jcenter()
     }
 
+    configurations.all {
+        resolutionStrategy {
+            force 'org.ow2.asm:asm:6.0_BETA'
+        }
+    }
+
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
