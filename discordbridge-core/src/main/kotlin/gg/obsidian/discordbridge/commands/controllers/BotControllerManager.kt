@@ -1,10 +1,7 @@
 package gg.obsidian.discordbridge.commands.controllers
 
 import gg.obsidian.discordbridge.DiscordBridge
-import gg.obsidian.discordbridge.commands.DiscordMessageWrapper
-import gg.obsidian.discordbridge.commands.IEventWrapper
-import gg.obsidian.discordbridge.commands.MinecraftChatEventWrapper
-import gg.obsidian.discordbridge.commands.MinecraftCommandWrapper
+import gg.obsidian.discordbridge.commands.*
 import gg.obsidian.discordbridge.commands.annotations.*
 import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.util.Cfg
@@ -373,45 +370,16 @@ class BotControllerManager {
     }
 
     /**
-     * Attempts to run a Spigot command
+     * Attempts to run a Minecraft command
      *
      * @param event the incoming event object
      * @param args the arguments associated with the command, space-delimited
      */
     private fun invokeServerCommand(event: IEventWrapper, args: Array<String>): Boolean {
-        TODO("Not implemented yet")
-//            val sender = DiscordCommandSender(DiscordBridge.getServer().getRemoteConsoleSender(), event.channel)
-//            val commandName = args[0].toLowerCase()
-//            when {
-//                DefaultCommands.minecraft.contains(commandName) -> {
-//                    DiscordBridge.logDebug("Discord user ${event.senderName} invoked Minecraft command '${args.joinToString(" ")}'")
-//                    DiscordBridge.getServer().dispatchCommand(sender, args.joinToString(" "))
-//                    return true
-//                }
-//
-//                DefaultCommands.bukkit.contains(commandName) -> {
-//                    DiscordBridge.logDebug("Discord user ${event.senderName} invoked Bukkit command '${args.joinToString(" ")}'")
-//                    DiscordBridge.getServer().dispatchCommand(sender, args.joinToString(" "))
-//                    return true
-//                }
-//
-//                DefaultCommands.spigot.contains(commandName) -> {
-//                    DiscordBridge.logDebug("Discord user ${event.senderName} invoked Spigot command '${args.joinToString(" ")}'")
-//                    DiscordBridge.getServer().dispatchCommand(sender, args.joinToString(" "))
-//                    return true
-//                }
-//
-//                else -> {
-//                    //TODO
-////                    val pluginCommand = DiscordBridge.getServer().getPluginCommand(commandName)
-////                    if (pluginCommand != null) {
-////                        DiscordBridge.logDebug("Discord user ${event.senderName} invoked ${pluginCommand.plugin.name} command '${args.joinToString(" ")}'")
-////                        pluginCommand.execute(sender, commandName, args.sliceArray(1 until args.size))
-////                        return true
-////                    }
-//                }
-//            }
-//        return false
+        val sender = DiscordCommandSender(event.senderName, event.channel)
+        DiscordBridge.logDebug("Discord user ${event.senderName} invoked Minecraft command '${args.joinToString(" ")}'")
+        DiscordBridge.getServer().dispatchCommand(sender, args.joinToString(" "))
+        return true
     }
 
     /**

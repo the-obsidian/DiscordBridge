@@ -1,8 +1,8 @@
 package gg.obsidian.discordbridge.wrappers
 
 import gg.obsidian.discordbridge.DiscordBridgePlugin
+import gg.obsidian.discordbridge.commands.DiscordCommandSender
 import gg.obsidian.discordbridge.util.unwrap
-import net.dv8tion.jda.core.entities.MessageChannel
 import org.spongepowered.api.Game
 import org.spongepowered.api.Sponge
 import org.spongepowered.api.text.Text
@@ -39,12 +39,9 @@ class Server(private val plugin: DiscordBridgePlugin, private val game: Game) : 
         Sponge.getServer().broadcastChannel.send(Text.of(message))
     }
 
-    override fun getRemoteConsoleSender(): IConsoleSender {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun dispatchCommand(channel: MessageChannel, command: String) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun dispatchCommand(sender: DiscordCommandSender, command: String) {
+        val rcon = DiscordRconConsoleSource(sender, game.server.console)
+        Sponge.getCommandManager().process(rcon, command)
     }
 
     override fun getLogger(): Logger {

@@ -1,6 +1,7 @@
 package gg.obsidian.discordbridge.wrappers
 
 import gg.obsidian.discordbridge.DiscordBridgeForge
+import gg.obsidian.discordbridge.commands.DiscordCommandSender
 import net.dv8tion.jda.core.entities.MessageChannel
 import net.minecraft.util.text.TextComponentString
 import net.minecraftforge.common.ForgeVersion
@@ -39,12 +40,9 @@ class Server(private val mod: DiscordBridgeForge) : IServer {
         FMLCommonHandler.instance().minecraftServerInstance.playerList.sendMessage(TextComponentString(message))
     }
 
-    override fun getRemoteConsoleSender(): IConsoleSender {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun dispatchCommand(channel: MessageChannel, command: String) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun dispatchCommand(sender: DiscordCommandSender, command: String) {
+        val rcon = DiscordRConConsoleSource(sender, FMLCommonHandler.instance().minecraftServerInstance)
+        FMLCommonHandler.instance().minecraftServerInstance.commandManager.executeCommand(rcon, command)
     }
 
     override fun getLogger(): Logger {

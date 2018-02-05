@@ -1,22 +1,18 @@
 package gg.obsidian.discordbridge.wrappers
 
 import gg.obsidian.discordbridge.DiscordBridgePlugin
-import gg.obsidian.discordbridge.DiscordCommandSender
-import net.dv8tion.jda.core.entities.MessageChannel
+import gg.obsidian.discordbridge.commands.DiscordCommandSender
+import org.bukkit.Bukkit
 import org.bukkit.Server
 import java.util.*
 
 class Server(val plugin: DiscordBridgePlugin, val bukkitServer: Server) : IServer {
-    override fun getRemoteConsoleSender(): IConsoleSender {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
     override fun getScheduler(): IScheduler {
         return Scheduler(plugin, bukkitServer.scheduler)
     }
 
     override fun getVersion(): String {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return bukkitServer.bukkitVersion.split("-")[0]
     }
 
     override fun getMinecraftShortVersion(): String {
@@ -39,9 +35,9 @@ class Server(val plugin: DiscordBridgePlugin, val bukkitServer: Server) : IServe
         bukkitServer.broadcastMessage(message)
     }
 
-    override fun dispatchCommand(channel: MessageChannel, command: String) {
-        val sender = DiscordCommandSender(channel)
-        bukkitServer.dispatchCommand(sender, command)
+    override fun dispatchCommand(sender: DiscordCommandSender, command: String) {
+        val rcon = DiscordRConConsoleSource(sender, Bukkit.getServer().consoleSender)
+        bukkitServer.dispatchCommand(rcon, command)
     }
 
     override fun getLogger(): ILogger {

@@ -1,5 +1,6 @@
 package gg.obsidian.discordbridge.wrappers
 
+import gg.obsidian.discordbridge.commands.DiscordCommandSender
 import net.dv8tion.jda.core.entities.MessageChannel
 import java.util.*
 
@@ -19,9 +20,7 @@ interface IServer {
 
     fun broadcastMessage(message: String)
 
-    fun getRemoteConsoleSender(): IConsoleSender
-
-    fun dispatchCommand(channel: MessageChannel, command: String)
+    fun dispatchCommand(sender: DiscordCommandSender, command: String)
 
     fun getLogger(): ILogger
 
