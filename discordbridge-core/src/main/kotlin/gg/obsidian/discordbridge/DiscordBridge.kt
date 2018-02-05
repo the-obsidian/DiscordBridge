@@ -364,6 +364,16 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
         return modifiedMessage
     }
 
+    fun handleServerStart() {
+        if (config.getBoolean("announce-server-start-stop", true))
+            sendToDiscord(config.getString("templates.discord.server-start", "Server started!"), Connection.getRelayChannel())
+    }
+
+    fun handleServerStop() {
+        if (config.getBoolean("announce-server-start-stop", true))
+            sendToDiscord(config.getString("templates.discord.server-stop", "Shutting down..."), Connection.getRelayChannel())
+    }
+
     fun handlePlayerChat(player: IPlayer, message: String, isCancelled: Boolean): String {
         // TODO: the order of these if statements may produce undesired behavior
         logDebug("Received a chat event from ${player.getName()}: $message")

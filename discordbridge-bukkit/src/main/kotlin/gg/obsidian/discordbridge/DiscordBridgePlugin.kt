@@ -39,6 +39,12 @@ class DiscordBridgePlugin : JavaPlugin() {
         getCommand("choose").executor = EventListener(core)
         getCommand("talk").executor = EventListener(core)
         getCommand("roll").executor = EventListener(core)
+
+        core.handleServerStart()
+    }
+
+    override fun onDisable() {
+        core.handleServerStop()
     }
 
 }

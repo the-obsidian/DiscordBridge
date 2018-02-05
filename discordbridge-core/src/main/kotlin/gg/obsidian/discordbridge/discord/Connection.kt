@@ -102,8 +102,6 @@ object Connection: Runnable {
         JDA = builder.buildBlocking()
         listener = Listener(db)
         JDA.addEventListener(listener)
-        if (db.getConfig().getBoolean("announce-server-start-stop", true))
-            send(db.getConfig().getString("templates.discord.server-start", "Server started!"), getRelayChannel())
         JDA.presence.game = Game.of("Minecraft ${db.getServer().getMinecraftShortVersion()}")
     }
 

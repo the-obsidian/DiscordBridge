@@ -14,6 +14,8 @@ import org.spongepowered.api.event.network.ClientConnectionEvent
 import org.spongepowered.api.plugin.Plugin
 import java.io.File
 import org.slf4j.Logger
+import org.spongepowered.api.event.game.state.GameStartedServerEvent
+import org.spongepowered.api.event.game.state.GameStoppingServerEvent
 import javax.inject.Inject
 
 @Plugin(id = "discordbridge-obsidian", name = "DiscordBridge", version = "@VERSION")
@@ -40,6 +42,16 @@ class DiscordBridgePlugin {
         core.postInit()
 
         //game.commandManager.register(this, )
+    }
+
+    @Listener
+    fun onServerStarted(event: GameStartedServerEvent) {
+        core.handleServerStart()
+    }
+
+    @Listener
+    fun onServerStopping(event: GameStoppingServerEvent) {
+        core.handleServerStop()
     }
 
     @Listener(order = Order.LAST)
