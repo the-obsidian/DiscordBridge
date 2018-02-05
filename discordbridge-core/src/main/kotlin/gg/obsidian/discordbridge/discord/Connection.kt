@@ -17,12 +17,15 @@ object Connection: Runnable {
     private lateinit var listener: Listener
     var server: Guild? = null
     var channel: TextChannel? = null
+    var serverReady = false
+    var jdaReady = false
 
     /**
      * Starts the connection
      */
     override fun run() {
         try {
+            DiscordBridge.logger.info("Connecting...")
             connect()
         } catch (e: Exception) {
             DiscordBridge.logger.severe("Error connecting to Discord: ${e.message}", e)
@@ -54,19 +57,21 @@ object Connection: Runnable {
         toChannel.sendMessage(message).queue()
     }
 
-    /**
-     * Shuts down the current JDA instance and creates a new one
-     */
-    fun reconnect(callback: Runnable) {
-        //disconnect
-        if (DiscordBridge.getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
-            send("Refreshing Discord connection...", getRelayChannel())
+    fun disconnect() {
         JDA.removeEventListener(listener)
         server = null
         channel = null
         JDA.shutdown()
+        jdaReady = false
+    }
 
-        //reconnect
+    /**
+     * Shuts down the current JDA instance and creates a new one
+     */
+    fun reconnect(callback: Runnable) {
+        if (DiscordBridge.getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
+            send("Refreshing Discord connection...", getRelayChannel())
+        disconnect()
         connect()
         callback.run()
     }
@@ -93,6 +98,12 @@ object Connection: Runnable {
         return mutableListOf()
     }
 
+    fun onServerReady() {
+        //TODO: Fix this race condition
+        if (jdaReady) send(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.server-start", "Server started!"), getRelayChannel())
+        serverReady = true
+    }
+
     /**
      * Builds a JDA instance to connect to the Discord API
      */
@@ -103,6 +114,8 @@ object Connection: Runnable {
         listener = Listener()
         JDA.addEventListener(listener)
         JDA.presence.game = Game.of("Minecraft ${DiscordBridge.getServer().getMinecraftShortVersion()}")
+        if (serverReady) send(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.server-start", "Server started!"), getRelayChannel())
+        jdaReady = true
     }
 
     /**

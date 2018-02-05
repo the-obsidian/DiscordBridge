@@ -12,6 +12,7 @@ dependencies {
     compile project(':discordbridge-core')
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile group: 'org.spigotmc', name: 'spigot-api', version: '1.12-R0.1-SNAPSHOT'
+    compile (group: 'org.pegdown', name:'pegdown', version: '1.6.0')
 
     compile files('../libraries/dynmap-api-2.5-SNAPSHOT.jar')
 }

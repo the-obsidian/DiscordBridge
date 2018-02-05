@@ -32,6 +32,7 @@ object DiscordBridge {
     private val discordChatControllerManager = BotControllerManager()
     private val minecraftCommandControllerManager = BotControllerManager()
     private val cfgNodes: MutableMap<Cfg, ConfigurationNode> = mutableMapOf()
+    private val isLoaded = false
     private lateinit var server: IServer
     lateinit var logger: ILogger
 
@@ -49,8 +50,12 @@ object DiscordBridge {
             val file = File(dataFolder, filename)
             if (!createDefaultFileFromResource("/$filename", file))
                 logger.severe("Could not create default file for $filename")
-            cfgNodes.put(c, ConfigurationNode(file))
+            val node = ConfigurationNode(file)
+            node.load()
+            cfgNodes.put(c, node)
         }
+        server.getScheduler().runAsyncTask(Connection)
+        UserAliasConfig.load()
 
         minecraftChatControllerManager.registerController(FunCommandsController(), chatExclusive = true)
         minecraftChatControllerManager.registerController(UtilCommandsController(), chatExclusive = true)
@@ -58,10 +63,6 @@ object DiscordBridge {
         minecraftCommandControllerManager.registerController(UtilCommandsController(), minecraftExclusive = true)
         discordChatControllerManager.registerController(FunCommandsController(), discordExclusive = true, chatExclusive = true)
         discordChatControllerManager.registerController(UtilCommandsController(), discordExclusive = true, chatExclusive = true)
-
-        for (cfg in cfgNodes.values) cfg.load()
-        UserAliasConfig.load()
-        server.getScheduler().runAsyncTask(Connection)
     }
 
     fun logDebug(msg: String) {
@@ -323,13 +324,13 @@ object DiscordBridge {
     }
 
     fun handleServerStart() {
-        if (getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
-            sendToDiscord(getConfig(Cfg.CONFIG).getString("templates.discord.server-start", "Server started!"), Connection.getRelayChannel())
+        Connection.onServerReady()
     }
 
     fun handleServerStop() {
         if (getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
             sendToDiscord(getConfig(Cfg.CONFIG).getString("templates.discord.server-stop", "Shutting down..."), Connection.getRelayChannel())
+        Connection.disconnect()
     }
 
     fun handlePlayerChat(player: IPlayer, message: String, isCancelled: Boolean): String {

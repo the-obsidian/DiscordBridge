@@ -19,9 +19,11 @@ class DiscordBridgePlugin : JavaPlugin() {
 
     override fun onLoad() {
         logger = LoggerFactory.getLogger("DiscordBrdige")
+        logger.info("Loading DiscordBridge")
     }
 
     override fun onEnable() {
+        logger.info("Enabling DiscordBridge")
         instance = this
         DiscordBridge.init(Server(this, this.server), dataFolder)
 
