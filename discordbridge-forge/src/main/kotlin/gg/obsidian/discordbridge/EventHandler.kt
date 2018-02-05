@@ -1,6 +1,5 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.wrappers.CommandSenderWrapper
 import gg.obsidian.discordbridge.wrappers.Player
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.entity.player.EntityPlayerMP

@@ -1,10 +1,12 @@
 package gg.obsidian.discordbridge.commands.controllers
 
 import gg.obsidian.discordbridge.DiscordBridge
-import gg.obsidian.discordbridge.commands.*
+import gg.obsidian.discordbridge.commands.DiscordMessageWrapper
+import gg.obsidian.discordbridge.commands.IEventWrapper
+import gg.obsidian.discordbridge.commands.MinecraftChatEventWrapper
+import gg.obsidian.discordbridge.commands.MinecraftCommandWrapper
 import gg.obsidian.discordbridge.commands.annotations.*
 import gg.obsidian.discordbridge.discord.Connection
-import gg.obsidian.discordbridge.util.ChatColor as CC
 import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
 import gg.obsidian.discordbridge.util.Script
 import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
@@ -14,14 +16,13 @@ import gg.obsidian.discordbridge.util.UtilFunctions.toMinecraftChatMessage
 import net.dv8tion.jda.core.Permission
 import java.lang.reflect.Method
 import java.util.*
-import java.util.logging.Level
-import kotlin.collections.HashMap
+import gg.obsidian.discordbridge.util.ChatColor as CC
 
 /**
  * A class that manages an assortment of IBotControllers and allows dynamic access to a configurable assortment
  * of their commands
  *
- * @param plugin a reference to the base Plugin object
+ * @param db a reference to the base DiscordBridge object
  * @see IBotController
  */
 class BotControllerManager(val db: DiscordBridge) {
@@ -140,7 +141,7 @@ class BotControllerManager(val db: DiscordBridge) {
      * @return true if a trigger was found and successfully responded to, false otherwise
      */
     private fun sendScriptedResponse(event: IEventWrapper): Boolean {
-        val responses = db.getScriptsConfig().getList<HashMap<String, Any>>("responses").castTo({Script(it)}) ?: return false
+        val responses = db.getScriptsConfig().getList<HashMap<String, Any>>("responses").castTo({Script(it)})
 
         var response: Script? = null
         for (r in responses) {
@@ -410,7 +411,7 @@ class BotControllerManager(val db: DiscordBridge) {
 ////                    }
 //                }
 //            }
-        return false
+//        return false
     }
 
     /**
@@ -423,7 +424,7 @@ class BotControllerManager(val db: DiscordBridge) {
     private fun relay(event: IEventWrapper, logIgnore: Boolean) {
         when (event) {
             is MinecraftChatEventWrapper -> {
-                var worldname = event.player.getWorld().getName()
+                val worldname = event.player.getWorld().getName()
 
                 // TODO
                 // Get world alias if Multiverse is installed

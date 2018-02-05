@@ -66,7 +66,6 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
         var totalRespects = db.getFConfig().getInteger("total-respects", 0)
         db.logger.info(db.getFConfig().getList<Any>("responses").toString())
         val responses = db.getFConfig().getList<LinkedHashMap<String, Any>>("responses").castTo({Respect(it)})
-                ?: return "ERROR: Responses for this command could not be read from the config."
         val totalWeight = responses.sumBy { it.weight }
         var rand = Random().nextInt(totalWeight) + 1
         var found: Respect? = null
@@ -120,7 +119,6 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
     private fun rate(event: IEventWrapper, thingToRate: String): String {
         db.logDebug("user ${event.senderName} requests a rating")
         val responses = db.getRateConfig().getList<LinkedHashMap<String, Any>>("responses").castTo({Rating(it)})
-                ?: return "ERROR: Responses for this command could not be read from the config."
 
         var rateOutOf = db.getRateConfig().getInteger("rate-out-of", 10)
         if (rateOutOf > 1000000) rateOutOf = 1000000
@@ -191,12 +189,6 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
         bot.sendRequest()
         return bot.response
     }
-
-    /**
-     * Shortcut method for adding "or <prefix>help " to the CommandNotFound output if a COMMAND_PREFIX is set in config
-     */
-    @Suppress("UNCHECKED_CAST")
-    private inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
 
     private inline fun <reified T : Any> List<HashMap<String, Any>>.castTo(factory: (HashMap<String, Any>) -> T): List<T> {
         return this.mapTo(mutableListOf()) { factory(it) }.toList()

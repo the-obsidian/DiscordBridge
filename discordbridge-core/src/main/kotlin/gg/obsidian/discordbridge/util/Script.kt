@@ -14,7 +14,6 @@ package gg.obsidian.discordbridge.util
 data class Script(val triggerMC: String?, val triggerDis: String?, val responseMC: String?, val responseDis: String?,
                   val caseSensitive: Boolean?, val requiresMention: Boolean?,
                   val startsWith: Boolean?) {
-    @Suppress("unused")
     constructor(map: MutableMap<String, Any>):
             this(map["trigger-minecraft"] as? String, map["trigger-discord"] as? String, map["response-minecraft"] as? String,
                     map["response-discord"] as String, map["case-sensitive"] as? Boolean, map["requires-mention"] as? Boolean,

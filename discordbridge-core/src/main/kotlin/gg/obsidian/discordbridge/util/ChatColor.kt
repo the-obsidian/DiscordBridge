@@ -8,9 +8,9 @@ private const val COLOR_CHAR = '\u00A7'
 /**
  * All supported color values for chat
  */
-enum class ChatColor private constructor(
+enum class ChatColor(
         val char: Char, private val intCode: Int,
-        val isFormat: Boolean = false) {
+        private val isFormat: Boolean = false) {
     BLACK('0', 0x00),
     DARK_BLUE('1', 0x1),
     DARK_GREEN('2', 0x2),

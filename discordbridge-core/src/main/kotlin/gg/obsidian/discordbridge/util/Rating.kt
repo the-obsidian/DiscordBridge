@@ -23,6 +23,4 @@ data class Rating(val message: String = "%u - I rate %m %r") {
         low = if(map["low"] is Double) map["low"] as Double else (map["low"] as Int).toDouble()
         high = if(map["high"] is Double) map["high"] as Double else (map["high"] as Int).toDouble()
     }
-
-    constructor(message: String, low: Double = 0.0, high: Double = 0.0): this(message)
 }

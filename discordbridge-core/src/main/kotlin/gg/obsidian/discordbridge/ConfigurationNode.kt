@@ -2,37 +2,21 @@
 
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.util.Rating
-import gg.obsidian.discordbridge.util.Respect
-import gg.obsidian.discordbridge.util.Script
 import gg.obsidian.discordbridge.util.UserAlias
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStreamWriter
-import java.util.ArrayList
-import java.util.LinkedHashMap
-
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor
 import org.yaml.snakeyaml.constructor.SafeConstructor
 import org.yaml.snakeyaml.error.YAMLException
 import org.yaml.snakeyaml.introspector.Property
-import org.yaml.snakeyaml.nodes.CollectionNode
-import org.yaml.snakeyaml.nodes.MappingNode
-import org.yaml.snakeyaml.nodes.Node
-import org.yaml.snakeyaml.nodes.NodeTuple
-import org.yaml.snakeyaml.nodes.SequenceNode
-import org.yaml.snakeyaml.nodes.Tag
+import org.yaml.snakeyaml.nodes.*
 import org.yaml.snakeyaml.reader.UnicodeReader
 import org.yaml.snakeyaml.representer.Represent
 import org.yaml.snakeyaml.representer.Representer
+import java.io.*
+import java.util.*
 
 class ConfigurationNode() : MutableMap<String, Any> {
-    var entries2: MutableMap<String, Any>? = null
+    private var entries2: MutableMap<String, Any>? = null
     private var f: File? = null
     private var yaml: Yaml? = null
 
@@ -62,24 +46,7 @@ class ConfigurationNode() : MutableMap<String, Any> {
     }
 
     constructor(map: MutableMap<String, Any>): this() {
-        if (map == null) {
-            throw IllegalArgumentException()
-        }
         entries2 = map
-    }
-
-    constructor(input: InputStream): this() {
-        load(input)
-    }
-
-    @SuppressWarnings("unchecked")
-    fun load(input: InputStream): Boolean {
-        initparse()
-
-        val o: Any = yaml!!.load(UnicodeReader(input))
-        if(o is MutableMap<*, *>)
-            entries2 = o as MutableMap<String, Any>
-        return (entries2 != null)
     }
 
     @SuppressWarnings("unchecked")
@@ -153,8 +120,7 @@ class ConfigurationNode() : MutableMap<String, Any> {
         }
 
         val subpath = path.substring(separator + 1)
-        val ret = ConfigurationNode(submap).getObject(subpath)
-        return ret
+        return ConfigurationNode(submap).getObject(subpath)
     }
 
     fun getObject(path: String, default: Any): Any {
@@ -209,8 +175,7 @@ class ConfigurationNode() : MutableMap<String, Any> {
     @SuppressWarnings("unchecked")
     fun <T> getList(path: String): List<T> {
         try {
-            val list = getObject(path) as List<T>
-            return list
+            return getObject(path) as List<T>
         } catch (e: ClassCastException) {
             try {
                 val o = getObject(path) as T ?: return ArrayList()

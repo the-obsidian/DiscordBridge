@@ -2,7 +2,6 @@ package gg.obsidian.discordbridge.commands
 
 import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.wrappers.ICommandSender
-import gg.obsidian.discordbridge.wrappers.ICommand
 import gg.obsidian.discordbridge.wrappers.IPlayer
 import net.dv8tion.jda.core.entities.MessageChannel
 
@@ -10,7 +9,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
  * A wrapper for the parameters passed to onCommand() in Bukkit's CommandExecutor class
  *
  * @param sender the sender of the command
- * @param command the command that was invoked
+ * @param commandName the name of the command that was invoked
  * @param args an array of argument strings passed to the command
  */
 class MinecraftCommandWrapper(val sender: ICommandSender, val commandName: String,

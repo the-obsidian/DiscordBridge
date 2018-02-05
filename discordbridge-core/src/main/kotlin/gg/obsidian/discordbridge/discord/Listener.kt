@@ -11,7 +11,7 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter
 /**
  * Listens for events from Discord
  *
- * @param plugin a reference to the base Plugin object
+ * @param db a reference to the base DiscordBridge object
  */
 class Listener(val db: DiscordBridge) : ListenerAdapter() {
 

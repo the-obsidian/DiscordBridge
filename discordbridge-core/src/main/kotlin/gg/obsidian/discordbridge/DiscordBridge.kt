@@ -7,7 +7,6 @@ import gg.obsidian.discordbridge.commands.controllers.FunCommandsController
 import gg.obsidian.discordbridge.commands.controllers.UtilCommandsController
 import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
-import gg.obsidian.discordbridge.util.Respect
 import gg.obsidian.discordbridge.util.UserAlias
 import gg.obsidian.discordbridge.util.ChatColor as CC
 import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
@@ -25,7 +24,7 @@ import java.io.IOException
 import java.io.FileOutputStream
 import java.util.*
 
-class DiscordBridge(private val server: IServer, private val dataFolder: File) {
+class DiscordBridge(private val server: IServer, dataFolder: File) {
 
     private val config: ConfigurationNode
     private val users: ConfigurationNode

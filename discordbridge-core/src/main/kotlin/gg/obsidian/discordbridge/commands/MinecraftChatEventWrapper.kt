@@ -5,9 +5,10 @@ import gg.obsidian.discordbridge.wrappers.IPlayer
 import net.dv8tion.jda.core.entities.MessageChannel
 
 /**
- * A wrapper for Bukkit's AsyncPlayerChatEvent class
+ * Event wrapper for a player chat event
  *
- * @param event the underlying AsyncPlayerChatEvent instance
+ * @param player the player who triggered the event
+ * @param chatMessage the contents of the message that was sent
  */
 class MinecraftChatEventWrapper(val player: IPlayer, val chatMessage: String) : IEventWrapper {
     /**
