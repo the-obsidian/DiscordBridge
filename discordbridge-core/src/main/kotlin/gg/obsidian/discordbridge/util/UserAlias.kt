@@ -10,11 +10,11 @@ import java.util.*
  * @param mcUuid the UUID of the Minecraft account linked to this alias
  * @param discordId the unique Discord ID of the Discord account linked to this alias
  */
-data class UserAlias(val mcUuid: UUID, val discordId: String): Serializable {
+data class UserAlias(var mcUuid: String, var discordId: String) {
 
-    constructor(): this(UUID.fromString("null"), "null")
+    constructor(): this("null", "null")
 
-    constructor(map: MutableMap<String, Any>):
-            this(UUID.fromString(map["mcUuid"] as String), map["discordId"] as String)
+//    constructor(map: MutableMap<String, Any>):
+//            this(map["mcUuid"] as String, map["discordId"] as String)
 
 }

@@ -1,42 +1,42 @@
 package gg.obsidian.discordbridge.wrappers
 
-import gg.obsidian.discordbridge.DiscordBridgePlugin
-import gg.obsidian.discordbridge.util.unwrap
+import gg.obsidian.discordbridge.DiscordBridgeForge
 import net.dv8tion.jda.core.entities.MessageChannel
-import org.spongepowered.api.Game
-import org.spongepowered.api.Sponge
-import org.spongepowered.api.text.Text
+import net.minecraft.util.text.TextComponentString
+import net.minecraftforge.common.ForgeVersion
+import net.minecraftforge.fml.common.FMLCommonHandler
 import java.util.*
 
-class Server(private val plugin: DiscordBridgePlugin, private val game: Game) : IServer {
+class Server(private val mod: DiscordBridgeForge) : IServer {
     override fun getScheduler(): IScheduler {
-        return Scheduler(plugin, game)
+        return Scheduler()
     }
 
+    // TODO
     override fun getVersion(): String {
-        return game.platform.minecraftVersion.name
+        return "Minecraft Forge " + ForgeVersion.mcVersion
     }
 
     override fun getMinecraftShortVersion(): String {
-        return game.platform.minecraftVersion.name
+        return "Minecraft Forge " + ForgeVersion.mcVersion
     }
 
     override fun getPlayer(uuid: UUID): IPlayer? {
-        val p = Sponge.getServer().getPlayer(uuid).unwrap()
-        return if (p != null) Player(p) else null
+        val p = FMLCommonHandler.instance().minecraftServerInstance.playerList.getPlayerByUUID(uuid)
+        return Player(p)
     }
 
     override fun getPlayer(name: String): IPlayer? {
-        val p = Sponge.getServer().getPlayer(name).unwrap()
+        val p = FMLCommonHandler.instance().minecraftServerInstance.playerList.getPlayerByUsername(name)
         return if (p != null) Player(p) else null
     }
 
     override fun getOnlinePlayers(): List<IPlayer> {
-        return Sponge.getServer().onlinePlayers.map { Player(it) }
+        return FMLCommonHandler.instance().minecraftServerInstance.playerList.players.map { Player(it) }
     }
 
     override fun broadcastMessage(message: String) {
-        Sponge.getServer().broadcastChannel.send(Text.of(message))
+        FMLCommonHandler.instance().minecraftServerInstance.playerList.sendMessage(TextComponentString(message))
     }
 
     override fun getRemoteConsoleSender(): IConsoleSender {
@@ -48,7 +48,7 @@ class Server(private val plugin: DiscordBridgePlugin, private val game: Game) : 
     }
 
     override fun getLogger(): Logger {
-        return Logger(plugin.getLogger())
+        return Logger(mod.logger)
     }
 
 }

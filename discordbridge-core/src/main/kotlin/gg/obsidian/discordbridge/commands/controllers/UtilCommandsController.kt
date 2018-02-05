@@ -9,6 +9,7 @@ import gg.obsidian.discordbridge.util.ChatColor as CC
 import gg.obsidian.discordbridge.util.UtilFunctions.stripColor
 import gg.obsidian.discordbridge.wrappers.IPlayer
 import net.dv8tion.jda.core.entities.ChannelType
+import java.util.*
 
 /**
  * Controller for utility commands that configure the way the bot works
@@ -121,7 +122,7 @@ class UtilCommandsController(val db: DiscordBridge) : IBotController {
                     return null
                 }
 
-                val ua = UserAliasConfig.aliases.firstOrNull{it.mcUuid == event.sender.getUUID()}
+                val ua = UserAliasConfig.aliases.firstOrNull{UUID.fromString(it.mcUuid) == event.sender.getUUID()}
                 if (ua != null) {
                     event.sender.sendMessage("${CC.YELLOW}You already have an alias linked with Discord user " +
                             "${Connection.JDA.getUserById(ua.discordId)}. " +
@@ -129,7 +130,7 @@ class UtilCommandsController(val db: DiscordBridge) : IBotController {
                     return null
                 }
 
-                val pendingRequest = db.requests.firstOrNull{it.mcUuid == event.sender.getUUID()}
+                val pendingRequest = db.requests.firstOrNull{ UUID.fromString(it.mcUuid) == event.sender.getUUID()}
                 if (pendingRequest != null) {
                     if (args.size < 3 || args[3] != "-u") {
                         event.sender.sendMessage("${CC.YELLOW}You already have an alias link request pending with " +
@@ -166,7 +167,7 @@ class UtilCommandsController(val db: DiscordBridge) : IBotController {
             "unlinkalias" -> {
                 if (event.sender !is IPlayer) return null
 
-                val ua = UserAliasConfig.aliases.firstOrNull{it.mcUuid == event.sender.getUUID()}
+                val ua = UserAliasConfig.aliases.firstOrNull{UUID.fromString(it.mcUuid) == event.sender.getUUID()}
                 if (ua == null) {
                     event.sender.sendMessage("${CC.YELLOW}You do not have an alias to unlink.")
                     return null

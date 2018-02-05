@@ -25,7 +25,7 @@ object Connection: Runnable {
         try {
             connect()
         } catch (e: Exception) {
-            db.logger.severe("Error connecting to Discord: " + e)
+            db.logger.severe("Error connecting to Discord: ${e.message}", e)
         }
     }
 

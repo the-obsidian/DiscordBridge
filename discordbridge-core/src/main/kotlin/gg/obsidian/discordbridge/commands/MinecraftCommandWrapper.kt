@@ -13,7 +13,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
  * @param command the command that was invoked
  * @param args an array of argument strings passed to the command
  */
-class MinecraftCommandWrapper(val sender: ICommandSender, val command: ICommand,
+class MinecraftCommandWrapper(val sender: ICommandSender, val commandName: String,
                               val args: Array<out String>) : IEventWrapper {
     /**
      * The Minecraft username of the command sender

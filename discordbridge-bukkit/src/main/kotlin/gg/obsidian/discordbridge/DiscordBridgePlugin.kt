@@ -2,6 +2,8 @@ package gg.obsidian.discordbridge
 
 import gg.obsidian.discordbridge.wrappers.Server
 import org.bukkit.plugin.java.JavaPlugin
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * The primary Plugin class that maintains the plugin's connection with Bukkit
@@ -10,10 +12,17 @@ class DiscordBridgePlugin : JavaPlugin() {
 
     private lateinit var core: DiscordBridge
     private lateinit var instance: DiscordBridgePlugin
+    private lateinit var logger: Logger
 
     fun getPlugin() : DiscordBridgePlugin = instance
 
     fun getCore() : DiscordBridge = core
+
+    fun getSLF4JLogger(): Logger = logger
+
+    override fun onLoad() {
+        logger = LoggerFactory.getLogger("DiscordBrdige")
+    }
 
     override fun onEnable() {
         instance = this

@@ -13,7 +13,7 @@ import org.spongepowered.api.event.message.MessageChannelEvent
 import org.spongepowered.api.event.network.ClientConnectionEvent
 import org.spongepowered.api.plugin.Plugin
 import java.io.File
-import java.util.logging.Logger
+import org.slf4j.Logger
 import javax.inject.Inject
 
 @Plugin(id = "discordbridge-obsidian", name = "DiscordBridge", version = "@VERSION")

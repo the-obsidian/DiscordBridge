@@ -57,6 +57,7 @@ subprojects {
     }
 
     shadowJar {
+        classifier = null
         dependencies {
             include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"))
             include(dependency('net.dv8tion:JDA:3.3.1_286'))
@@ -66,16 +67,19 @@ subprojects {
             include(dependency(group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'))
             include(dependency('org.parboiled:parboiled-core'))
             include(dependency('org.parboiled:parboiled-java'))
-            include(dependency('org.ow2.asm:asm'))
-            include(dependency('org.ow2.asm:asm-analysis'))
-            include(dependency('org.ow2.asm:asm-tree'))
-            include(dependency('org.ow2.asm:asm-util'))
+            //include(dependency('org.ow2.asm:asm'))
+            //include(dependency('org.ow2.asm:asm-analysis'))
+            //include(dependency('org.ow2.asm:asm-tree'))
+            //include(dependency('org.ow2.asm:asm-util'))
             include(dependency('com.squareup.okhttp3:okhttp:'))
             include(dependency('com.squareup.okio:okio'))
             include(dependency('com.neovisionaries:nv-websocket-client'))
             include(dependency('org.slf4j:slf4j-api'))
             include(dependency('org.json:json'))
         }
+
+        relocate 'org.parboiled:parboiled-core', "gg.obsidian.discordbridge.shadow.parboiled-core"
+        relocate 'org.parboiled:parboiled-java', "gg.obsidian.discordbridge.shadow.parboiled-java"
     }
 
 }

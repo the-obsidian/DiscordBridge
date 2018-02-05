@@ -9,24 +9,21 @@ import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
 import gg.obsidian.discordbridge.util.Respect
 import gg.obsidian.discordbridge.util.UserAlias
-import gg.obsidian.discordbridge.wrappers.IServer
 import gg.obsidian.discordbridge.util.ChatColor as CC
 import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordChatMessage
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerJoin
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerLeave
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerDeath
-import gg.obsidian.discordbridge.wrappers.ICommand
-import gg.obsidian.discordbridge.wrappers.ICommandSender
-import gg.obsidian.discordbridge.wrappers.IPlayer
+import gg.obsidian.discordbridge.wrappers.*
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.MessageChannel
 import org.pegdown.PegDownProcessor
 import java.io.File
-import java.util.logging.Logger
 import java.io.IOException
 import java.io.FileOutputStream
+import java.util.*
 
 class DiscordBridge(private val server: IServer, private val dataFolder: File) {
 
@@ -45,11 +42,10 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
     // Temporary storage for alias linking requests
     var requests: MutableList<UserAlias> = mutableListOf()
 
-    val logger: Logger = server.getLogger()
+    val logger: ILogger = server.getLogger()
 
     init {
         Connection.db  = this //TODO: enforce this better
-        server.getScheduler().runAsyncTask(Connection)
 
         if (!dataFolder.exists()) dataFolder.mkdirs()
 
@@ -92,6 +88,7 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
         f.load()
         rate.load()
         insult.load()
+        server.getScheduler().runAsyncTask(Connection)
     }
 
     fun logDebug(msg: String) {
@@ -201,7 +198,7 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
         val users = Connection.listUsers()
         val found: Member = users.find { it.user.name + "#" + it.user.discriminator == discriminator } ?: return null
 
-        val ua = UserAlias(player.getUUID(), found.user.id)
+        val ua = UserAlias(player.getUUID().toString(), found.user.id)
         requests.add(ua)
         val msg = "Minecraft user '${player.getName()}' has requested to become associated with your Discord" +
                 " account. If this is you, respond '${Connection.JDA.selfUser.asMention} confirm'. If this is not" +
@@ -288,7 +285,7 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
         for (du in discordusers)
             for ((mcUuid, discordId) in UserAliasConfig.aliases)
                 if (discordId == du.user.id) {
-                    val player = server.getPlayer(mcUuid)
+                    val player = server.getPlayer(UUID.fromString(mcUuid))
                     if (player != null) discordaliases.add(Pair(player.getName(), du))
                 }
 
@@ -334,7 +331,7 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
     fun translateAliasesToDiscord(message: String): String {
         var modifiedMessage = message
         for ((mcUuid, discordId) in UserAliasConfig.aliases) {
-            val player = server.getPlayer(mcUuid)
+            val player = server.getPlayer(UUID.fromString(mcUuid))
             if (player != null) {
                 val nameMC = player.getName()
                 val discordUser = Connection.listUsers().firstOrNull { it.user.id == discordId }
@@ -355,7 +352,7 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
     fun translateAliasesToMinecraft(message: String): String {
         var modifiedMessage = message
         for ((mcUuid, discordId) in UserAliasConfig.aliases) {
-            val player = server.getPlayer(mcUuid)
+            val player = server.getPlayer(UUID.fromString(mcUuid))
             if (player != null) {
                 val nameMC = player.getName()
                 val nameDis = Connection.JDA.getUserById(discordId).name
@@ -466,8 +463,12 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
         sendToDiscord(translateAliasesToDiscord(message.toDiscordChatMessage(this, name, "Dynmap")), Connection.getRelayChannel())
     }
 
-    fun handleCommand(sender: ICommandSender, command: ICommand, args: Array<out String>): Boolean {
-        return minecraftCommandControllerManager.dispatchMessage(MinecraftCommandWrapper(sender, command, args))
+    fun handleCommand(sender: ICommandSender, commandName: String, args: Array<out String>): Boolean {
+        return minecraftCommandControllerManager.dispatchMessage(MinecraftCommandWrapper(sender, commandName, args))
+    }
+
+    fun getServerCommands(): List<BotControllerManager.Command> {
+        return minecraftCommandControllerManager.getCommands().values.toList()
     }
 
 }

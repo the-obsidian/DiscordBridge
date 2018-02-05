@@ -5,7 +5,6 @@ import gg.obsidian.discordbridge.DiscordCommandSender
 import net.dv8tion.jda.core.entities.MessageChannel
 import org.bukkit.Server
 import java.util.*
-import java.util.logging.Logger
 
 class Server(val plugin: DiscordBridgePlugin, val bukkitServer: Server) : IServer {
     override fun getRemoteConsoleSender(): IConsoleSender {
@@ -45,8 +44,8 @@ class Server(val plugin: DiscordBridgePlugin, val bukkitServer: Server) : IServe
         bukkitServer.dispatchCommand(sender, command)
     }
 
-    override fun getLogger(): Logger {
-        return plugin.logger
+    override fun getLogger(): ILogger {
+        return Logger(plugin.logger)
     }
 
 }

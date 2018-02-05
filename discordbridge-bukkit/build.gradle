@@ -24,6 +24,10 @@ shadowJar {
     dependencies {
         include(project(':discordbridge-core'))
         include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"))
+        include(dependency('org.ow2.asm:asm'))
+        include(dependency('org.ow2.asm:asm-analysis'))
+        include(dependency('org.ow2.asm:asm-tree'))
+        include(dependency('org.ow2.asm:asm-util'))
     }
 }
 build.dependsOn(shadowJar)

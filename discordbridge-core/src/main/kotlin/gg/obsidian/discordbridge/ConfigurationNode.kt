@@ -49,10 +49,11 @@ class ConfigurationNode() : MutableMap<String, Any> {
             options.isPrettyFlow = true
 
             val representer = EmptyNullRepresenter()
+            representer.addClassTag(String::class.java, Tag.STR)
 //            representer.addClassTag(Rating::class.java, Tag("!!Rating"))
 //            representer.addClassTag(Respect::class.java, Tag("!!Respect"))
 //            representer.addClassTag(Script::class.java, Tag("!!Script"))
-//            representer.addClassTag(UserAlias::class.java, Tag("!!UserAlias"))
+            representer.addClassTag(UserAlias::class.java, Tag(UserAlias::class.java))
 
             //yaml = Yaml(SafeConstructor(), representer, options)
             yaml = Yaml(CustomClassLoaderConstructor(DiscordBridge::class.java.classLoader), representer, options)

@@ -82,6 +82,10 @@ class BotControllerManager(val db: DiscordBridge) {
         commands.put(command.name, command)
     }
 
+    fun getCommands(): Map<String, Command> {
+        return commands
+    }
+
     // =============================================
     // ============== MESSAGE HANDLING =============
 
@@ -95,9 +99,9 @@ class BotControllerManager(val db: DiscordBridge) {
 
         // Short circuit if event was a Minecraft command
         if (event is MinecraftCommandWrapper) {
-            val command = commands[event.command.getName()]
+            val command = commands[event.commandName]
             if (command == null) {
-                commandNotFound(event, event.command.getName())
+                commandNotFound(event, event.commandName)
                 return true
             }
             return invokeBotCommand(command, controllers, event, event.args.asList().toTypedArray())
@@ -562,7 +566,7 @@ class BotControllerManager(val db: DiscordBridge) {
      * @param throwable the uncaught exception
      */
     private fun commandException(event: IEventWrapper, throwable: Throwable) {
-        db.logger.log(Level.SEVERE, "Command with content ${event.rawMessage} threw an exception.", throwable)
+        db.logger.severe("Command with content ${event.rawMessage} threw an exception.", throwable)
         when (event) {
             is DiscordMessageWrapper ->
                 event.channel.sendMessage(

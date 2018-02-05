@@ -12,9 +12,9 @@ apply plugin: 'kotlin'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
 
-version = "1.0"
-group = "com.yourname.modid" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "modid"
+version = "2.0"
+group = "gg.obsidian.discordbridge-o" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "discordbridge-o"
 
 sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 compileJava {
@@ -43,26 +43,6 @@ repositories {
 dependencies {
     compile project(':discordbridge-core')
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    // you may put jars on which you depend on in ./libs
-    // or you may define them like so..
-    //compile "some.group:artifact:version:classifier"
-    //compile "some.group:artifact:version"
-      
-    // real examples
-    //compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
-    //compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
-
-    // the 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
-    //provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-    // the deobf configurations:  'deobfCompile' and 'deobfProvided' are the same as the normal compile and provided,
-    // except that these dependencies get remapped to your current MCP mappings
-    //deobfCompile 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-    //deobfProvided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-    // for more info...
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
 }
 
@@ -84,3 +64,10 @@ processResources {
         exclude 'mcmod.info'
     }
 }
+
+shadowJar {
+    dependencies {
+        include(project(':discordbridge-core'))
+    }
+}
+build.dependsOn(shadowJar)

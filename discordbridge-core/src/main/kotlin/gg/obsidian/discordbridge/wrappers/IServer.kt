@@ -2,7 +2,6 @@ package gg.obsidian.discordbridge.wrappers
 
 import net.dv8tion.jda.core.entities.MessageChannel
 import java.util.*
-import java.util.logging.Logger
 
 interface IServer {
 
@@ -24,6 +23,6 @@ interface IServer {
 
     fun dispatchCommand(channel: MessageChannel, command: String)
 
-    fun getLogger(): Logger
+    fun getLogger(): ILogger
 
 }
