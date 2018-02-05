@@ -1,6 +1,7 @@
 package gg.obsidian.discordbridge
 
 import gg.obsidian.discordbridge.util.unwrap
+import gg.obsidian.discordbridge.wrappers.CommandWrapper
 import gg.obsidian.discordbridge.wrappers.Player
 import gg.obsidian.discordbridge.wrappers.Server
 import org.spongepowered.api.Game
@@ -14,7 +15,9 @@ import org.spongepowered.api.event.network.ClientConnectionEvent
 import org.spongepowered.api.plugin.Plugin
 import java.io.File
 import org.slf4j.Logger
+import org.spongepowered.api.Sponge
 import org.spongepowered.api.event.game.state.GameStartedServerEvent
+import org.spongepowered.api.event.game.state.GameStartingServerEvent
 import org.spongepowered.api.event.game.state.GameStoppingServerEvent
 import javax.inject.Inject
 
@@ -37,7 +40,11 @@ class DiscordBridgePlugin {
         instance = this
         DiscordBridge.init(Server(this, game), defaultConfig)
 
-        //game.commandManager.register(this, )
+        val mgr = Sponge.getCommandManager()
+        for (c in DiscordBridge.getServerCommands()) {
+            val wrap = CommandWrapper(c)
+            logger.info(mgr.register(this, wrap, c.name).isPresent.toString())
+        }
     }
 
     @Listener
