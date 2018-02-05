@@ -1,6 +1,7 @@
 package gg.obsidian.discordbridge.discord
 
 import gg.obsidian.discordbridge.DiscordBridge
+import gg.obsidian.discordbridge.util.Cfg
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder
@@ -35,8 +36,8 @@ object Connection: Runnable {
      * @return the relay TextChannel, null if the value could not be read
      */
     fun getRelayChannel(): TextChannel? {
-        server = if (server == null) getServerById(db.getConfig().getString("server-id", "")) else server
-        channel = if (channel == null) getGroupByName(server!!, db.getConfig().getString("channel", "")) else channel
+        server = if (server == null) getServerById(db.getConfig(Cfg.CONFIG).getString("server-id", "")) else server
+        channel = if (channel == null) getGroupByName(server!!, db.getConfig(Cfg.CONFIG).getString("channel", "")) else channel
         return channel
     }
 
@@ -59,7 +60,7 @@ object Connection: Runnable {
      */
     fun reconnect(callback: Runnable) {
         //disconnect
-        if (db.getConfig().getBoolean("announce-server-start-stop", true))
+        if (db.getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
             send("Refreshing Discord connection...", getRelayChannel())
         JDA.removeEventListener(listener)
         server = null
@@ -98,7 +99,7 @@ object Connection: Runnable {
      */
     private fun connect() {
         var builder = JDABuilder(AccountType.BOT).setAudioEnabled(true)
-        builder = builder.setToken(db.getConfig().getString("token", ""))
+        builder = builder.setToken(db.getConfig(Cfg.CONFIG).getString("token", ""))
         JDA = builder.buildBlocking()
         listener = Listener(db)
         JDA.addEventListener(listener)

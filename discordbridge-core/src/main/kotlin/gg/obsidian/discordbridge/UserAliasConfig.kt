@@ -1,5 +1,6 @@
 package gg.obsidian.discordbridge
 
+import gg.obsidian.discordbridge.util.Cfg
 import gg.obsidian.discordbridge.util.UserAlias
 
 /**
@@ -12,7 +13,7 @@ object UserAliasConfig {
      * Load the stored aliases from file into memory
      */
     fun load(db: DiscordBridge) {
-        val list = db.getUsersConfig().getList<Map<String, Any>>("aliases")
+        val list = db.getConfig(Cfg.ALIAS).getList<Map<String, Any>>("aliases")
         aliases = list.castTo({UserAlias(it)})
     }
 
@@ -21,9 +22,9 @@ object UserAliasConfig {
      */
     fun add(db: DiscordBridge, ua: UserAlias) {
         aliases = aliases.plus(ua)
-        db.getUsersConfig().put("aliases", aliases)
-        db.getUsersConfig().save()
-        db.getUsersConfig().load()
+        db.getConfig(Cfg.ALIAS).put("aliases", aliases)
+        db.getConfig(Cfg.ALIAS).save()
+        db.getConfig(Cfg.ALIAS).load()
     }
 
     /**
@@ -31,9 +32,9 @@ object UserAliasConfig {
      */
     fun remove(db: DiscordBridge, ua: UserAlias) {
         aliases = aliases.minus(ua)
-        db.getUsersConfig().put("aliases", aliases)
-        db.getUsersConfig().save()
-        db.getUsersConfig().load()
+        db.getConfig(Cfg.ALIAS).put("aliases", aliases)
+        db.getConfig(Cfg.ALIAS).save()
+        db.getConfig(Cfg.ALIAS).load()
     }
 
     private inline fun <reified T : Any> List<Map<String, Any>>.castTo(factory: (Map<String, Any>) -> T): List<T> {

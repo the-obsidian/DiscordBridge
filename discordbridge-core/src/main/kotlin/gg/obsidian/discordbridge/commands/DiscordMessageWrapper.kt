@@ -1,6 +1,7 @@
 package gg.obsidian.discordbridge.commands
 
 import gg.obsidian.discordbridge.DiscordBridge
+import gg.obsidian.discordbridge.util.Cfg
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.entities.Message
 import net.dv8tion.jda.core.entities.MessageChannel
@@ -33,9 +34,9 @@ class DiscordMessageWrapper(val db: DiscordBridge, val originalMessage: Message)
      */
     override val isFromRelayChannel: Boolean
         get() = if (originalMessage.isFromType(ChannelType.PRIVATE)) false
-                else originalMessage.guild.id == db.getConfig().getString("server-id")
+                else originalMessage.guild.id == db.getConfig(Cfg.CONFIG).getString("server-id")
                 && originalMessage.isFromType(ChannelType.TEXT)
-                && originalMessage.textChannel.name.equals(db.getConfig().getString("channel"), true)
+                && originalMessage.textChannel.name.equals(db.getConfig(Cfg.CONFIG).getString("channel"), true)
 
     /**
      * The message of this event

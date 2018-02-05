@@ -5,6 +5,7 @@ import gg.obsidian.discordbridge.UserAliasConfig
 import gg.obsidian.discordbridge.commands.*
 import gg.obsidian.discordbridge.commands.annotations.*
 import gg.obsidian.discordbridge.discord.Connection
+import gg.obsidian.discordbridge.util.Cfg
 import gg.obsidian.discordbridge.util.ChatColor as CC
 import gg.obsidian.discordbridge.util.UtilFunctions.stripColor
 import gg.obsidian.discordbridge.wrappers.IPlayer
@@ -102,7 +103,7 @@ class UtilCommandsController(val db: DiscordBridge) : IBotController {
         when (subCommand.toLowerCase()) {
             "reload" -> {
                 if (event.sender is IPlayer && !event.sender.hasPermission("discordbridge.discord.reload")) {
-                    event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig().getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                    event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             "Sorry, you don't have permission to use that command.")
                 } else {
                     event.sender.sendMessage("${CC.YELLOW}Reloading Discord Bridge...")
@@ -113,7 +114,7 @@ class UtilCommandsController(val db: DiscordBridge) : IBotController {
                 if (event.sender !is IPlayer) return null
 
                 if (!event.sender.hasPermission("discordbridge.discord.linkalias")) {
-                    event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig().getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                    event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             "Sorry, you don't have permission to use that command.")
                 }
 
@@ -154,7 +155,7 @@ class UtilCommandsController(val db: DiscordBridge) : IBotController {
                 }
 
                 if (event.sender is IPlayer && !event.sender.hasPermission("discordbridge.discord.listmembers")) {
-                    event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig().getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                    event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             "Sorry, you don't have permission to use that command.")
                 }
 

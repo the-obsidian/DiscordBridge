@@ -6,6 +6,7 @@ import gg.obsidian.discordbridge.commands.controllers.BotControllerManager
 import gg.obsidian.discordbridge.commands.controllers.FunCommandsController
 import gg.obsidian.discordbridge.commands.controllers.UtilCommandsController
 import gg.obsidian.discordbridge.discord.Connection
+import gg.obsidian.discordbridge.util.Cfg
 import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
 import gg.obsidian.discordbridge.util.UserAlias
 import gg.obsidian.discordbridge.util.ChatColor as CC
@@ -26,17 +27,11 @@ import java.util.*
 
 class DiscordBridge(private val server: IServer, dataFolder: File) {
 
-    private val config: ConfigurationNode
-    private val users: ConfigurationNode
-    private val scripts: ConfigurationNode
-    private val eightball: ConfigurationNode
-    private val f: ConfigurationNode
-    private val rate: ConfigurationNode
-    private val insult: ConfigurationNode
     private val pegDownProc = PegDownProcessor()
     private val minecraftChatControllerManager = BotControllerManager(this)
     private val discordChatControllerManager = BotControllerManager(this)
     private val minecraftCommandControllerManager = BotControllerManager(this)
+    private val cfgNodes: MutableMap<Cfg, ConfigurationNode> = mutableMapOf()
 
     // Temporary storage for alias linking requests
     var requests: MutableList<UserAlias> = mutableListOf()
@@ -48,28 +43,13 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
 
         if (!dataFolder.exists()) dataFolder.mkdirs()
 
-        val cf = File(dataFolder, "config.yml")
-        if (!createDefaultFileFromResource("/config.yml", cf)) {logger.severe("Could not create default for config.yml")} //return false
-        val uaf = File(dataFolder, "usernames.yml")
-        if (!createDefaultFileFromResource("/usernames.yml", uaf)) {logger.severe("Could not create default for usernamess.yml")} // return false
-        val sf = File(dataFolder, "script.yml")
-        if (!createDefaultFileFromResource("/script.yml", sf)) {logger.severe("Could not create default for script.yml")} // return false
-        val ebf = File(dataFolder, "8ball.yml")
-        if (!createDefaultFileFromResource("/8ball.yml", ebf)) {logger.severe("Could not create default for 8ball.yml")} //return false
-        val ff = File(dataFolder, "f.yml")
-        if (!createDefaultFileFromResource("/f.yml", ff)) {logger.severe("Could not create default for f.yml")} // return false
-        val rf = File(dataFolder, "rate.yml")
-        if (!createDefaultFileFromResource("/rate.yml", rf)) {logger.severe("Could not create default for rate.yml")} // return false
-        val inf = File(dataFolder, "insult.yml")
-        if (!createDefaultFileFromResource("/insult.yml", inf)) {logger.severe("Could not create default for insult.yml")} // return false
-
-        config = ConfigurationNode(cf)
-        users = ConfigurationNode(uaf)
-        scripts = ConfigurationNode(sf)
-        eightball = ConfigurationNode(ebf)
-        f = ConfigurationNode(ff)
-        rate = ConfigurationNode(rf)
-        insult = ConfigurationNode(inf)
+        for (c in Cfg.values()) {
+            val filename = "${c.filename}.yml"
+            val file = File(dataFolder, filename)
+            if (!createDefaultFileFromResource("/$filename", file))
+                logger.severe("Could not create default file for $filename")
+            cfgNodes.put(c, ConfigurationNode(file))
+        }
 
         minecraftChatControllerManager.registerController(FunCommandsController(this), chatExclusive = true)
         minecraftChatControllerManager.registerController(UtilCommandsController(this), chatExclusive = true)
@@ -80,40 +60,25 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
     }
 
     fun postInit() {
-        config.load()
-        users.load()
+        for (cfg in cfgNodes.values) cfg.load()
         UserAliasConfig.load(this)
-        scripts.load()
-        eightball.load()
-        f.load()
-        rate.load()
-        insult.load()
         server.getScheduler().runAsyncTask(Connection)
     }
 
     fun logDebug(msg: String) {
-        if (!getConfig().getBoolean("debug", false)) return
+        if (!getConfig(Cfg.CONFIG).getBoolean("debug", false)) return
         logger.info("[DiscordBridge] $msg")
     }
 
     fun getServer(): IServer = server
     fun getPegDownProcessor(): PegDownProcessor = pegDownProc
-
-    fun getConfig(): ConfigurationNode = config
-    fun getUsersConfig(): ConfigurationNode = users
-    fun getScriptsConfig(): ConfigurationNode = scripts
-    fun getEightBallConfig(): ConfigurationNode = eightball
-    fun getFConfig(): ConfigurationNode = f
-    fun getRateConfig(): ConfigurationNode = rate
-    fun getInsultConfig(): ConfigurationNode = insult
+    fun getConfig(type: Cfg) = cfgNodes[type]!!
 
     // Borrowed code from dynmap-core
     /* Uses resource to create default file, if file does not yet exist */
     private fun createDefaultFileFromResource(resourcename: String, deffile: File): Boolean {
         if (deffile.canRead()) return true
-        //TODO: This is initialized before the config that controls the debug logger is!
         logger.info(deffile.path + " not found - creating default")
-        //logger.info(deffile.path + " not found - creating default")
         val inputStream = javaClass.getResourceAsStream(resourcename)
         if (inputStream == null) {
             logger.severe("Unable to find default resource - " + resourcename)
@@ -165,13 +130,7 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
 
 
     fun reload(callback: Runnable) {
-        config.load()
-        users.load()
-        eightball.load()
-        insult.load()
-        f.load()
-        rate.load()
-        scripts.load()
+        for (cfg in cfgNodes.values) cfg.load()
         //if (isMultiverseInstalled) worlds!!.reloadConfig()
         UserAliasConfig.load(this)
         Connection.reconnect(callback)
@@ -365,21 +324,21 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
     }
 
     fun handleServerStart() {
-        if (config.getBoolean("announce-server-start-stop", true))
-            sendToDiscord(config.getString("templates.discord.server-start", "Server started!"), Connection.getRelayChannel())
+        if (getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
+            sendToDiscord(getConfig(Cfg.CONFIG).getString("templates.discord.server-start", "Server started!"), Connection.getRelayChannel())
     }
 
     fun handleServerStop() {
-        if (config.getBoolean("announce-server-start-stop", true))
-            sendToDiscord(config.getString("templates.discord.server-stop", "Shutting down..."), Connection.getRelayChannel())
+        if (getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
+            sendToDiscord(getConfig(Cfg.CONFIG).getString("templates.discord.server-stop", "Shutting down..."), Connection.getRelayChannel())
     }
 
     fun handlePlayerChat(player: IPlayer, message: String, isCancelled: Boolean): String {
         // TODO: the order of these if statements may produce undesired behavior
         logDebug("Received a chat event from ${player.getName()}: $message")
-        if (!getConfig().getBoolean("player-messages.chat", true)) return message
-        if (isCancelled && !getConfig().getBoolean("relay-cancelled-messages", true)) return message
-        if (player.isVanished() && !getConfig().getBoolean("if-vanished.player-chat", false)) return message
+        if (!getConfig(Cfg.CONFIG).getBoolean("player-messages.chat", true)) return message
+        if (isCancelled && !getConfig(Cfg.CONFIG).getBoolean("relay-cancelled-messages", true)) return message
+        if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-chat", false)) return message
 
         // Emoticons!
         var newMessage = message.replace(":lenny:", "( \u0361\u00B0 \u035C\u0296 \u0361\u00B0)")
@@ -410,8 +369,8 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
         val username = player.getName()
         val worldname = player.getWorld().getName()
         logDebug("Received a join event for $username")
-        if (!getConfig().getBoolean("messages.player-join", true)) return
-        if (player.isVanished() && !getConfig().getBoolean("if-vanished.player-join", false)) return
+        if (!getConfig(Cfg.CONFIG).getBoolean("messages.player-join", true)) return
+        if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-join", false)) return
 
         // Get world alias if Multiverse is installed
 //        if (plugin.isMultiverseInstalled) {
@@ -431,8 +390,8 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
         val username = player.getName()
         val worldname = player.getWorld().getName()
         logDebug("Received a leave event for $username")
-        if (!getConfig().getBoolean("messages.player-leave", true)) return
-        if (player.isVanished() && !getConfig().getBoolean("if-vanished.player-leave", false)) return
+        if (!getConfig(Cfg.CONFIG).getBoolean("messages.player-leave", true)) return
+        if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-leave", false)) return
 
         // Get world alias if Multiverse is installed
 //        if (plugin.isMultiverseInstalled) {
@@ -452,8 +411,8 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
         val username = player.getName()
         val worldname = player.getWorld().getName()
 
-        if (!getConfig().getBoolean("messages.player-death", false)) return
-        if (player.isVanished() && !getConfig().getBoolean("if-vanished.player-death", false)) return
+        if (!getConfig(Cfg.CONFIG).getBoolean("messages.player-death", false)) return
+        if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-death", false)) return
 
         // Get world alias if Multiverse is installed
 //        if (plugin.isMultiverseInstalled) {
