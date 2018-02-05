@@ -1,8 +1,5 @@
 package gg.obsidian.discordbridge.util
 
-import java.io.Serializable
-import java.util.*
-
 //TODO: make null safe
 /**
  * Represents a UserAlias entry in usernames.yml
@@ -11,10 +8,5 @@ import java.util.*
  * @param discordId the unique Discord ID of the Discord account linked to this alias
  */
 data class UserAlias(var mcUuid: String, var discordId: String) {
-
-    constructor(): this("null", "null")
-
-//    constructor(map: MutableMap<String, Any>):
-//            this(map["mcUuid"] as String, map["discordId"] as String)
-
+    constructor(map: Map<String, Any>): this(map["mcUuid"] as String, map["discordId"] as String)
 }

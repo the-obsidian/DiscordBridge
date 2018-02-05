@@ -83,6 +83,7 @@ class DiscordBridge(private val server: IServer, private val dataFolder: File) {
     fun postInit() {
         config.load()
         users.load()
+        UserAliasConfig.load(this)
         scripts.load()
         eightball.load()
         f.load()

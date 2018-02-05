@@ -50,13 +50,10 @@ class ConfigurationNode() : MutableMap<String, Any> {
 
             val representer = EmptyNullRepresenter()
             representer.addClassTag(String::class.java, Tag.STR)
-//            representer.addClassTag(Rating::class.java, Tag("!!Rating"))
-//            representer.addClassTag(Respect::class.java, Tag("!!Respect"))
-//            representer.addClassTag(Script::class.java, Tag("!!Script"))
-            representer.addClassTag(UserAlias::class.java, Tag(UserAlias::class.java))
+            representer.addClassTag(UserAlias::class.java, Tag.MAP)
 
-            //yaml = Yaml(SafeConstructor(), representer, options)
-            yaml = Yaml(CustomClassLoaderConstructor(DiscordBridge::class.java.classLoader), representer, options)
+            yaml = Yaml(SafeConstructor(), representer, options)
+            //yaml = Yaml(CustomClassLoaderConstructor(DiscordBridge::class.java.classLoader), representer, options)
         }
     }
 

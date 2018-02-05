@@ -12,9 +12,8 @@ object UserAliasConfig {
      * Load the stored aliases from file into memory
      */
     fun load(db: DiscordBridge) {
-        val list = db.getUsersConfig().getList<UserAlias>("aliases")
-        aliases = list ?:
-                throw IllegalStateException("usernames.yml could not be read - list items are not properly formatted")
+        val list = db.getUsersConfig().getList<Map<String, Any>>("aliases")
+        aliases = list.castTo({UserAlias(it)})
     }
 
     /**
@@ -37,7 +36,7 @@ object UserAliasConfig {
         db.getUsersConfig().load()
     }
 
-    private inline fun <reified T : Any> List<HashMap<String, Any>>.castTo(factory: (HashMap<String, Any>) -> T): List<T> {
+    private inline fun <reified T : Any> List<Map<String, Any>>.castTo(factory: (Map<String, Any>) -> T): List<T> {
         return this.mapTo(mutableListOf()) { factory(it) }.toList()
     }
 }
