@@ -10,13 +10,10 @@ import org.slf4j.LoggerFactory
  */
 class DiscordBridgePlugin : JavaPlugin() {
 
-    private lateinit var core: DiscordBridge
     private lateinit var instance: DiscordBridgePlugin
     private lateinit var logger: Logger
 
     fun getPlugin() : DiscordBridgePlugin = instance
-
-    fun getCore() : DiscordBridge = core
 
     fun getSLF4JLogger(): Logger = logger
 
@@ -26,25 +23,24 @@ class DiscordBridgePlugin : JavaPlugin() {
 
     override fun onEnable() {
         instance = this
-        core = DiscordBridge(Server(this, this.server), dataFolder)
-        core.postInit()
+        DiscordBridge.init(Server(this, this.server), dataFolder)
 
-        server.pluginManager.registerEvents(EventListener(core), this)
+        server.pluginManager.registerEvents(EventListener(), this)
 
-        getCommand("discord").executor = EventListener(core)
-        getCommand("f").executor = EventListener(core)
-        getCommand("rate").executor = EventListener(core)
-        getCommand("8ball").executor = EventListener(core)
-        getCommand("insult").executor = EventListener(core)
-        getCommand("choose").executor = EventListener(core)
-        getCommand("talk").executor = EventListener(core)
-        getCommand("roll").executor = EventListener(core)
+        getCommand("discord").executor = EventListener()
+        getCommand("f").executor = EventListener()
+        getCommand("rate").executor = EventListener()
+        getCommand("8ball").executor = EventListener()
+        getCommand("insult").executor = EventListener()
+        getCommand("choose").executor = EventListener()
+        getCommand("talk").executor = EventListener()
+        getCommand("roll").executor = EventListener()
 
-        core.handleServerStart()
+        DiscordBridge.handleServerStart()
     }
 
     override fun onDisable() {
-        core.handleServerStop()
+        DiscordBridge.handleServerStop()
     }
 
 }

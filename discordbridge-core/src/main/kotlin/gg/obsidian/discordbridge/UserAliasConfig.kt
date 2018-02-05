@@ -12,29 +12,29 @@ object UserAliasConfig {
     /**
      * Load the stored aliases from file into memory
      */
-    fun load(db: DiscordBridge) {
-        val list = db.getConfig(Cfg.ALIAS).getList<Map<String, Any>>("aliases")
+    fun load() {
+        val list = DiscordBridge.getConfig(Cfg.ALIAS).getList<Map<String, Any>>("aliases")
         aliases = list.castTo({UserAlias(it)})
     }
 
     /**
      * Adds a new alias to the list and saves the updated list to file
      */
-    fun add(db: DiscordBridge, ua: UserAlias) {
+    fun add(ua: UserAlias) {
         aliases = aliases.plus(ua)
-        db.getConfig(Cfg.ALIAS).put("aliases", aliases)
-        db.getConfig(Cfg.ALIAS).save()
-        db.getConfig(Cfg.ALIAS).load()
+        DiscordBridge.getConfig(Cfg.ALIAS).put("aliases", aliases)
+        DiscordBridge.getConfig(Cfg.ALIAS).save()
+        DiscordBridge.getConfig(Cfg.ALIAS).load()
     }
 
     /**
      * Removes an alias from the list and saves the updated list to file
      */
-    fun remove(db: DiscordBridge, ua: UserAlias) {
+    fun remove(ua: UserAlias) {
         aliases = aliases.minus(ua)
-        db.getConfig(Cfg.ALIAS).put("aliases", aliases)
-        db.getConfig(Cfg.ALIAS).save()
-        db.getConfig(Cfg.ALIAS).load()
+        DiscordBridge.getConfig(Cfg.ALIAS).put("aliases", aliases)
+        DiscordBridge.getConfig(Cfg.ALIAS).save()
+        DiscordBridge.getConfig(Cfg.ALIAS).load()
     }
 
     private inline fun <reified T : Any> List<Map<String, Any>>.castTo(factory: (Map<String, Any>) -> T): List<T> {

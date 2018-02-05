@@ -25,21 +25,22 @@ import java.io.IOException
 import java.io.FileOutputStream
 import java.util.*
 
-class DiscordBridge(private val server: IServer, dataFolder: File) {
+object DiscordBridge {
 
     private val pegDownProc = PegDownProcessor()
-    private val minecraftChatControllerManager = BotControllerManager(this)
-    private val discordChatControllerManager = BotControllerManager(this)
-    private val minecraftCommandControllerManager = BotControllerManager(this)
+    private val minecraftChatControllerManager = BotControllerManager()
+    private val discordChatControllerManager = BotControllerManager()
+    private val minecraftCommandControllerManager = BotControllerManager()
     private val cfgNodes: MutableMap<Cfg, ConfigurationNode> = mutableMapOf()
+    private lateinit var server: IServer
+    lateinit var logger: ILogger
 
     // Temporary storage for alias linking requests
     var requests: MutableList<UserAlias> = mutableListOf()
 
-    val logger: ILogger = server.getLogger()
-
-    init {
-        Connection.db  = this //TODO: enforce this better
+    fun init(server: IServer, dataFolder: File) {
+        this.server = server
+        logger = this.server.getLogger()
 
         if (!dataFolder.exists()) dataFolder.mkdirs()
 
@@ -51,17 +52,15 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
             cfgNodes.put(c, ConfigurationNode(file))
         }
 
-        minecraftChatControllerManager.registerController(FunCommandsController(this), chatExclusive = true)
-        minecraftChatControllerManager.registerController(UtilCommandsController(this), chatExclusive = true)
-        minecraftCommandControllerManager.registerController(FunCommandsController(this), minecraftExclusive = true)
-        minecraftCommandControllerManager.registerController(UtilCommandsController(this), minecraftExclusive = true)
-        discordChatControllerManager.registerController(FunCommandsController(this), discordExclusive = true, chatExclusive = true)
-        discordChatControllerManager.registerController(UtilCommandsController(this), discordExclusive = true, chatExclusive = true)
-    }
+        minecraftChatControllerManager.registerController(FunCommandsController(), chatExclusive = true)
+        minecraftChatControllerManager.registerController(UtilCommandsController(), chatExclusive = true)
+        minecraftCommandControllerManager.registerController(FunCommandsController(), minecraftExclusive = true)
+        minecraftCommandControllerManager.registerController(UtilCommandsController(), minecraftExclusive = true)
+        discordChatControllerManager.registerController(FunCommandsController(), discordExclusive = true, chatExclusive = true)
+        discordChatControllerManager.registerController(UtilCommandsController(), discordExclusive = true, chatExclusive = true)
 
-    fun postInit() {
         for (cfg in cfgNodes.values) cfg.load()
-        UserAliasConfig.load(this)
+        UserAliasConfig.load()
         server.getScheduler().runAsyncTask(Connection)
     }
 
@@ -132,7 +131,7 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
     fun reload(callback: Runnable) {
         for (cfg in cfgNodes.values) cfg.load()
         //if (isMultiverseInstalled) worlds!!.reloadConfig()
-        UserAliasConfig.load(this)
+        UserAliasConfig.load()
         Connection.reconnect(callback)
     }
 
@@ -381,7 +380,7 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
 //            if (alias is String) worldname = alias
 //        }
 
-        var formattedMessage = player.toDiscordPlayerJoin(this, worldname)
+        var formattedMessage = player.toDiscordPlayerJoin(worldname)
         formattedMessage = translateAliasesToDiscord(formattedMessage)
         sendToDiscord(formattedMessage, Connection.getRelayChannel())
     }
@@ -402,7 +401,7 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
 //            if (alias is String) worldname = alias
 //        }
 
-        var formattedMessage = player.toDiscordPlayerLeave(this, worldname)
+        var formattedMessage = player.toDiscordPlayerLeave(worldname)
         formattedMessage = translateAliasesToDiscord(formattedMessage)
         sendToDiscord(formattedMessage, Connection.getRelayChannel())
     }
@@ -423,13 +422,13 @@ class DiscordBridge(private val server: IServer, dataFolder: File) {
 //            if (alias is String) worldname = alias
 //        }
 
-        var formattedMessage = deathMessage.toDiscordPlayerDeath(this, username, worldname)
+        var formattedMessage = deathMessage.toDiscordPlayerDeath(username, worldname)
         formattedMessage = translateAliasesToDiscord(formattedMessage)
         sendToDiscord(formattedMessage, Connection.getRelayChannel())
     }
 
     fun handleDynmapChat(name: String, message: String) {
-        sendToDiscord(translateAliasesToDiscord(message.toDiscordChatMessage(this, name, "Dynmap")), Connection.getRelayChannel())
+        sendToDiscord(translateAliasesToDiscord(message.toDiscordChatMessage(name, "Dynmap")), Connection.getRelayChannel())
     }
 
     fun handleCommand(sender: ICommandSender, commandName: String, args: Array<out String>): Boolean {

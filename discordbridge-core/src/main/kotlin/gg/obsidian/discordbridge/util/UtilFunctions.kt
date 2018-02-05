@@ -27,8 +27,8 @@ object UtilFunctions {
      * @return the formatted string
      */
     @JvmStatic
-    fun String.toMinecraftChatMessage(db: DiscordBridge, alias: String): String {
-        return formatMessage(db.getConfig(Cfg.CONFIG).getString("templates.minecraft.chat-message", "[&b&lDiscord&r]<%u> %m"), msg = this, u = alias, w = "Discord")
+    fun String.toMinecraftChatMessage(alias: String): String {
+        return formatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.minecraft.chat-message", "[&b&lDiscord&r]<%u> %m"), msg = this, u = alias, w = "Discord")
     }
 
     /**
@@ -39,8 +39,8 @@ object UtilFunctions {
      * @return the formatted string
      */
     @JvmStatic
-    fun String.toDiscordChatMessage(db: DiscordBridge, username: String, worldName: String): String {
-        return formatMessage(db.getConfig(Cfg.CONFIG).getString("templates.discord.chat-message", "<**%u**> %m"), msg = this, u = username, w = worldName)
+    fun String.toDiscordChatMessage(username: String, worldName: String): String {
+        return formatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.chat-message", "<**%u**> %m"), msg = this, u = username, w = worldName)
     }
 
     /**
@@ -50,8 +50,8 @@ object UtilFunctions {
      * @return the formatted string
      */
     @JvmStatic
-    fun IPlayer.toDiscordPlayerJoin(db: DiscordBridge, worldName: String): String {
-        return formatMessage(db.getConfig(Cfg.CONFIG).getString("templates.discord.player-join", "**%u** joined the server"), u = this.getName().stripColor(), w = worldName)
+    fun IPlayer.toDiscordPlayerJoin(worldName: String): String {
+        return formatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.player-join", "**%u** joined the server"), u = this.getName().stripColor(), w = worldName)
     }
 
     /**
@@ -61,8 +61,8 @@ object UtilFunctions {
      * @return the formatted string
      */
     @JvmStatic
-    fun IPlayer.toDiscordPlayerLeave(db: DiscordBridge, worldName: String): String {
-        return formatMessage(db.getConfig(Cfg.CONFIG).getString("templates.discord.player-leave", "**%u** left the server"), u = this.getName().stripColor(), w = worldName)
+    fun IPlayer.toDiscordPlayerLeave(worldName: String): String {
+        return formatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.player-leave", "**%u** left the server"), u = this.getName().stripColor(), w = worldName)
     }
 
     /**
@@ -73,8 +73,8 @@ object UtilFunctions {
      * @return the formatted string
      */
     @JvmStatic
-    fun String.toDiscordPlayerDeath(db: DiscordBridge, username: String, worldName: String): String {
-        return formatMessage(db.getConfig(Cfg.CONFIG).getString("templates.discord.player-death", "%m"), msg = this, u = username, w = worldName)
+    fun String.toDiscordPlayerDeath(username: String, worldName: String): String {
+        return formatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.player-death", "%m"), msg = this, u = username, w = worldName)
     }
 
     /**

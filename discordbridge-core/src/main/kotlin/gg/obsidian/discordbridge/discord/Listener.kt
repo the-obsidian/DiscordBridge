@@ -10,16 +10,14 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter
 
 /**
  * Listens for events from Discord
- *
- * @param db a reference to the base DiscordBridge object
  */
-class Listener(val db: DiscordBridge) : ListenerAdapter() {
+class Listener: ListenerAdapter() {
 
-    private val controllerManager = BotControllerManager(db)
+    private val controllerManager = BotControllerManager()
 
     init {
-        controllerManager.registerController(FunCommandsController(db), discordExclusive = true, chatExclusive = true)
-        controllerManager.registerController(UtilCommandsController(db), discordExclusive = true, chatExclusive = true)
+        controllerManager.registerController(FunCommandsController(), discordExclusive = true, chatExclusive = true)
+        controllerManager.registerController(UtilCommandsController(), discordExclusive = true, chatExclusive = true)
     }
 
     /**
@@ -28,15 +26,15 @@ class Listener(val db: DiscordBridge) : ListenerAdapter() {
      * @param event the MessageReceivedEvent object
      */
     override fun onMessageReceived(event: MessageReceivedEvent) {
-        db.logDebug("Received message ${event.message.id} from Discord - ${event.message.rawContent}")
+        DiscordBridge.logDebug("Received message ${event.message.id} from Discord - ${event.message.rawContent}")
 
         // Immediately throw out messages sent from itself
         if (event.author.id == Connection.JDA.selfUser.id) {
-            db.logDebug("Ignoring message ${event.message.id} from Discord: it matches this bot's username")
+            DiscordBridge.logDebug("Ignoring message ${event.message.id} from Discord: it matches this bot's username")
             return
         }
 
-        controllerManager.dispatchMessage(DiscordMessageWrapper(db, event.message))
+        controllerManager.dispatchMessage(DiscordMessageWrapper(event.message))
     }
 
 }

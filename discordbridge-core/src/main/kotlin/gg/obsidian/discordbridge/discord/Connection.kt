@@ -13,7 +13,6 @@ import net.dv8tion.jda.core.entities.*
  * This object is designed to run asynchronously on its own thread.
  */
 object Connection: Runnable {
-    lateinit var db: DiscordBridge
     lateinit var JDA: JDA
     private lateinit var listener: Listener
     var server: Guild? = null
@@ -26,7 +25,7 @@ object Connection: Runnable {
         try {
             connect()
         } catch (e: Exception) {
-            db.logger.severe("Error connecting to Discord: ${e.message}", e)
+            DiscordBridge.logger.severe("Error connecting to Discord: ${e.message}", e)
         }
     }
 
@@ -36,8 +35,8 @@ object Connection: Runnable {
      * @return the relay TextChannel, null if the value could not be read
      */
     fun getRelayChannel(): TextChannel? {
-        server = if (server == null) getServerById(db.getConfig(Cfg.CONFIG).getString("server-id", "")) else server
-        channel = if (channel == null) getGroupByName(server!!, db.getConfig(Cfg.CONFIG).getString("channel", "")) else channel
+        server = if (server == null) getServerById(DiscordBridge.getConfig(Cfg.CONFIG).getString("server-id", "")) else server
+        channel = if (channel == null) getGroupByName(server!!, DiscordBridge.getConfig(Cfg.CONFIG).getString("channel", "")) else channel
         return channel
     }
 
@@ -49,7 +48,7 @@ object Connection: Runnable {
      */
     fun send(message: String, toChannel: MessageChannel?) {
         if (toChannel == null) {
-            db.logger.severe("Could not send message to Discord: Channel is not defined")
+            DiscordBridge.logger.severe("Could not send message to Discord: Channel is not defined")
             return
         }
         toChannel.sendMessage(message).queue()
@@ -60,7 +59,7 @@ object Connection: Runnable {
      */
     fun reconnect(callback: Runnable) {
         //disconnect
-        if (db.getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
+        if (DiscordBridge.getConfig(Cfg.CONFIG).getBoolean("announce-server-start-stop", true))
             send("Refreshing Discord connection...", getRelayChannel())
         JDA.removeEventListener(listener)
         server = null
@@ -99,11 +98,11 @@ object Connection: Runnable {
      */
     private fun connect() {
         var builder = JDABuilder(AccountType.BOT).setAudioEnabled(true)
-        builder = builder.setToken(db.getConfig(Cfg.CONFIG).getString("token", ""))
+        builder = builder.setToken(DiscordBridge.getConfig(Cfg.CONFIG).getString("token", ""))
         JDA = builder.buildBlocking()
-        listener = Listener(db)
+        listener = Listener()
         JDA.addEventListener(listener)
-        JDA.presence.game = Game.of("Minecraft ${db.getServer().getMinecraftShortVersion()}")
+        JDA.presence.game = Game.of("Minecraft ${DiscordBridge.getServer().getMinecraftShortVersion()}")
     }
 
     /**

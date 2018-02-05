@@ -13,10 +13,8 @@ import kotlin.collections.LinkedHashMap
 
 /**
  * Controller for fun commands that have no purpose outside of amusement
- *
- * @param db a reference to the base Plugin object
  */
-class FunCommandsController(val db: DiscordBridge) : IBotController {
+class FunCommandsController : IBotController {
 
     /**
      * @return a description of this class of commands, used in the Help command
@@ -32,8 +30,8 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
     @BotCommand(name = "8ball", usage = "<question>", description = "Consult the Magic 8 Ball", squishExcessArgs = true)
     @TaggedResponse
     private fun eightBall(event: IEventWrapper): String {
-        db.logDebug("user ${event.senderName} consults the Magic 8-Ball")
-        val responses = db.getConfig(Cfg.EBALL).getList<String>("responses")
+        DiscordBridge.logDebug("user ${event.senderName} consults the Magic 8-Ball")
+        val responses = DiscordBridge.getConfig(Cfg.EBALL).getList<String>("responses")
         val rand = Random().nextInt(responses.count())
         return responses[rand]
     }
@@ -49,7 +47,7 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
             description = "Have the bot choose between given options", squishExcessArgs = true)
     @TaggedResponse
     private fun choose(event: IEventWrapper, query: String): String {
-        db.logDebug("user ${event.senderName} needs a choice made")
+        DiscordBridge.logDebug("user ${event.senderName} needs a choice made")
         val choices = query.split(", or ", " or ", ",", "|")
         val rand = Random().nextInt(choices.count())
         return "I pick '${choices[rand]}'"
@@ -63,10 +61,10 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
      */
     @BotCommand(usage="", description = "Press F to pay respects")
     private fun f(event: IEventWrapper): String {
-        db.logDebug("user ${event.senderName}} pays respects")
-        var totalRespects = db.getConfig(Cfg.F).getInteger("total-respects", 0)
-        db.logger.info(db.getConfig(Cfg.F).getList<Any>("responses").toString())
-        val responses = db.getConfig(Cfg.F).getList<LinkedHashMap<String, Any>>("responses").castTo({Respect(it)})
+        DiscordBridge.logDebug("user ${event.senderName}} pays respects")
+        var totalRespects = DiscordBridge.getConfig(Cfg.F).getInteger("total-respects", 0)
+        DiscordBridge.logger.info(DiscordBridge.getConfig(Cfg.F).getList<Any>("responses").toString())
+        val responses = DiscordBridge.getConfig(Cfg.F).getList<LinkedHashMap<String, Any>>("responses").castTo({Respect(it)})
         val totalWeight = responses.sumBy { it.weight }
         var rand = Random().nextInt(totalWeight) + 1
         var found: Respect? = null
@@ -87,8 +85,8 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
             "${event.senderAsMention} | ${found.message}".replace("%t", totalRespects.toString())
                     .replace("%c", found.count.toString())
 
-        db.getConfig(Cfg.F).put("total-respects", totalRespects)
-        db.getConfig(Cfg.F).save()
+        DiscordBridge.getConfig(Cfg.F).put("total-respects", totalRespects)
+        DiscordBridge.getConfig(Cfg.F).save()
 
         return msg
     }
@@ -102,8 +100,8 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
      */
     @BotCommand(usage="<thing to insult>", description = "Make the bot insult something for you", squishExcessArgs = true)
     private fun insult(event: IEventWrapper, thingToInsult: String): String {
-        db.logDebug("user ${event.senderName} requests an insult against '$thingToInsult'")
-        val responses = db.getConfig(Cfg.INSULT).getList<String>("responses")
+        DiscordBridge.logDebug("user ${event.senderName} requests an insult against '$thingToInsult'")
+        val responses = DiscordBridge.getConfig(Cfg.INSULT).getList<String>("responses")
         val rand = Random().nextInt(responses.count())
         return "${event.senderAsMention} \u27A4 $thingToInsult | ${responses[rand]}"
     }
@@ -118,14 +116,14 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
     @BotCommand(usage="<thing to be rated>", description = "Have the bot rate something for you", squishExcessArgs = true)
     @TaggedResponse
     private fun rate(event: IEventWrapper, thingToRate: String): String {
-        db.logDebug("user ${event.senderName} requests a rating")
-        val responses = db.getConfig(Cfg.RATE).getList<LinkedHashMap<String, Any>>("responses").castTo({Rating(it)})
+        DiscordBridge.logDebug("user ${event.senderName} requests a rating")
+        val responses = DiscordBridge.getConfig(Cfg.RATE).getList<LinkedHashMap<String, Any>>("responses").castTo({Rating(it)})
 
-        var rateOutOf = db.getConfig(Cfg.RATE).getInteger("rate-out-of", 10)
+        var rateOutOf = DiscordBridge.getConfig(Cfg.RATE).getInteger("rate-out-of", 10)
         if (rateOutOf > 1000000) rateOutOf = 1000000
         if (rateOutOf < 0) rateOutOf = 0
 
-        var granularity = db.getConfig(Cfg.RATE).getInteger("granularity", 1)
+        var granularity = DiscordBridge.getConfig(Cfg.RATE).getInteger("granularity", 1)
         if (granularity > 2) granularity = 2
         if (granularity < 0) granularity = 0
 
@@ -136,7 +134,7 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
                 ?: return "ERROR: No response set for rating $rating"
 
         var thingToBeRated = thingToRate
-        if (db.getConfig(Cfg.RATE).getBoolean("translate-first-and-second-person", true)) {
+        if (DiscordBridge.getConfig(Cfg.RATE).getBoolean("translate-first-and-second-person", true)) {
             val argArray = thingToRate.split(" ").toMutableList()
             val iterate = argArray.listIterator()
             while (iterate.hasNext()) {
@@ -163,7 +161,7 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
     @BotCommand(name = "roll", usage = "<sides>", description = "Roll a die for a random number")
     @TaggedResponse
     private fun roll(event: IEventWrapper, sides: Int): String {
-        db.logDebug("user ${event.senderName} needs a choice made")
+        DiscordBridge.logDebug("user ${event.senderName} needs a choice made")
         if (sides == 1)
             return "You rolled... 1. Was it any surprise?"
         if (sides > 100 || sides < 1)
@@ -182,11 +180,11 @@ class FunCommandsController(val db: DiscordBridge) : IBotController {
     @TaggedResponse
     @BotCommand(usage="<say something>", description = "Say something to Cleverbot", squishExcessArgs = true)
     private fun talk(event: IEventWrapper, query: String): String {
-        db.logDebug("user ${event.senderName} invokes Cleverbot")
+        DiscordBridge.logDebug("user ${event.senderName} invokes Cleverbot")
 
-        if (db.getConfig(Cfg.CONFIG).getString("cleverbot-key", "").isEmpty())
+        if (DiscordBridge.getConfig(Cfg.CONFIG).getString("cleverbot-key", "").isEmpty())
             return "You do not have an API key. Go to https://www.cleverbot.com/JDA/ for more information."
-        val bot = CleverBotQuery(db.getConfig(Cfg.CONFIG).getString("cleverbot-key", ""), query)
+        val bot = CleverBotQuery(DiscordBridge.getConfig(Cfg.CONFIG).getString("cleverbot-key", ""), query)
         bot.sendRequest()
         return bot.response
     }

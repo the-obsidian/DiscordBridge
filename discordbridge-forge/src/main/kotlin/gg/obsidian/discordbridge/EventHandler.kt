@@ -16,27 +16,27 @@ object EventHandler {
     @JvmStatic
     @SubscribeEvent(priority = EventPriority.LOWEST)
     fun onPlayerJoin(event: PlayerEvent.PlayerLoggedInEvent) {
-        DiscordBridgeForge.inst.getCore().handlePlayerJoin(Player(event.player))
+        DiscordBridge.handlePlayerJoin(Player(event.player))
     }
 
     @JvmStatic
     @SubscribeEvent(priority = EventPriority.LOWEST)
     fun onPlayerQuit(event: PlayerEvent.PlayerLoggedOutEvent) {
-        DiscordBridgeForge.inst.getCore().handlePlayerQuit(Player(event.player))
+        DiscordBridge.handlePlayerQuit(Player(event.player))
     }
 
     @JvmStatic
     @SubscribeEvent(priority = EventPriority.LOWEST)
     fun onPlayerDeath(event: LivingDeathEvent) {
         val e = event.entityLiving
-        if (e is EntityPlayer) DiscordBridgeForge.inst.getCore().handlePlayerDeath(Player(e), e.combatTracker.deathMessage.unformattedText)
+        if (e is EntityPlayer) DiscordBridge.handlePlayerDeath(Player(e), e.combatTracker.deathMessage.unformattedText)
     }
 
     @JvmStatic
     @SubscribeEvent(priority = EventPriority.LOWEST)
     fun onPlayerChat(event: ServerChatEvent) {
         val p = event.player
-        if (p != null) DiscordBridgeForge.inst.getCore().handlePlayerChat(Player(p), event.message, event.isCanceled)
+        if (p != null) DiscordBridge.handlePlayerChat(Player(p), event.message, event.isCanceled)
     }
 
     // https://github.com/sk89q/WorldEdit/blob/85ef47ae0c2c02a5870b764ca4b0da0d9e01671f/worldedit-forge/src/main/java/com/sk89q/worldedit/forge/ForgeWorldEdit.java
@@ -46,7 +46,7 @@ object EventHandler {
         val p = event.sender
         if (p is EntityPlayerMP) {
             if (p.world.isRemote) return
-            DiscordBridgeForge.inst.getCore().handleCommand(Player(p), event.command.name, event.parameters)
+            DiscordBridge.handleCommand(Player(p), event.command.name, event.parameters)
         }
     }
 }

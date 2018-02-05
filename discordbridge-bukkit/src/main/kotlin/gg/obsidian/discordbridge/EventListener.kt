@@ -15,40 +15,40 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.dynmap.DynmapWebChatEvent
 
-class EventListener(val db: DiscordBridge) : Listener, CommandExecutor {
+class EventListener: Listener, CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         return if (sender is org.bukkit.entity.Player) {
             val wp = Player(sender)
-            db.handleCommand(wp, gg.obsidian.discordbridge.wrappers.Command(command), args)
+            DiscordBridge.handleCommand(wp, command.name, args)
         } else {
-            db.handleCommand(ConsoleSender(db, Bukkit.getConsoleSender()), gg.obsidian.discordbridge.wrappers.Command(command), args)
+            DiscordBridge.handleCommand(ConsoleSender(Bukkit.getConsoleSender()), command.name, args)
         }
     }
 
     @EventHandler
     fun onChat(event: AsyncPlayerChatEvent) {
-        event.message = db.handlePlayerChat(Player(event.player), event.message, event.isCancelled)
+        event.message = DiscordBridge.handlePlayerChat(Player(event.player), event.message, event.isCancelled)
     }
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        db.handlePlayerJoin(Player(event.player))
+        DiscordBridge.handlePlayerJoin(Player(event.player))
     }
 
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
-        db.handlePlayerQuit(Player(event.player))
+        DiscordBridge.handlePlayerQuit(Player(event.player))
     }
 
     @EventHandler
     fun onPlayerDeath(event: PlayerDeathEvent) {
-        db.handlePlayerDeath(Player(event.entity.player), event.deathMessage)
+        DiscordBridge.handlePlayerDeath(Player(event.entity.player), event.deathMessage)
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onDynmapCatEvent(event: DynmapWebChatEvent) {
-        db.handleDynmapChat(event.name, event.message)
+        DiscordBridge.handleDynmapChat(event.name, event.message)
     }
 
 }

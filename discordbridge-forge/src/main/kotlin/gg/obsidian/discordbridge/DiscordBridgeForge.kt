@@ -17,33 +17,27 @@ class DiscordBridgeForge {
     fun preInit(event: FMLPreInitializationEvent) {
         logger = event.modLog
         val workingDir = File(event.modConfigurationDirectory.toString() + File.separator + "discordbridge")
-        core = DiscordBridge(Server(this), workingDir)
-        core.postInit()
+        DiscordBridge.init(Server(this), workingDir)
     }
 
     @Mod.EventHandler
     fun serverStarting(event: FMLServerStartingEvent) {
-        for (c in core.getServerCommands()) {
+        for (c in DiscordBridge.getServerCommands()) {
             event.registerServerCommand(CommandWrapper(c))
         }
     }
 
     @Mod.EventHandler
     fun serverStarted(event: FMLServerStartedEvent) {
-        core.handleServerStart()
+        DiscordBridge.handleServerStart()
     }
 
     @Mod.EventHandler
     fun serverStop(event: FMLServerStoppingEvent) {
-        core.handleServerStop()
+        DiscordBridge.handleServerStop()
     }
 
     lateinit var logger: Logger
-
-    private lateinit var core: DiscordBridge
-
-    fun getCore() : DiscordBridge = core
-
 
     companion object {
         const val MODID = "discordbridge-obsidian"

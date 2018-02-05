@@ -22,11 +22,10 @@ import gg.obsidian.discordbridge.util.ChatColor as CC
 /**
  * A class that manages an assortment of IBotControllers and allows dynamic access to a configurable assortment
  * of their commands
- *
- * @param db a reference to the base DiscordBridge object
+ * 
  * @see IBotController
  */
-class BotControllerManager(val db: DiscordBridge) {
+class BotControllerManager {
 
     private val commands: MutableMap<String, Command> = mutableMapOf()
     private val controllers: MutableMap<Class<out IBotController>, IBotController> = mutableMapOf()
@@ -113,14 +112,14 @@ class BotControllerManager(val db: DiscordBridge) {
         if (sendScriptedResponse(event)) return true
 
         // <prefix>command
-        if (db.getConfig(Cfg.CONFIG).getString("command-prefix", "").isNotBlank() && event.rawMessage.startsWith(db.getConfig(Cfg.CONFIG).getString("command-prefix", ""))) {
-            val split = event.rawMessage.replaceFirst(db.getConfig(Cfg.CONFIG).getString("command-prefix", ""), "").trim().split("\\s+".toRegex()).toTypedArray()
+        if (DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", "").isNotBlank() && event.rawMessage.startsWith(DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", ""))) {
+            val split = event.rawMessage.replaceFirst(DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", ""), "").trim().split("\\s+".toRegex()).toTypedArray()
             return parseCommand(event, split, false)
         }
 
         // @<mention> command from Minecraft
-        if (event is MinecraftChatEventWrapper && event.rawMessage.startsWith("@${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").noSpace()} ")) {
-            val split = event.rawMessage.replaceFirst("@${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").noSpace()} ", "").trim().split("\\s+".toRegex()).toTypedArray()
+        if (event is MinecraftChatEventWrapper && event.rawMessage.startsWith("@${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").noSpace()} ")) {
+            val split = event.rawMessage.replaceFirst("@${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").noSpace()} ", "").trim().split("\\s+".toRegex()).toTypedArray()
             return parseCommand(event, split, true)
         }
 
@@ -142,7 +141,7 @@ class BotControllerManager(val db: DiscordBridge) {
      * @return true if a trigger was found and successfully responded to, false otherwise
      */
     private fun sendScriptedResponse(event: IEventWrapper): Boolean {
-        val responses = db.getConfig(Cfg.SCRIPT).getList<HashMap<String, Any>>("responses").castTo({Script(it)})
+        val responses = DiscordBridge.getConfig(Cfg.SCRIPT).getList<HashMap<String, Any>>("responses").castTo({Script(it)})
 
         var response: Script? = null
         for (r in responses) {
@@ -171,24 +170,24 @@ class BotControllerManager(val db: DiscordBridge) {
         }
         if (response == null) return false
 
-        db.logDebug("user ${event.senderName} has triggered a scripted response")
+        DiscordBridge.logDebug("user ${event.senderName} has triggered a scripted response")
         val responseDis: String? = response.responseDis
         val responseMC: String? = response.responseMC
         if (responseDis != null && responseDis.isNotBlank()) {
             var out = responseDis.replace("%u", event.senderAsMention)
             if (event is MinecraftChatEventWrapper) {
-                out = db.convertAtMentions(out)
-                out = db.translateAliasesToDiscord(out)
+                out = DiscordBridge.convertAtMentions(out)
+                out = DiscordBridge.translateAliasesToDiscord(out)
             }
-            db.sendToDiscord(out, event.channel)
+            DiscordBridge.sendToDiscord(out, event.channel)
         }
         if (responseMC != null && responseMC.isNotBlank() && event.isFromRelayChannel) {
             var out = responseMC.replace("%u", event.senderAsMention)
             if (event is DiscordMessageWrapper) {
-                out = db.deconvertAtMentions(out)
-                out = db.translateAliasesToMinecraft(out)
+                out = DiscordBridge.deconvertAtMentions(out)
+                out = DiscordBridge.translateAliasesToMinecraft(out)
             }
-            db.sendToMinecraft(out.toMinecraftChatMessage(db, db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
+            DiscordBridge.sendToMinecraft(out.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
         }
         return true
     }
@@ -324,19 +323,19 @@ class BotControllerManager(val db: DiscordBridge) {
         when (event) {
             is MinecraftChatEventWrapper -> {
                 if (command.isPrivate) {
-                    modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(db.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
-                    modifiedResponse = "${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                    modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                    modifiedResponse = "${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             modifiedResponse
                     event.player.sendMessage(modifiedResponse)
                     return
                 }
                 if (command.isTagged) modifiedResponse = "${event.senderAsMention} | $modifiedResponse"
-                val mcModifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(db.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
-                db.sendToMinecraft(mcModifiedResponse.toMinecraftChatMessage(db, db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
+                val mcModifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                DiscordBridge.sendToMinecraft(mcModifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
 
-                modifiedResponse = db.convertAtMentions(modifiedResponse)
-                modifiedResponse = db.translateAliasesToDiscord(modifiedResponse)
-                db.sendToDiscord(modifiedResponse, event.channel)
+                modifiedResponse = DiscordBridge.convertAtMentions(modifiedResponse)
+                modifiedResponse = DiscordBridge.translateAliasesToDiscord(modifiedResponse)
+                DiscordBridge.sendToDiscord(modifiedResponse, event.channel)
                 return
             }
             is DiscordMessageWrapper -> {
@@ -345,29 +344,29 @@ class BotControllerManager(val db: DiscordBridge) {
                     return
                 }
                 if (command.isTagged) modifiedResponse = "${event.senderAsMention} | $modifiedResponse"
-                db.sendToDiscord(modifiedResponse, event.channel)
+                DiscordBridge.sendToDiscord(modifiedResponse, event.channel)
 
-                modifiedResponse = modifiedResponse.toMinecraftChatMessage(db, db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge"))
-                modifiedResponse = db.deconvertAtMentions(modifiedResponse)
-                modifiedResponse = db.translateAliasesToMinecraft(modifiedResponse)
-                modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(db.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
-                db.sendToMinecraft(modifiedResponse)
+                modifiedResponse = modifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge"))
+                modifiedResponse = DiscordBridge.deconvertAtMentions(modifiedResponse)
+                modifiedResponse = DiscordBridge.translateAliasesToMinecraft(modifiedResponse)
+                modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                DiscordBridge.sendToMinecraft(modifiedResponse)
                 return
             }
             is MinecraftCommandWrapper -> {
                 if (command.isPrivate || command.isTagged) {
-                    modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(db.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
-                    modifiedResponse = "${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                    modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                    modifiedResponse = "${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             modifiedResponse
                     event.sender.sendMessage(modifiedResponse)
                     return
                 }
-                val mcModifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(db.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
-                db.sendToMinecraft(mcModifiedResponse.toMinecraftChatMessage(db, db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
+                val mcModifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                DiscordBridge.sendToMinecraft(mcModifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
 
-                modifiedResponse = db.convertAtMentions(modifiedResponse)
-                modifiedResponse = db.translateAliasesToDiscord(modifiedResponse)
-                db.sendToDiscord(modifiedResponse, event.channel)
+                modifiedResponse = DiscordBridge.convertAtMentions(modifiedResponse)
+                modifiedResponse = DiscordBridge.translateAliasesToDiscord(modifiedResponse)
+                DiscordBridge.sendToDiscord(modifiedResponse, event.channel)
                 return
             }
         }
@@ -381,32 +380,32 @@ class BotControllerManager(val db: DiscordBridge) {
      */
     private fun invokeServerCommand(event: IEventWrapper, args: Array<String>): Boolean {
         TODO("Not implemented yet")
-//            val sender = DiscordCommandSender(db.getServer().getRemoteConsoleSender(), event.channel)
+//            val sender = DiscordCommandSender(DiscordBridge.getServer().getRemoteConsoleSender(), event.channel)
 //            val commandName = args[0].toLowerCase()
 //            when {
 //                DefaultCommands.minecraft.contains(commandName) -> {
-//                    db.logDebug("Discord user ${event.senderName} invoked Minecraft command '${args.joinToString(" ")}'")
-//                    db.getServer().dispatchCommand(sender, args.joinToString(" "))
+//                    DiscordBridge.logDebug("Discord user ${event.senderName} invoked Minecraft command '${args.joinToString(" ")}'")
+//                    DiscordBridge.getServer().dispatchCommand(sender, args.joinToString(" "))
 //                    return true
 //                }
 //
 //                DefaultCommands.bukkit.contains(commandName) -> {
-//                    db.logDebug("Discord user ${event.senderName} invoked Bukkit command '${args.joinToString(" ")}'")
-//                    db.getServer().dispatchCommand(sender, args.joinToString(" "))
+//                    DiscordBridge.logDebug("Discord user ${event.senderName} invoked Bukkit command '${args.joinToString(" ")}'")
+//                    DiscordBridge.getServer().dispatchCommand(sender, args.joinToString(" "))
 //                    return true
 //                }
 //
 //                DefaultCommands.spigot.contains(commandName) -> {
-//                    db.logDebug("Discord user ${event.senderName} invoked Spigot command '${args.joinToString(" ")}'")
-//                    db.getServer().dispatchCommand(sender, args.joinToString(" "))
+//                    DiscordBridge.logDebug("Discord user ${event.senderName} invoked Spigot command '${args.joinToString(" ")}'")
+//                    DiscordBridge.getServer().dispatchCommand(sender, args.joinToString(" "))
 //                    return true
 //                }
 //
 //                else -> {
 //                    //TODO
-////                    val pluginCommand = db.getServer().getPluginCommand(commandName)
+////                    val pluginCommand = DiscordBridge.getServer().getPluginCommand(commandName)
 ////                    if (pluginCommand != null) {
-////                        db.logDebug("Discord user ${event.senderName} invoked ${pluginCommand.plugin.name} command '${args.joinToString(" ")}'")
+////                        DiscordBridge.logDebug("Discord user ${event.senderName} invoked ${pluginCommand.plugin.name} command '${args.joinToString(" ")}'")
 ////                        pluginCommand.execute(sender, commandName, args.sliceArray(1 until args.size))
 ////                        return true
 ////                    }
@@ -429,28 +428,28 @@ class BotControllerManager(val db: DiscordBridge) {
 
                 // TODO
                 // Get world alias if Multiverse is installed
-//                if (db.isMultiverseInstalled) {
-//                    val worldProperties = db.worlds!!.data.get("worlds.$worldname")
+//                if (DiscordBridge.isMultiverseInstalled) {
+//                    val worldProperties = DiscordBridge.worlds!!.data.get("worlds.$worldname")
 //                    val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
 //                    val meth: Method = cls.getMethod("getAlias")
 //                    val alias = meth.invoke(worldProperties)
 //                    if (alias is String) worldname = alias
 //                }
 
-                var formattedMessage = event.message.toDiscordChatMessage(db, event.senderName, worldname)
-                formattedMessage = db.convertAtMentions(formattedMessage)
-                formattedMessage = db.translateAliasesToDiscord(formattedMessage)
-                db.sendToDiscord(formattedMessage, Connection.getRelayChannel())
+                var formattedMessage = event.message.toDiscordChatMessage(event.senderName, worldname)
+                formattedMessage = DiscordBridge.convertAtMentions(formattedMessage)
+                formattedMessage = DiscordBridge.translateAliasesToDiscord(formattedMessage)
+                DiscordBridge.sendToDiscord(formattedMessage, Connection.getRelayChannel())
             }
             is DiscordMessageWrapper -> {
                 if (event.isFromRelayChannel) {
-                    db.logDebug("Broadcasting message from Discord to Minecraft as user ${event.senderName}")
-                    var formattedMessage = event.message.toMinecraftChatMessage(db, event.senderName)
-                    formattedMessage = db.deconvertAtMentions(formattedMessage)
-                    formattedMessage = db.translateAliasesToMinecraft(formattedMessage)
-                    formattedMessage = MarkdownToMinecraftSeralizer().toMinecraft(db.getPegDownProcessor().parseMarkdown(formattedMessage.toCharArray()))
-                    db.sendToMinecraft(formattedMessage)
-                } else if (logIgnore) db.logDebug("Not relaying message from Discord: channel does not match")
+                    DiscordBridge.logDebug("Broadcasting message from Discord to Minecraft as user ${event.senderName}")
+                    var formattedMessage = event.message.toMinecraftChatMessage(event.senderName)
+                    formattedMessage = DiscordBridge.deconvertAtMentions(formattedMessage)
+                    formattedMessage = DiscordBridge.translateAliasesToMinecraft(formattedMessage)
+                    formattedMessage = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(formattedMessage.toCharArray()))
+                    DiscordBridge.sendToMinecraft(formattedMessage)
+                } else if (logIgnore) DiscordBridge.logDebug("Not relaying message from Discord: channel does not match")
             }
             else -> return // slash commands do not get relayed
         }
@@ -472,13 +471,13 @@ class BotControllerManager(val db: DiscordBridge) {
                         "${event.senderAsMention} | I don't seem to have a command called '$commandName'. " +
                                 "See '${Connection.JDA.selfUser.asMention} help' ${orPrefixHelp()}for the commands I do have.").queue()
             is MinecraftChatEventWrapper ->
-                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "I don't seem to have a command called '$commandName'. " +
-                        "See '@${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
+                        "See '@${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
             is MinecraftCommandWrapper ->
-                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "I don't seem to have a command called '$commandName'. " +
-                        "See '@${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
+                        "See '@${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
         }
 
     }
@@ -500,12 +499,12 @@ class BotControllerManager(val db: DiscordBridge) {
                                 "I got $given from you, but I need $required. " +
                                 "(Usage: $commandName $usage)").queue()
             is MinecraftChatEventWrapper ->
-                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "I didn't seem to get the correct number of arguments for that command. " +
                         "I got $given from you, but I need $required. " +
                         "(Usage: $commandName $usage)")
             is MinecraftCommandWrapper ->
-                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "I didn't seem to get the correct number of arguments for that command. " +
                         "I got $given from you, but I need $required. " +
                         "(Usage: $commandName $usage)")
@@ -531,12 +530,12 @@ class BotControllerManager(val db: DiscordBridge) {
                                 "Argument $index seems like ${actualType.simpleName}, but I need ${expectedType.simpleName}. " +
                                 "(Usage: $name $usage)").queue()
             is MinecraftChatEventWrapper ->
-                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "One of the arguments for that command doesn't seem to be the right type. " +
                         "Argument $index seems like ${actualType.simpleName}, but I need ${expectedType.simpleName}. " +
                         "(Usage: $name $usage)")
             is MinecraftCommandWrapper ->
-                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "One of the arguments for that command doesn't seem to be the right type. " +
                         "Argument $index seems like ${actualType.simpleName}, but I need ${expectedType.simpleName}. " +
                         "(Usage: $name $usage)")
@@ -553,10 +552,10 @@ class BotControllerManager(val db: DiscordBridge) {
             is DiscordMessageWrapper ->
                 event.channel.sendMessage("${event.senderAsMention} | Sorry, you don't have permission to use that command.").queue()
             is MinecraftChatEventWrapper ->
-                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "Sorry, you don't have permission to use that command.")
             is MinecraftCommandWrapper ->
-                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "Sorry, you don't have permission to use that command.")
         }
     }
@@ -568,18 +567,18 @@ class BotControllerManager(val db: DiscordBridge) {
      * @param throwable the uncaught exception
      */
     private fun commandException(event: IEventWrapper, throwable: Throwable) {
-        db.logger.severe("Command with content ${event.rawMessage} threw an exception.", throwable)
+        DiscordBridge.logger.severe("Command with content ${event.rawMessage} threw an exception.", throwable)
         when (event) {
             is DiscordMessageWrapper ->
                 event.channel.sendMessage(
                         "${event.senderAsMention} | Ouch! That command threw an exception. Sorry about that... " +
                                 "Have an admin check the logs for more info.").queue()
             is MinecraftChatEventWrapper ->
-                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "Ouch! That command threw an exception. Sorry about that... " +
                         "Have an admin check the logs for more info.")
             is MinecraftCommandWrapper ->
-                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${db.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
+                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                         "Ouch! That command threw an exception. Sorry about that... " +
                         "Have an admin check the logs for more info.")
         }
@@ -631,7 +630,7 @@ class BotControllerManager(val db: DiscordBridge) {
     /**
      * Shortcut method for adding "or <prefix>help " to the CommandNotFound output if a COMMAND_PREFIX is set in config
      */
-    private fun orPrefixHelp(): String = if (db.getConfig(Cfg.CONFIG).getString("command-prefix", "") != "") "or ${db.getConfig(Cfg.CONFIG).getString("command-prefix", "")}help " else ""
+    private fun orPrefixHelp(): String = if (DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", "") != "") "or ${DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", "")}help " else ""
 
     /**
      * A function to assert that all the items in a given list are of a specific type
