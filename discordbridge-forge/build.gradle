@@ -8,17 +8,11 @@ buildscript {
     }
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'kotlin'
-//Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
-
-version = "2.0"
-group = "gg.obsidian.discordbridge-o" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "discordbridge-o"
 
 sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 compileJava {
-
     sourceCompatibility = targetCompatibility = '1.8'
 }
 
@@ -35,15 +29,8 @@ minecraft {
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
 
-repositories {
-    maven { url 'https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo' }
-    jcenter()
-}
-
 dependencies {
     compile project(':discordbridge-core')
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-
 }
 
 processResources {
@@ -66,8 +53,9 @@ processResources {
 }
 
 shadowJar {
+    include ':discordbridge-core'
     dependencies {
-        include(project(':discordbridge-core'))
+        include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"))
     }
 }
 build.dependsOn(shadowJar)

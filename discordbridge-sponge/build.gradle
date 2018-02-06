@@ -1,22 +1,11 @@
-apply plugin: 'kotlin'
-
 repositories {
     mavenCentral()
-    maven { url 'https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo' }
     maven { url 'http://repo.spongepowered.org/Sponge/maven/' }
-    jcenter()
 }
 
 dependencies {
     compile project(':discordbridge-core')
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "org.spongepowered:spongeapi:6.0.0"
-
-    compile files('../libraries/dynmap-api-2.5-SNAPSHOT.jar')
-}
-
-sourceSets {
-    main.java.srcDirs += 'src/main/kotlin'
 }
 
 shadowJar {
