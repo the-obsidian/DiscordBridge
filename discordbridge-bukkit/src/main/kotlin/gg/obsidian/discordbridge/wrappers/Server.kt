@@ -2,11 +2,27 @@ package gg.obsidian.discordbridge.wrappers
 
 import gg.obsidian.discordbridge.DiscordBridgePlugin
 import gg.obsidian.discordbridge.commands.DiscordCommandSender
+import gg.obsidian.discordbridge.util.UrlAttachment
+import net.md_5.bungee.api.chat.ClickEvent
+import net.md_5.bungee.api.chat.ComponentBuilder
+import net.md_5.bungee.api.chat.HoverEvent
 import org.bukkit.Bukkit
 import org.bukkit.Server
 import java.util.*
 
 class Server(val plugin: DiscordBridgePlugin, val bukkitServer: Server) : IServer {
+    override fun broadcastAttachment(att: UrlAttachment) {
+        val msg = ComponentBuilder("${att.sender} sent ")
+                .color(net.md_5.bungee.api.ChatColor.ITALIC)
+                .append("an attachment")
+                .color(net.md_5.bungee.api.ChatColor.RESET)
+                .color(net.md_5.bungee.api.ChatColor.UNDERLINE)
+                .event(ClickEvent(ClickEvent.Action.OPEN_URL, att.url))
+                .event(HoverEvent(HoverEvent.Action.SHOW_TEXT, ComponentBuilder(att.hoverText).create()))
+                .create()
+        bukkitServer.spigot().broadcast(*msg)
+    }
+
     override fun getScheduler(): IScheduler {
         return Scheduler(plugin, bukkitServer.scheduler)
     }

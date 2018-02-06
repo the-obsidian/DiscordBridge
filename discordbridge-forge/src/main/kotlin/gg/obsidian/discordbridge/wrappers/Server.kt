@@ -2,13 +2,28 @@ package gg.obsidian.discordbridge.wrappers
 
 import gg.obsidian.discordbridge.DiscordBridgeForge
 import gg.obsidian.discordbridge.commands.DiscordCommandSender
+import gg.obsidian.discordbridge.util.UrlAttachment
 import net.dv8tion.jda.core.entities.MessageChannel
+import net.minecraft.util.text.TextComponentBase
 import net.minecraft.util.text.TextComponentString
+import net.minecraft.util.text.event.ClickEvent
+import net.minecraft.util.text.event.HoverEvent
 import net.minecraftforge.common.ForgeVersion
 import net.minecraftforge.fml.common.FMLCommonHandler
 import java.util.*
 
 class Server(private val mod: DiscordBridgeForge) : IServer {
+    override fun broadcastAttachment(att: UrlAttachment) {
+        val pt1 = TextComponentString("${att.sender} sent ")
+        pt1.style.italic = true
+        val pt2 = TextComponentString("an attachment")
+        pt2.style.underlined = true
+        pt2.style.clickEvent = ClickEvent(ClickEvent.Action.OPEN_URL, att.url)
+        pt2.style.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, TextComponentString(att.hoverText))
+
+        FMLCommonHandler.instance().minecraftServerInstance.playerList.sendMessage(pt1.appendSibling(pt2))
+    }
+
     override fun getScheduler(): IScheduler {
         return Scheduler()
     }

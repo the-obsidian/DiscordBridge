@@ -2,13 +2,28 @@ package gg.obsidian.discordbridge.wrappers
 
 import gg.obsidian.discordbridge.DiscordBridgePlugin
 import gg.obsidian.discordbridge.commands.DiscordCommandSender
+import gg.obsidian.discordbridge.util.UrlAttachment
 import gg.obsidian.discordbridge.util.unwrap
 import org.spongepowered.api.Game
 import org.spongepowered.api.Sponge
 import org.spongepowered.api.text.Text
+import org.spongepowered.api.text.action.TextActions
+import org.spongepowered.api.text.format.TextStyles
+import java.net.URL
 import java.util.*
 
 class Server(private val plugin: DiscordBridgePlugin, private val game: Game) : IServer {
+    override fun broadcastAttachment(att: UrlAttachment) {
+        val msg = Text.builder("${att.sender} sent ").style(TextStyles.ITALIC).append(
+                    Text.builder("an attachment")
+                        .style(TextStyles.UNDERLINE)
+                        .onClick(TextActions.openUrl(URL(att.url)))
+                        .onHover(TextActions.showText(Text.of(att.hoverText)))
+                        .build()
+        ).build()
+        Sponge.getServer().broadcastChannel.send(msg)
+    }
+
     override fun getScheduler(): IScheduler {
         return Scheduler(plugin, game)
     }

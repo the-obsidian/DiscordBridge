@@ -9,6 +9,7 @@ import gg.obsidian.discordbridge.commands.controllers.UtilCommandsController
 import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.util.Cfg
 import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
+import gg.obsidian.discordbridge.util.UrlAttachment
 import gg.obsidian.discordbridge.util.UserAlias
 import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordChatMessage
@@ -140,6 +141,10 @@ object DiscordBridge {
      */
     fun sendToMinecraft(message: String) {
         server.broadcastMessage(message)
+    }
+
+    fun sendToMinecraft(att: UrlAttachment) {
+        server.broadcastAttachment(att)
     }
 
 
