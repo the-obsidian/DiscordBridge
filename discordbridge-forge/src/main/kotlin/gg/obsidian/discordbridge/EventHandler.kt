@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.wrappers.DbForgePlayer
+import gg.obsidian.discordbridge.wrapper.DbForgePlayer
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.entity.player.EntityPlayerMP
 import net.minecraft.util.text.TextComponentString

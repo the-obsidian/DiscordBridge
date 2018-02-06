@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.commands.DiscordCommandSender
+import gg.obsidian.discordbridge.command.DiscordCommandSender
 import org.bukkit.Server
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender

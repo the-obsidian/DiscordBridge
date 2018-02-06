@@ -1,7 +1,7 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.wrappers.DbBukkitConsoleSender
-import gg.obsidian.discordbridge.wrappers.DbBukkitPlayer
+import gg.obsidian.discordbridge.wrapper.DbBukkitConsoleSender
+import gg.obsidian.discordbridge.wrapper.DbBukkitPlayer
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor

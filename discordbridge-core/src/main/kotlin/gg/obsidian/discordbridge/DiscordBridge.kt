@@ -1,25 +1,25 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.commands.Command
-import gg.obsidian.discordbridge.commands.MinecraftChatEventWrapper
-import gg.obsidian.discordbridge.commands.MinecraftCommandWrapper
-import gg.obsidian.discordbridge.commands.controllers.BotControllerManager
-import gg.obsidian.discordbridge.commands.controllers.FunCommandsController
-import gg.obsidian.discordbridge.commands.controllers.UtilCommandsController
+import gg.obsidian.discordbridge.command.Command
+import gg.obsidian.discordbridge.command.MinecraftChatEventWrapper
+import gg.obsidian.discordbridge.command.MinecraftCommandWrapper
+import gg.obsidian.discordbridge.command.controller.BotControllerManager
+import gg.obsidian.discordbridge.command.controller.FunCommandsController
+import gg.obsidian.discordbridge.command.controller.UtilCommandsController
 import gg.obsidian.discordbridge.discord.Connection
-import gg.obsidian.discordbridge.util.Cfg
+import gg.obsidian.discordbridge.util.enum.Cfg
 import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
 import gg.obsidian.discordbridge.util.UrlAttachment
-import gg.obsidian.discordbridge.util.UserAlias
+import gg.obsidian.discordbridge.util.config.UserAlias
 import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordChatMessage
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerDeath
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerJoin
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerLeave
-import gg.obsidian.discordbridge.wrappers.IDbCommandSender
-import gg.obsidian.discordbridge.wrappers.IDbLogger
-import gg.obsidian.discordbridge.wrappers.IDbPlayer
-import gg.obsidian.discordbridge.wrappers.IDbServer
+import gg.obsidian.discordbridge.wrapper.IDbCommandSender
+import gg.obsidian.discordbridge.wrapper.IDbLogger
+import gg.obsidian.discordbridge.wrapper.IDbPlayer
+import gg.obsidian.discordbridge.wrapper.IDbServer
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.MessageChannel
@@ -28,7 +28,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
-import gg.obsidian.discordbridge.util.ChatColor as CC
+import gg.obsidian.discordbridge.util.enum.ChatColor as CC
 
 object DiscordBridge {
 

@@ -1,7 +1,7 @@
 package gg.obsidian.discordbridge.discord
 
 import gg.obsidian.discordbridge.DiscordBridge
-import gg.obsidian.discordbridge.util.Cfg
+import gg.obsidian.discordbridge.util.enum.Cfg
 import net.dv8tion.jda.core.AccountType
 import net.dv8tion.jda.core.JDA
 import net.dv8tion.jda.core.JDABuilder

@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.commands.DiscordCommandSender
+import gg.obsidian.discordbridge.command.DiscordCommandSender
 import net.minecraft.network.rcon.RConConsoleSource
 import net.minecraft.server.MinecraftServer
 import net.minecraft.util.text.ITextComponent

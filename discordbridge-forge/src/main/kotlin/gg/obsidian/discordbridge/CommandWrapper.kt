@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.commands.Command
+import gg.obsidian.discordbridge.command.Command
 import net.minecraft.command.CommandBase
 import net.minecraft.command.ICommand
 import net.minecraft.command.ICommandSender

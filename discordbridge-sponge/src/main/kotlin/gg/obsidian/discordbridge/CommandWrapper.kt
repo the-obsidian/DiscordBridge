@@ -1,7 +1,7 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.commands.Command
-import gg.obsidian.discordbridge.wrappers.DbSpongePlayer
+import gg.obsidian.discordbridge.command.Command
+import gg.obsidian.discordbridge.wrapper.DbSpongePlayer
 import org.spongepowered.api.command.CommandCallable
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource

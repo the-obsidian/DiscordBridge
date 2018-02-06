@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.wrappers.DbBukkitServer
+import gg.obsidian.discordbridge.wrapper.DbBukkitServer
 import org.bukkit.plugin.java.JavaPlugin
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

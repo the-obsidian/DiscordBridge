@@ -1,7 +1,9 @@
 package gg.obsidian.discordbridge.util
 
 import gg.obsidian.discordbridge.DiscordBridge
-import gg.obsidian.discordbridge.wrappers.IDbPlayer
+import gg.obsidian.discordbridge.util.enum.Cfg
+import gg.obsidian.discordbridge.util.enum.ChatColor
+import gg.obsidian.discordbridge.wrapper.IDbPlayer
 
 /**
  * Various utility functions

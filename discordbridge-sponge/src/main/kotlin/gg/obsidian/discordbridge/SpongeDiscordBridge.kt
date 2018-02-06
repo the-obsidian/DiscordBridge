@@ -1,8 +1,8 @@
 package gg.obsidian.discordbridge
 
 import gg.obsidian.discordbridge.util.unwrap
-import gg.obsidian.discordbridge.wrappers.DbSpongePlayer
-import gg.obsidian.discordbridge.wrappers.DbSpongeServer
+import gg.obsidian.discordbridge.wrapper.DbSpongePlayer
+import gg.obsidian.discordbridge.wrapper.DbSpongeServer
 import org.spongepowered.api.Game
 import org.spongepowered.api.config.DefaultConfig
 import org.spongepowered.api.event.Listener

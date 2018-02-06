@@ -1,7 +1,7 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.util.Cfg
-import gg.obsidian.discordbridge.util.UserAlias
+import gg.obsidian.discordbridge.util.enum.Cfg
+import gg.obsidian.discordbridge.util.config.UserAlias
 
 /**
  * An accessor object for the users config file
@@ -14,7 +14,7 @@ object UserAliasConfig {
      */
     fun load() {
         val list = DiscordBridge.getConfig(Cfg.ALIAS).getList<Map<String, Any>>("aliases")
-        aliases = list.castTo({UserAlias(it)})
+        aliases = list.castTo({ UserAlias(it) })
     }
 
     /**

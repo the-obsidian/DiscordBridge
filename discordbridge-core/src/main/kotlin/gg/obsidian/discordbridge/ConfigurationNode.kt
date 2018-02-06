@@ -2,7 +2,7 @@
 
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.util.UserAlias
+import gg.obsidian.discordbridge.util.config.UserAlias
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.SafeConstructor

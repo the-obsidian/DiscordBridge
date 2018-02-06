@@ -1,11 +1,10 @@
 package gg.obsidian.discordbridge.discord
 
 import gg.obsidian.discordbridge.DiscordBridge
-import gg.obsidian.discordbridge.commands.DiscordMessageWrapper
-import gg.obsidian.discordbridge.commands.controllers.BotControllerManager
-import gg.obsidian.discordbridge.commands.controllers.FunCommandsController
-import gg.obsidian.discordbridge.commands.controllers.UtilCommandsController
-import gg.obsidian.discordbridge.util.Cfg
+import gg.obsidian.discordbridge.command.DiscordMessageWrapper
+import gg.obsidian.discordbridge.command.controller.BotControllerManager
+import gg.obsidian.discordbridge.command.controller.FunCommandsController
+import gg.obsidian.discordbridge.command.controller.UtilCommandsController
 import gg.obsidian.discordbridge.util.UrlAttachment
 import net.dv8tion.jda.core.entities.ChannelType
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent
