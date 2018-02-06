@@ -20,6 +20,8 @@ import org.spongepowered.api.Sponge
 import org.spongepowered.api.event.game.state.GameStartedServerEvent
 import org.spongepowered.api.event.game.state.GameStartingServerEvent
 import org.spongepowered.api.event.game.state.GameStoppingServerEvent
+import org.spongepowered.api.event.message.MessageEvent
+import org.spongepowered.api.text.Text
 import javax.inject.Inject
 
 @Plugin(id = "discordbridge-obsidian", name = "DiscordBridge", version = "@VERSION")
@@ -78,7 +80,10 @@ class DiscordBridgePlugin {
     @Listener(order = Order.LAST)
     fun onPlayerChat(event: MessageChannelEvent.Chat) {
         val p = event.cause.first(org.spongepowered.api.entity.living.player.Player::class.java).unwrap()
-        if (p != null) DiscordBridge.handlePlayerChat(Player(p), event.rawMessage.toPlain(), event.isCancelled)
+        if (p != null) {
+            val msg = DiscordBridge.handlePlayerChat(Player(p), event.rawMessage.toPlain(), event.isCancelled)
+            event.setMessage(event.formatter.header.format(), Text.of(msg), event.formatter.footer.format())
+        }
     }
 
 
