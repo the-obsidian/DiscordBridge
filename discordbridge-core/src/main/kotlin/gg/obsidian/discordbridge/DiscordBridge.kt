@@ -1,5 +1,6 @@
 package gg.obsidian.discordbridge
 
+import gg.obsidian.discordbridge.commands.Command
 import gg.obsidian.discordbridge.commands.MinecraftChatEventWrapper
 import gg.obsidian.discordbridge.commands.MinecraftCommandWrapper
 import gg.obsidian.discordbridge.commands.controllers.BotControllerManager
@@ -9,21 +10,24 @@ import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.util.Cfg
 import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
 import gg.obsidian.discordbridge.util.UserAlias
-import gg.obsidian.discordbridge.util.ChatColor as CC
 import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordChatMessage
+import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerDeath
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerJoin
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerLeave
-import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerDeath
-import gg.obsidian.discordbridge.wrappers.*
+import gg.obsidian.discordbridge.wrappers.ICommandSender
+import gg.obsidian.discordbridge.wrappers.ILogger
+import gg.obsidian.discordbridge.wrappers.IPlayer
+import gg.obsidian.discordbridge.wrappers.IServer
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.MessageChannel
 import org.pegdown.PegDownProcessor
 import java.io.File
-import java.io.IOException
 import java.io.FileOutputStream
+import java.io.IOException
 import java.util.*
+import gg.obsidian.discordbridge.util.ChatColor as CC
 
 object DiscordBridge {
 
@@ -436,7 +440,7 @@ object DiscordBridge {
         return minecraftCommandControllerManager.dispatchMessage(MinecraftCommandWrapper(sender, commandName, args))
     }
 
-    fun getServerCommands(): List<BotControllerManager.Command> {
+    fun getServerCommands(): List<Command> {
         return minecraftCommandControllerManager.getCommands().values.toList()
     }
 

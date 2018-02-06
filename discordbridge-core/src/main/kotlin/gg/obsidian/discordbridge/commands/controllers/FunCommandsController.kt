@@ -27,7 +27,12 @@ class FunCommandsController : IBotController {
      * @param event the incoming event object
      * @return the response string
      */
-    @BotCommand(name = "8ball", usage = "<question>", description = "Consult the Magic 8 Ball", squishExcessArgs = true)
+    @BotCommand(
+            aliases = ["8ball", "eightball", "8"],
+            usage = "<question>",
+            desc = "Consult the Magic 8 Ball",
+            ignoreExcessArgs = true
+    )
     @TaggedResponse
     private fun eightBall(event: IEventWrapper): String {
         DiscordBridge.logDebug("user ${event.senderName} consults the Magic 8-Ball")
@@ -43,14 +48,18 @@ class FunCommandsController : IBotController {
      * @param query a delimited string of the options to choose from
      * @return the response string
      */
-    @BotCommand(name = "choose", usage = "<option>, <option>, ... (delimiters include ',', 'or', '|')",
-            description = "Have the bot choose between given options", squishExcessArgs = true)
+    @BotCommand(
+            aliases = ["choose"],
+            usage = "<option>, <option>, ... (delimiters include ',', 'or', '|')",
+            desc = "Have the bot choose between given options",
+            squishExcessArgs = true
+    )
     @TaggedResponse
     private fun choose(event: IEventWrapper, query: String): String {
         DiscordBridge.logDebug("user ${event.senderName} needs a choice made")
         val choices = query.split(", or ", " or ", ",", "|")
         val rand = Random().nextInt(choices.count())
-        return "I pick '${choices[rand]}'"
+        return "I pick '${choices[rand].trim()}'"
     }
 
     /**
@@ -59,11 +68,13 @@ class FunCommandsController : IBotController {
      * @param event the incoming event object
      * @return the response string
      */
-    @BotCommand(usage="", description = "Press F to pay respects")
+    @BotCommand(
+            aliases = ["f"],
+            desc = "Press F to pay respects"
+    )
     private fun f(event: IEventWrapper): String {
         DiscordBridge.logDebug("user ${event.senderName}} pays respects")
         var totalRespects = DiscordBridge.getConfig(Cfg.F).getInteger("total-respects", 0)
-        DiscordBridge.logger.info(DiscordBridge.getConfig(Cfg.F).getList<Any>("responses").toString())
         val responses = DiscordBridge.getConfig(Cfg.F).getList<LinkedHashMap<String, Any>>("responses").castTo({Respect(it)})
         val totalWeight = responses.sumBy { it.weight }
         var rand = Random().nextInt(totalWeight) + 1
@@ -98,7 +109,12 @@ class FunCommandsController : IBotController {
      * @param thingToInsult the target of the insult
      * @return the response string
      */
-    @BotCommand(usage="<thing to insult>", description = "Make the bot insult something for you", squishExcessArgs = true)
+    @BotCommand(
+            aliases = ["insult"],
+            usage = "<thing to insult>",
+            desc = "Make the bot insult something for you",
+            squishExcessArgs = true
+    )
     private fun insult(event: IEventWrapper, thingToInsult: String): String {
         DiscordBridge.logDebug("user ${event.senderName} requests an insult against '$thingToInsult'")
         val responses = DiscordBridge.getConfig(Cfg.INSULT).getList<String>("responses")
@@ -113,7 +129,12 @@ class FunCommandsController : IBotController {
      * @param thingToRate the thing that will receive the rating
      * @return the response string
      */
-    @BotCommand(usage="<thing to be rated>", description = "Have the bot rate something for you", squishExcessArgs = true)
+    @BotCommand(
+            aliases = ["rate"],
+            usage = "<thing to be rated>",
+            desc = "Have the bot rate something for you",
+            squishExcessArgs = true
+    )
     @TaggedResponse
     private fun rate(event: IEventWrapper, thingToRate: String): String {
         DiscordBridge.logDebug("user ${event.senderName} requests a rating")
@@ -158,7 +179,11 @@ class FunCommandsController : IBotController {
      * @param sides the number of sides of the die
      * @return the response string
      */
-    @BotCommand(name = "roll", usage = "<sides>", description = "Roll a die for a random number")
+    @BotCommand(
+            aliases = ["roll"],
+            usage = "<sides>",
+            desc = "Roll a die for a random number"
+    )
     @TaggedResponse
     private fun roll(event: IEventWrapper, sides: Int): String {
         DiscordBridge.logDebug("user ${event.senderName} needs a choice made")
@@ -178,7 +203,12 @@ class FunCommandsController : IBotController {
      * @return the response string
      */
     @TaggedResponse
-    @BotCommand(usage="<say something>", description = "Say something to Cleverbot", squishExcessArgs = true)
+    @BotCommand(
+            aliases = ["talk", "cleverbot"],
+            usage = "<say something>",
+            desc = "Say something to Cleverbot",
+            squishExcessArgs = true
+    )
     private fun talk(event: IEventWrapper, query: String): String {
         DiscordBridge.logDebug("user ${event.senderName} invokes Cleverbot")
 

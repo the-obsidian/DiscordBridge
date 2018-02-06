@@ -1,20 +1,20 @@
 package gg.obsidian.discordbridge.wrappers
 
 import gg.obsidian.discordbridge.DiscordBridge
-import gg.obsidian.discordbridge.commands.controllers.BotControllerManager
+import gg.obsidian.discordbridge.commands.Command
 import org.spongepowered.api.command.CommandCallable
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
-import org.spongepowered.api.entity.living.player.Player
+import org.spongepowered.api.entity.living.player.Player as SpongePlayer
 import org.spongepowered.api.text.Text
 import org.spongepowered.api.world.Location
 import org.spongepowered.api.world.World
 import java.util.*
 
-class CommandWrapper(private val command: BotControllerManager.Command): CommandCallable {
+class CommandWrapper(private val command: Command): CommandCallable {
     override fun process(source: CommandSource, arguments: String): CommandResult {
-        if (source is Player) {
-            DiscordBridge.handleCommand(gg.obsidian.discordbridge.wrappers.Player(source), command.name, arguments.split(" ").toTypedArray())
+        if (source is SpongePlayer) {
+            DiscordBridge.handleCommand(Player(source), command.aliases[0], arguments.split(" ").toTypedArray())
             return CommandResult.success()
         }
         return CommandResult.empty()

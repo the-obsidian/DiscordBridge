@@ -1,5 +1,6 @@
 package gg.obsidian.discordbridge
 
+import gg.obsidian.discordbridge.commands.Command
 import gg.obsidian.discordbridge.util.unwrap
 import gg.obsidian.discordbridge.wrappers.CommandWrapper
 import gg.obsidian.discordbridge.wrappers.Player
@@ -43,7 +44,7 @@ class DiscordBridgePlugin {
         val mgr = Sponge.getCommandManager()
         for (c in DiscordBridge.getServerCommands()) {
             val wrap = CommandWrapper(c)
-            logger.info(mgr.register(this, wrap, c.name).isPresent.toString())
+            mgr.register(this, wrap, *c.aliases)
         }
     }
 

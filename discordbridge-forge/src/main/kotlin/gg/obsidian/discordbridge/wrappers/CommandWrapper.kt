@@ -1,18 +1,18 @@
 package gg.obsidian.discordbridge.wrappers
 
-import gg.obsidian.discordbridge.commands.controllers.BotControllerManager
+import gg.obsidian.discordbridge.commands.Command
 import net.minecraft.command.CommandBase
 import net.minecraft.command.ICommand
 import net.minecraft.command.ICommandSender
 import net.minecraft.server.MinecraftServer
 
-class CommandWrapper(private val command: BotControllerManager.Command): CommandBase() {
+class CommandWrapper(private val command: Command): CommandBase() {
     override fun getUsage(sender: ICommandSender?): String {
-        return "/${command.name} ${command.usage}"
+        return "/$name ${command.usage}"
     }
 
     override fun getName(): String {
-        return command.name
+        return command.aliases[0]
     }
 
     override fun compareTo(other: ICommand?): Int {
@@ -20,16 +20,15 @@ class CommandWrapper(private val command: BotControllerManager.Command): Command
     }
 
     override fun checkPermission(server: MinecraftServer?, sender: ICommandSender?): Boolean {
+        // TODO
         return true
     }
 
     override fun getAliases(): MutableList<String> {
-        // TODO: Add support for command aliases
-        return mutableListOf()
+        return command.aliases.toMutableList()
     }
 
     override fun execute(server: MinecraftServer?, sender: ICommandSender?, args: Array<out String>?) {
         // Let the command listener handle this.
     }
-
 }

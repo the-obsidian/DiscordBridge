@@ -28,7 +28,11 @@ class UtilCommandsController : IBotController {
      * @param event the incoming event object
      * @return a status message if the event is type DiscordMessageWrapper and is sent via DM, null otherwise
      */
-    @BotCommand(usage="", description="Confirm an alias link request", relayTriggerMessage = false)
+    @BotCommand(
+            aliases = ["confirm"],
+            desc = "Confirm an alias link request",
+            relayTriggerMessage = false
+    )
     @DiscordExclusiveCommand
     @PrivateResponse
     private fun confirm(event: IEventWrapper): String? {
@@ -52,7 +56,11 @@ class UtilCommandsController : IBotController {
      * @param event the incoming event object
      * @return a status message if the event is type DiscordMessageWrapper and is sent via DM, null otherwise
      */
-    @BotCommand(usage="", description="Deny an alias link request", relayTriggerMessage = false)
+    @BotCommand(
+            aliases = ["deny"],
+            desc = "Deny an alias link request",
+            relayTriggerMessage = false
+    )
     @DiscordExclusiveCommand
     @PrivateResponse
     private fun deny(event: IEventWrapper): String? {
@@ -85,7 +93,13 @@ class UtilCommandsController : IBotController {
      * @param argString a space-delimited string of subcommands to execute
      * @return this command always returns null
      */
-    @BotCommand(usage="<reload|linkalias|listmembers|unlinkalias> [args...]", description = "For in-game functions", relayTriggerMessage = false, squishExcessArgs = true)
+    @BotCommand(
+            aliases = ["discord"],
+            usage = "<reload|linkalias|listmembers|unlinkalias> [args...]",
+            desc = "For in-game functions",
+            relayTriggerMessage = false,
+            squishExcessArgs = true
+    )
     @MinecraftExclusiveCommand
     @PrivateResponse
     private fun discord(event: IEventWrapper, argString: String): String? {
@@ -186,10 +200,14 @@ class UtilCommandsController : IBotController {
      * @param commands a map of all commands that can be called by the invoker in the given medium indexed by name
      * @param instances a map of IBotController instances accessed by their Java classes
      */
-    @BotCommand(usage="", description="You just used it", relayTriggerMessage = false)
+    @BotCommand(
+            aliases = ["help", "dbhelp"],
+            desc = "You just used it",
+            relayTriggerMessage = false
+    )
     @ChatExclusiveCommand
     @PrivateResponse
-    private fun help(event: IEventWrapper, commands: MutableMap<String, BotControllerManager.Command>,
+    private fun help(event: IEventWrapper, commands: MutableMap<String, Command>,
                      instances: Map<Class<out IBotController>, IBotController>) {
         DiscordBridge.logger.info("Entered 'help'")
         DiscordBridge.logDebug("user ${event.senderName} requested help")
@@ -200,9 +218,9 @@ class UtilCommandsController : IBotController {
                 var out: String
                 for (bc: IBotController in instances.values) {
                     out = bc.getDescription() + "\n```"
-                    commands.values.sortedBy { (name) -> name }
+                    commands.values.sortedBy { it.aliases[0] }
                             .filter { it.controllerClass == bc.javaClass }
-                            .forEach { out += "\n${it.name} ${it.usage}\n  ${it.description}\n" }
+                            .forEach { out += "\n${it.aliases[0]} ${it.usage}\n  ${it.description}\n" }
                     out += "```"
                     player.sendMessage(out)
                 }
@@ -215,9 +233,9 @@ class UtilCommandsController : IBotController {
                     var out: String
                     for (bc: IBotController in instances.values) {
                         out = bc.getDescription() + "\n```"
-                        commands.values.sortedBy { (name) -> name }
+                        commands.values.sortedBy { it.aliases[0] }
                                 .filter { it.controllerClass == bc.javaClass }
-                                .forEach { out += "\n${it.name} ${it.usage}\n  ${it.description}\n" }
+                                .forEach { out += "\n${it.aliases[0]} ${it.usage}\n  ${it.description}\n" }
                         out += "```"
                         p.sendMessage(out).queue()
                     }
@@ -233,8 +251,11 @@ class UtilCommandsController : IBotController {
      * @param event the incoming event object
      */
     @DiscordExclusiveCommand
-    @BotCommand(usage="", description = "List all Minecraft players currently online on the server",
-            relayTriggerMessage = false)
+    @BotCommand(
+            aliases = ["serverlist"],
+            desc = "List all Minecraft players currently online on the server",
+            relayTriggerMessage = false
+    )
     private fun serverList(event: IEventWrapper) {
         if (event !is DiscordMessageWrapper) return
         DiscordBridge.logDebug("user ${event.originalMessage.author.name} has requested a listing of online players")

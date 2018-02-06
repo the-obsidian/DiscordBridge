@@ -65,7 +65,7 @@ class BotControllerManager {
      * @param annotation the BotCommand annotation object of the method
      */
     private fun registerControllerMethod(controllerClass: Class<*>, method: Method, annotation: BotCommand) {
-        val commandName = if (annotation.name.isEmpty()) method.name.toLowerCase() else annotation.name
+        val commandAliases = annotation.aliases
         val usage = annotation.usage
         val methodParameters = method.parameters
 
@@ -75,9 +75,9 @@ class BotControllerManager {
         val parameters = (1 until methodParameters.size).mapTo(ArrayList<Class<*>>()) { methodParameters[it].type }
         val isTagged: Boolean = method.getAnnotation(TaggedResponse::class.java) != null
         val isPrivate: Boolean = method.getAnnotation(PrivateResponse::class.java) != null
-        val command = Command(commandName, usage, annotation.description, parameters, annotation.relayTriggerMessage,
-                annotation.squishExcessArgs, isTagged, isPrivate, controllerClass, method)
-        commands.put(command.name, command)
+        val command = Command(commandAliases, usage, annotation.desc, annotation.help, parameters, annotation.relayTriggerMessage,
+                annotation.squishExcessArgs, annotation.ignoreExcessArgs, isTagged, isPrivate, controllerClass, method)
+        commands.put(command.aliases[0], command)
     }
 
     fun getCommands(): Map<String, Command> {
@@ -236,23 +236,23 @@ class BotControllerManager {
 
         when {
             // Check for permission
-            event is MinecraftChatEventWrapper && !event.player.hasPermission("discordbridge.${command.name}") -> {
+            event is MinecraftChatEventWrapper && !event.player.hasPermission("discordbridge.${command.aliases[0]}") -> {
                 commandRestricted(event)
                 return true
             }
-            event is MinecraftCommandWrapper && !event.sender.hasPermission("discordbridge.${command.name}") -> {
+            event is MinecraftCommandWrapper && !event.sender.hasPermission("discordbridge.${command.aliases[0]}") -> {
                 commandRestricted(event)
                 return true
             }
 
             // Short circuit "help"
-            command.name == "help" -> {
+            command.aliases[0] == "help" -> {
                 try {
                     val response = command.commandMethod.invoke(instances[command.controllerClass], event, commands, instances) as? String ?: return true
                     sendBotCommandOutput(event, command, response)
                     return true
                 } catch (e: IllegalArgumentException) {
-                    commandWrongParameterCount(event, command.name, command.usage, 2, command.parameters.size)
+                    commandWrongParameterCount(event, command.aliases[0], command.usage, 2, command.parameters.size)
                     return false
                 } catch (e: Exception) {
                     commandException(event, e)
@@ -271,8 +271,8 @@ class BotControllerManager {
             }
 
             // Fail if wrong number of arguments
-            squishedArgs.size != command.parameters.size -> {
-                commandWrongParameterCount(event, command.name, command.usage, squishedArgs.size, command.parameters.size)
+            !command.ignoreExcessArgs && squishedArgs.size != command.parameters.size -> {
+                commandWrongParameterCount(event, command.aliases[0], command.usage, squishedArgs.size, command.parameters.size)
                 return false
             }
         }
@@ -288,7 +288,7 @@ class BotControllerManager {
             try {
                 arguments[i + 1] = parseArgument(parameterClass, squishedArgs[i])
             } catch (ignored: IllegalArgumentException) {
-                commandWrongParameterType(event, command.name, command.usage, i, squishedArgs[i].javaClass, parameterClass)
+                commandWrongParameterType(event, command.aliases[0], command.usage, i, squishedArgs[i].javaClass, parameterClass)
                 return false
             }
         }
@@ -299,7 +299,7 @@ class BotControllerManager {
             sendBotCommandOutput(event, command, response)
             return true
         } catch (e: IllegalArgumentException) {
-            commandWrongParameterCount(event, command.name, command.usage, squishedArgs.size, command.parameters.size)
+            commandWrongParameterCount(event, command.aliases[0], command.usage, squishedArgs.size, command.parameters.size)
             return false
         } catch (e: Exception) {
             commandException(event, e)
@@ -600,134 +600,7 @@ class BotControllerManager {
      */
     private fun orPrefixHelp(): String = if (DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", "") != "") "or ${DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", "")}help " else ""
 
-    /**
-     * A function to assert that all the items in a given list are of a specific type
-     */
-//    @Suppress("UNCHECKED_CAST")
-//    private inline fun <reified T : Any> List<*>.checkItemsAre() = if (all { it is T }) this as List<T> else null
-
     private inline fun <reified T : Any> List<HashMap<String, Any>>.castTo(factory: (HashMap<String, Any>) -> T): List<T> {
         return this.mapTo(mutableListOf()) { factory(it) }.toList()
-    }
-
-    // =============================================
-    // =============== HELPER OBJECTS ==============
-
-    /**
-     * Represents a command that the bot can execute
-     *
-     * @param name the name of the command (not necessarily the name of the method called)
-     * @param usage the usage description of the method
-     * @param description a description of the command's function
-     * @param parameters a List of the command arguments' expected Java class types
-     * @param relayTriggerMessage whether the message that triggered this command should be relayed
-     * @param squishExcessArgs whether this command should combine excess arguments into one
-     * @param isTagged if the output of this command should be prepended with "@invokerName | "
-     * @param isPrivate if the output of this command should be sent via DM/PM to the invoker
-     * @param controllerClass the Java class type of the IBotController that defines this command
-     * @param commandMethod the method that is called when this command is invoked
-     */
-    data class Command(
-            val name: String,
-            val usage: String,
-            val description: String,
-            val parameters: List<Class<*>>,
-            val relayTriggerMessage: Boolean,
-            val squishExcessArgs: Boolean,
-            val isTagged: Boolean,
-            val isPrivate: Boolean,
-            val controllerClass: Class<*>,
-            val commandMethod: Method
-    )
-
-    /**
-     * A simple list of all commands native to Minecraft, Bukkit, and Spigot
-     *
-     * TODO: Can this list be attained programmatically??
-     */
-    private object DefaultCommands {
-        val minecraft : List<String> = listOf(
-                "advancement",
-                "ban",
-                "blockdata",
-                "clear",
-                "clone",
-                //"data",
-                //"datapack",
-                "debug",
-                "defaultgamemode",
-                "deop",
-                "difficulty",
-                "effect",
-                "enchant",
-                "entitydata",
-                //"experience",
-                "execute",
-                "fill",
-                "function",
-                "gamemode",
-                "gamerule",
-                "give",
-                "help",
-                "kick",
-                "kill",
-                "list",
-                "locate",
-                "me",
-                "op",
-                "pardon",
-                "particle",
-                "playsound",
-                "publish",
-                "recipe",
-                "reload",
-                "replaceitem",
-                "save",
-                "say",
-                "scoreboard",
-                "seed",
-                "setblock",
-                "setidletimeout",
-                "setmaxplayers",
-                "setworldspawn",
-                "spawnpoint",
-                "spreadplayers",
-                "stats",
-                "stop",
-                "stopsound",
-                "summon",
-                "teleport",
-                "tell",
-                //"tag",
-                //"team",
-                "tellraw",
-                "testfor",
-                "testforblock",
-                "testforblocks",
-                "tickingarea",
-                "time",
-                "title",
-                "toggledownfall",
-                "tp",
-                "transferserver",
-                "trigger",
-                "weather",
-                "whitelist",
-                "worldborder",
-                "wsserver"
-        )
-
-        val bukkit : List<String> = listOf(
-                "version",
-                "plugins",
-                "help",
-                "reload",
-                "timings"
-        )
-
-        val spigot:List<String> = listOf(
-                "restart",
-                "tps"
-        )
     }
 }
