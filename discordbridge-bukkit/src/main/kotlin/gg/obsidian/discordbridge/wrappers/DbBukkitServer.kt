@@ -37,11 +37,11 @@ class DbBukkitServer(val plugin: BukkitDiscordBridge, val bukkitServer: Server) 
     }
 
     override fun getPlayer(uuid: UUID): IDbPlayer? {
-        return DbBukkitPlayer(bukkitServer.getPlayer(uuid))
+        return DbBukkitPlayer(bukkitServer.getOfflinePlayer(uuid))
     }
 
     override fun getPlayer(name: String): IDbPlayer? {
-        return DbBukkitPlayer(bukkitServer.getPlayer(name))
+        return DbBukkitPlayer(bukkitServer.getOfflinePlayer(name))
     }
 
     override fun getOnlinePlayers(): List<IDbPlayer> {

@@ -1,19 +1,21 @@
 package gg.obsidian.discordbridge.wrappers
 
-import org.bukkit.entity.Player
+import org.bukkit.OfflinePlayer
 import java.util.*
 
-class DbBukkitPlayer(val bukkitPlayer: Player) : IDbPlayer {
+// TODO: Add safety for when OfflinePlayer is not online
+class DbBukkitPlayer(val bukkitPlayer: OfflinePlayer) : IDbPlayer {
     override fun hasPermission(permission: String): Boolean {
-        return bukkitPlayer.hasPermission(permission)
+        return bukkitPlayer.player.hasPermission(permission)
     }
 
     override fun getWorld(): IDbWorld {
-        return DbBukkitWorld(bukkitPlayer.world)
+        return DbBukkitWorld(bukkitPlayer.player.world)
     }
 
     override fun isVanished(): Boolean {
-        return bukkitPlayer.hasMetadata("vanished") && bukkitPlayer.getMetadata("vanished")[0].asBoolean()
+        return bukkitPlayer.player.hasMetadata("vanished")
+                && bukkitPlayer.player.getMetadata("vanished")[0].asBoolean()
     }
 
     override fun getName(): String {
@@ -21,7 +23,7 @@ class DbBukkitPlayer(val bukkitPlayer: Player) : IDbPlayer {
     }
 
     override fun sendMessage(message: String) {
-        bukkitPlayer.sendMessage(message)
+        bukkitPlayer.player.sendMessage(message)
     }
 
     override fun getUUID(): UUID {
