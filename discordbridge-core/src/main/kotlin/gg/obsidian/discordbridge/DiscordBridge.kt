@@ -16,10 +16,10 @@ import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordChatMessage
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerDeath
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerJoin
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordPlayerLeave
-import gg.obsidian.discordbridge.wrappers.ICommandSender
-import gg.obsidian.discordbridge.wrappers.ILogger
-import gg.obsidian.discordbridge.wrappers.IPlayer
-import gg.obsidian.discordbridge.wrappers.IServer
+import gg.obsidian.discordbridge.wrappers.IDbCommandSender
+import gg.obsidian.discordbridge.wrappers.IDbLogger
+import gg.obsidian.discordbridge.wrappers.IDbPlayer
+import gg.obsidian.discordbridge.wrappers.IDbServer
 import net.dv8tion.jda.core.OnlineStatus
 import net.dv8tion.jda.core.entities.Member
 import net.dv8tion.jda.core.entities.MessageChannel
@@ -37,8 +37,8 @@ object DiscordBridge {
     private val discordChatControllerManager = BotControllerManager()
     private val minecraftCommandControllerManager = BotControllerManager()
     private val cfgNodes: MutableMap<Cfg, ConfigurationNode> = mutableMapOf()
-    private lateinit var server: IServer
-    lateinit var logger: ILogger
+    private lateinit var server: IDbServer
+    lateinit var logger: IDbLogger
 
     // Temporary storage for alias linking requests
     var requests: MutableList<UserAlias> = mutableListOf()
@@ -49,7 +49,7 @@ object DiscordBridge {
 
     lateinit var mvWorlds: ConfigurationNode
 
-    fun init(server: IServer, dataFolder: File, isMultiverse: Boolean = false) {
+    fun init(server: IDbServer, dataFolder: File, isMultiverse: Boolean = false) {
         this.server = server
         logger = this.server.getLogger()
 
@@ -85,7 +85,7 @@ object DiscordBridge {
         logger.info("[DiscordBridge] $msg")
     }
 
-    fun getServer(): IServer = server
+    fun getServer(): IDbServer = server
     fun getPegDownProcessor(): PegDownProcessor = pegDownProc
     fun getConfig(type: Cfg) = cfgNodes[type]!!
 
@@ -172,7 +172,7 @@ object DiscordBridge {
      * @param discriminator the Discord username+discriminator of the target Discord user
      * @return a Discord Member object, or null if no matching member was found
      */
-    fun registerUserRequest(player: IPlayer, discriminator: String): Member? {
+    fun registerUserRequest(player: IDbPlayer, discriminator: String): Member? {
         val users = Connection.listUsers()
         val found: Member = users.find { it.user.name + "#" + it.user.discriminator == discriminator } ?: return null
 
@@ -352,7 +352,7 @@ object DiscordBridge {
         Connection.disconnect()
     }
 
-    fun handlePlayerChat(player: IPlayer, message: String, isCancelled: Boolean): String {
+    fun handlePlayerChat(player: IDbPlayer, message: String, isCancelled: Boolean): String {
         // TODO: the order of these if statements may produce undesired behavior
         logDebug("Received a chat event from ${player.getName()}: $message")
         if (!getConfig(Cfg.CONFIG).getBoolean("player-messages.chat", true)) return message
@@ -383,7 +383,7 @@ object DiscordBridge {
         return MarkdownToMinecraftSeralizer().toMinecraft(pegDownProc.parseMarkdown(newMessage.toCharArray()))
     }
 
-    fun handlePlayerJoin(player: IPlayer) {
+    fun handlePlayerJoin(player: IDbPlayer) {
         val username = player.getName()
         var worldname = player.getWorld().getName()
         logDebug("Received a join event for $username")
@@ -407,7 +407,7 @@ object DiscordBridge {
         sendToDiscord(formattedMessage, Connection.getRelayChannel())
     }
 
-    fun handlePlayerQuit(player: IPlayer) {
+    fun handlePlayerQuit(player: IDbPlayer) {
         val username = player.getName()
         var worldname = player.getWorld().getName()
         logDebug("Received a leave event for $username")
@@ -431,7 +431,7 @@ object DiscordBridge {
         sendToDiscord(formattedMessage, Connection.getRelayChannel())
     }
 
-    fun handlePlayerDeath(player: IPlayer, deathMessage: String) {
+    fun handlePlayerDeath(player: IDbPlayer, deathMessage: String) {
         val username = player.getName()
         var worldname = player.getWorld().getName()
 
@@ -459,7 +459,7 @@ object DiscordBridge {
         sendToDiscord(translateAliasesToDiscord(message.toDiscordChatMessage(name, "Dynmap")), Connection.getRelayChannel())
     }
 
-    fun handleCommand(sender: ICommandSender, commandName: String, args: Array<out String>): Boolean {
+    fun handleCommand(sender: IDbCommandSender, commandName: String, args: Array<out String>): Boolean {
         return minecraftCommandControllerManager.dispatchMessage(MinecraftCommandWrapper(sender, commandName, args))
     }
 

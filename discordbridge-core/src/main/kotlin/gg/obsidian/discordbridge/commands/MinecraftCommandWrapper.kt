@@ -1,8 +1,8 @@
 package gg.obsidian.discordbridge.commands
 
 import gg.obsidian.discordbridge.discord.Connection
-import gg.obsidian.discordbridge.wrappers.ICommandSender
-import gg.obsidian.discordbridge.wrappers.IPlayer
+import gg.obsidian.discordbridge.wrappers.IDbCommandSender
+import gg.obsidian.discordbridge.wrappers.IDbPlayer
 import net.dv8tion.jda.core.entities.MessageChannel
 
 /**
@@ -12,7 +12,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
  * @param commandName the name of the command that was invoked
  * @param args an array of argument strings passed to the command
  */
-class MinecraftCommandWrapper(val sender: ICommandSender, val commandName: String,
+class MinecraftCommandWrapper(val sender: IDbCommandSender, val commandName: String,
                               val args: Array<out String>) : IEventWrapper {
     /**
      * The Minecraft username of the command sender
@@ -20,7 +20,7 @@ class MinecraftCommandWrapper(val sender: ICommandSender, val commandName: Strin
      * Returns "Console" if the command was sent from the server console
      */
     override val senderName: String
-        get() = if (sender is IPlayer) sender.getName() else "Console"
+        get() = if (sender is IDbPlayer) sender.getName() else "Console"
     /**
      * Returns a space-delimited string of all the arguments passed with the command
      *
@@ -50,7 +50,7 @@ class MinecraftCommandWrapper(val sender: ICommandSender, val commandName: Strin
      * The command sender's Minecraft UUID
      */
     override val senderId: String
-        get() = (sender as? IPlayer)?.getUUID()?.toString() ?: ""
+        get() = (sender as? IDbPlayer)?.getUUID()?.toString() ?: ""
     /**
      * Always returns true for this wrapper type
      */

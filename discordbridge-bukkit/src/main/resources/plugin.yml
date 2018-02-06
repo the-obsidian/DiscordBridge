@@ -8,7 +8,7 @@ website: '@URL@'
 loadbefore: [SpaceBukkit, RemoteToolkitPlugin]
 softdepend: [Multiverse-Core]
 
-main: gg.obsidian.discordbridge.DiscordBridgePlugin
+main: gg.obsidian.discordbridge.BukkitDiscordBridge
 
 permissions:
   discordbridge.discord:

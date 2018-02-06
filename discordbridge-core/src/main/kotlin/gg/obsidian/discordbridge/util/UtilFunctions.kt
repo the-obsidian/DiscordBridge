@@ -1,7 +1,7 @@
 package gg.obsidian.discordbridge.util
 
 import gg.obsidian.discordbridge.DiscordBridge
-import gg.obsidian.discordbridge.wrappers.IPlayer
+import gg.obsidian.discordbridge.wrappers.IDbPlayer
 
 /**
  * Various utility functions
@@ -50,7 +50,7 @@ object UtilFunctions {
      * @return the formatted string
      */
     @JvmStatic
-    fun IPlayer.toDiscordPlayerJoin(worldName: String): String {
+    fun IDbPlayer.toDiscordPlayerJoin(worldName: String): String {
         return formatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.player-join", "**%u** joined the server"), u = this.getName().stripColor(), w = worldName)
     }
 
@@ -61,7 +61,7 @@ object UtilFunctions {
      * @return the formatted string
      */
     @JvmStatic
-    fun IPlayer.toDiscordPlayerLeave(worldName: String): String {
+    fun IDbPlayer.toDiscordPlayerLeave(worldName: String): String {
         return formatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.player-leave", "**%u** left the server"), u = this.getName().stripColor(), w = worldName)
     }
 

@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge
 
-import gg.obsidian.discordbridge.wrappers.Player
+import gg.obsidian.discordbridge.wrappers.DbForgePlayer
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.entity.player.EntityPlayerMP
 import net.minecraft.util.text.TextComponentString
@@ -17,20 +17,20 @@ object EventHandler {
     @JvmStatic
     @SubscribeEvent(priority = EventPriority.LOWEST)
     fun onPlayerJoin(event: PlayerEvent.PlayerLoggedInEvent) {
-        DiscordBridge.handlePlayerJoin(Player(event.player))
+        DiscordBridge.handlePlayerJoin(DbForgePlayer(event.player))
     }
 
     @JvmStatic
     @SubscribeEvent(priority = EventPriority.LOWEST)
     fun onPlayerQuit(event: PlayerEvent.PlayerLoggedOutEvent) {
-        DiscordBridge.handlePlayerQuit(Player(event.player))
+        DiscordBridge.handlePlayerQuit(DbForgePlayer(event.player))
     }
 
     @JvmStatic
     @SubscribeEvent(priority = EventPriority.LOWEST)
     fun onPlayerDeath(event: LivingDeathEvent) {
         val e = event.entityLiving
-        if (e is EntityPlayer) DiscordBridge.handlePlayerDeath(Player(e), e.combatTracker.deathMessage.unformattedText)
+        if (e is EntityPlayer) DiscordBridge.handlePlayerDeath(DbForgePlayer(e), e.combatTracker.deathMessage.unformattedText)
     }
 
     @JvmStatic
@@ -38,7 +38,7 @@ object EventHandler {
     fun onPlayerChat(event: ServerChatEvent) {
         val p = event.player
         if (p != null) {
-            val message = DiscordBridge.handlePlayerChat(Player(p), event.message, event.isCanceled)
+            val message = DiscordBridge.handlePlayerChat(DbForgePlayer(p), event.message, event.isCanceled)
             event.component = TextComponentString(event.component.unformattedText.replace(event.message, message))
         }
     }
@@ -50,7 +50,7 @@ object EventHandler {
         val p = event.sender
         if (p is EntityPlayerMP) {
             if (p.world.isRemote) return
-            DiscordBridge.handleCommand(Player(p), event.command.name, event.parameters)
+            DiscordBridge.handleCommand(DbForgePlayer(p), event.command.name, event.parameters)
         }
     }
 }

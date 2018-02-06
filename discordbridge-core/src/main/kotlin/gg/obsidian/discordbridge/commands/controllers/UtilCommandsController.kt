@@ -8,7 +8,7 @@ import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.util.Cfg
 import gg.obsidian.discordbridge.util.ChatColor as CC
 import gg.obsidian.discordbridge.util.UtilFunctions.stripColor
-import gg.obsidian.discordbridge.wrappers.IPlayer
+import gg.obsidian.discordbridge.wrappers.IDbPlayer
 import net.dv8tion.jda.core.entities.ChannelType
 import java.util.*
 
@@ -114,7 +114,7 @@ class UtilCommandsController : IBotController {
 
         when (subCommand.toLowerCase()) {
             "reload" -> {
-                if (event.sender is IPlayer && !event.sender.hasPermission("discordbridge.discord.reload")) {
+                if (event.sender is IDbPlayer && !event.sender.hasPermission("discordbridge.discord.reload")) {
                     event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             "Sorry, you don't have permission to use that command.")
                 } else {
@@ -123,7 +123,7 @@ class UtilCommandsController : IBotController {
                 }
             }
             "linkalias" -> {
-                if (event.sender !is IPlayer) return null
+                if (event.sender !is IDbPlayer) return null
 
                 if (!event.sender.hasPermission("discordbridge.discord.linkalias")) {
                     event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
@@ -166,7 +166,7 @@ class UtilCommandsController : IBotController {
                     return null
                 }
 
-                if (event.sender is IPlayer && !event.sender.hasPermission("discordbridge.discord.listmembers")) {
+                if (event.sender is IDbPlayer && !event.sender.hasPermission("discordbridge.discord.listmembers")) {
                     event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             "Sorry, you don't have permission to use that command.")
                 }
@@ -178,7 +178,7 @@ class UtilCommandsController : IBotController {
                 }
             }
             "unlinkalias" -> {
-                if (event.sender !is IPlayer) return null
+                if (event.sender !is IDbPlayer) return null
 
                 val ua = UserAliasConfig.aliases.firstOrNull{UUID.fromString(it.mcUuid) == event.sender.getUUID()}
                 if (ua == null) {

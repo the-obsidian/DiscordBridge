@@ -1,7 +1,7 @@
 package gg.obsidian.discordbridge.commands
 
 import gg.obsidian.discordbridge.discord.Connection
-import gg.obsidian.discordbridge.wrappers.IPlayer
+import gg.obsidian.discordbridge.wrappers.IDbPlayer
 import net.dv8tion.jda.core.entities.MessageChannel
 
 /**
@@ -10,7 +10,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
  * @param player the player who triggered the event
  * @param chatMessage the contents of the message that was sent
  */
-class MinecraftChatEventWrapper(val player: IPlayer, val chatMessage: String) : IEventWrapper {
+class MinecraftChatEventWrapper(val player: IDbPlayer, val chatMessage: String) : IEventWrapper {
     /**
      * The Minecraft username of the event author
      */
