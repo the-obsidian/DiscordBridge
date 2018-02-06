@@ -97,11 +97,7 @@ class BotControllerManager {
 
         // Short circuit if event was a Minecraft command
         if (event is MinecraftCommandWrapper) {
-            val command = commands[event.commandName]
-            if (command == null) {
-                commandNotFound(event, event.commandName)
-                return true
-            }
+            val command = commands[event.commandName] ?: return true
             return invokeBotCommand(command, controllers, event, event.args.asList().toTypedArray())
         }
 
@@ -208,10 +204,7 @@ class BotControllerManager {
                 if (invokeServerCommand(event, args)) return true
 
             if (defaultToTalk) command = commands["talk"]
-            if (command == null) {
-                commandNotFound(event, commandName)
-                return false
-            }
+            if (command == null) return false
         }
 
         val slicedArgs = if (args.size > 1) args.slice(1 until args.size).toTypedArray() else arrayOf()
@@ -427,30 +420,6 @@ class BotControllerManager {
     // ============= Exception Handling ============
 
     /**
-     * Handler for if command syntax is given but no matching command is found
-     *
-     * @param event the incoming event object
-     * @param commandName the name of the command that was not found
-     */
-    private fun commandNotFound(event: IEventWrapper, commandName: String) {
-        when (event) {
-            is DiscordMessageWrapper ->
-                event.channel.sendMessage(
-                        "${event.senderAsMention} | I don't seem to have a command called '$commandName'. " +
-                                "See '${Connection.JDA.selfUser.asMention} help' ${orPrefixHelp()}for the commands I do have.").queue()
-            is MinecraftChatEventWrapper ->
-                event.player.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
-                        "I don't seem to have a command called '$commandName'. " +
-                        "See '@${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
-            is MinecraftCommandWrapper ->
-                event.sender.sendMessage("${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
-                        "I don't seem to have a command called '$commandName'. " +
-                        "See '@${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} help' ${orPrefixHelp()}for the commands I do have.")
-        }
-
-    }
-
-    /**
      * Handler for when a command is invoked with the wrong number of parameters
      *
      * @param event the incoming event object
@@ -594,11 +563,6 @@ class BotControllerManager {
             }
         }
     }
-
-    /**
-     * Shortcut method for adding "or <prefix>help " to the CommandNotFound output if a COMMAND_PREFIX is set in config
-     */
-    private fun orPrefixHelp(): String = if (DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", "") != "") "or ${DiscordBridge.getConfig(Cfg.CONFIG).getString("command-prefix", "")}help " else ""
 
     private inline fun <reified T : Any> List<HashMap<String, Any>>.castTo(factory: (HashMap<String, Any>) -> T): List<T> {
         return this.mapTo(mutableListOf()) { factory(it) }.toList()
