@@ -13,10 +13,6 @@ class DiscordBridgePlugin : JavaPlugin() {
     private lateinit var instance: DiscordBridgePlugin
     private lateinit var logger: Logger
 
-    fun getPlugin() : DiscordBridgePlugin = instance
-
-    fun getSLF4JLogger(): Logger = logger
-
     override fun onLoad() {
         logger = LoggerFactory.getLogger("DiscordBrdige")
         logger.info("Loading DiscordBridge")
@@ -25,7 +21,8 @@ class DiscordBridgePlugin : JavaPlugin() {
     override fun onEnable() {
         logger.info("Enabling DiscordBridge")
         instance = this
-        DiscordBridge.init(Server(this, this.server), dataFolder)
+        val isMultiverse = server.pluginManager.getPlugin("Multiverse-Core") != null
+        DiscordBridge.init(Server(this, this.server), dataFolder, isMultiverse=isMultiverse)
 
         server.pluginManager.registerEvents(EventListener(), this)
 

@@ -385,17 +385,20 @@ class BotControllerManager {
     private fun relay(event: IEventWrapper, logIgnore: Boolean) {
         when (event) {
             is MinecraftChatEventWrapper -> {
-                val worldname = event.player.getWorld().getName()
+                var worldname = event.player.getWorld().getName()
+                DiscordBridge.logger.info(worldname)
 
-                // TODO
                 // Get world alias if Multiverse is installed
-//                if (DiscordBridge.isMultiverseInstalled) {
-//                    val worldProperties = DiscordBridge.worlds!!.data.get("worlds.$worldname")
-//                    val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
-//                    val meth: Method = cls.getMethod("getAlias")
-//                    val alias = meth.invoke(worldProperties)
-//                    if (alias is String) worldname = alias
-//                }
+                if (DiscordBridge.isMultiverse) {
+                    val obj = DiscordBridge.mvWorlds.getObject("worlds.$worldname")
+                    if (obj != null) {
+                        val alias = (obj as Map<*, *>)["alias"]
+                        if (alias is String && alias.isNotEmpty()) worldname = alias
+                    }
+                    else
+                        DiscordBridge.logger.warning("Could not fetch world alias from config " +
+                                "(did you `/discord reload` yet?)")
+                }
 
                 var formattedMessage = event.message.toDiscordChatMessage(event.senderName, worldname)
                 formattedMessage = DiscordBridge.convertAtMentions(formattedMessage)

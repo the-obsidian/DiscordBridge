@@ -36,19 +36,23 @@ object DiscordBridge {
     private val discordChatControllerManager = BotControllerManager()
     private val minecraftCommandControllerManager = BotControllerManager()
     private val cfgNodes: MutableMap<Cfg, ConfigurationNode> = mutableMapOf()
-    private val isLoaded = false
     private lateinit var server: IServer
     lateinit var logger: ILogger
 
     // Temporary storage for alias linking requests
     var requests: MutableList<UserAlias> = mutableListOf()
 
-    fun init(server: IServer, dataFolder: File) {
+    // Whether Multiverse-Core is installed in Bukkit
+    var isMultiverse: Boolean = false
+        private set(value) { field = value }
+
+    lateinit var mvWorlds: ConfigurationNode
+
+    fun init(server: IServer, dataFolder: File, isMultiverse: Boolean = false) {
         this.server = server
         logger = this.server.getLogger()
 
         if (!dataFolder.exists()) dataFolder.mkdirs()
-
         for (c in Cfg.values()) {
             val filename = "${c.filename}.yml"
             val file = File(dataFolder, filename)
@@ -60,6 +64,12 @@ object DiscordBridge {
         }
         server.getScheduler().runAsyncTask(Connection)
         UserAliasConfig.load()
+
+        if (isMultiverse) {
+            this.isMultiverse = true
+            mvWorlds = ConfigurationNode(File("plugins/Multiverse-Core/worlds.yml"))
+            mvWorlds.load().toString()
+        }
 
         minecraftChatControllerManager.registerController(FunCommandsController(), chatExclusive = true)
         minecraftChatControllerManager.registerController(UtilCommandsController(), chatExclusive = true)
@@ -135,7 +145,7 @@ object DiscordBridge {
 
     fun reload(callback: Runnable) {
         for (cfg in cfgNodes.values) cfg.load()
-        //if (isMultiverseInstalled) worlds!!.reloadConfig()
+        if (isMultiverse) mvWorlds.load()
         UserAliasConfig.load()
         Connection.reconnect(callback)
     }
@@ -371,19 +381,22 @@ object DiscordBridge {
 
     fun handlePlayerJoin(player: IPlayer) {
         val username = player.getName()
-        val worldname = player.getWorld().getName()
+        var worldname = player.getWorld().getName()
         logDebug("Received a join event for $username")
         if (!getConfig(Cfg.CONFIG).getBoolean("messages.player-join", true)) return
         if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-join", false)) return
 
         // Get world alias if Multiverse is installed
-//        if (plugin.isMultiverseInstalled) {
-//            val worldProperties = plugin.worlds!!.data.get("worlds.$worldname")
-//            val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
-//            val meth: Method = cls.getMethod("getAlias")
-//            val alias = meth.invoke(worldProperties)
-//            if (alias is String) worldname = alias
-//        }
+        if (DiscordBridge.isMultiverse) {
+            val obj = DiscordBridge.mvWorlds.getObject("worlds.$worldname")
+            if (obj != null) {
+                val alias = (obj as Map<*, *>)["alias"]
+                if (alias is String && alias.isNotEmpty()) worldname = alias
+            }
+            else
+                DiscordBridge.logger.warning("Could not fetch world alias from config " +
+                        "(did you `/discord reload` yet?)")
+        }
 
         var formattedMessage = player.toDiscordPlayerJoin(worldname)
         formattedMessage = translateAliasesToDiscord(formattedMessage)
@@ -392,19 +405,22 @@ object DiscordBridge {
 
     fun handlePlayerQuit(player: IPlayer) {
         val username = player.getName()
-        val worldname = player.getWorld().getName()
+        var worldname = player.getWorld().getName()
         logDebug("Received a leave event for $username")
         if (!getConfig(Cfg.CONFIG).getBoolean("messages.player-leave", true)) return
         if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-leave", false)) return
 
         // Get world alias if Multiverse is installed
-//        if (plugin.isMultiverseInstalled) {
-//            val worldProperties = plugin.worlds!!.data.get("worlds.$worldname")
-//            val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
-//            val meth: Method = cls.getMethod("getAlias")
-//            val alias = meth.invoke(worldProperties)
-//            if (alias is String) worldname = alias
-//        }
+        if (DiscordBridge.isMultiverse) {
+            val obj = DiscordBridge.mvWorlds.getObject("worlds.$worldname")
+            if (obj != null) {
+                val alias = (obj as Map<*, *>)["alias"]
+                if (alias is String && alias.isNotEmpty()) worldname = alias
+            }
+            else
+                DiscordBridge.logger.warning("Could not fetch world alias from config " +
+                        "(did you `/discord reload` yet?)")
+        }
 
         var formattedMessage = player.toDiscordPlayerLeave(worldname)
         formattedMessage = translateAliasesToDiscord(formattedMessage)
@@ -413,19 +429,22 @@ object DiscordBridge {
 
     fun handlePlayerDeath(player: IPlayer, deathMessage: String) {
         val username = player.getName()
-        val worldname = player.getWorld().getName()
+        var worldname = player.getWorld().getName()
 
         if (!getConfig(Cfg.CONFIG).getBoolean("messages.player-death", false)) return
         if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-death", false)) return
 
         // Get world alias if Multiverse is installed
-//        if (plugin.isMultiverseInstalled) {
-//            val worldProperties = plugin.worlds!!.data.get("worlds.$worldname")
-//            val cls = Class.forName("com.onarandombox.MultiverseCore.WorldProperties")
-//            val meth: Method = cls.getMethod("getAlias")
-//            val alias = meth.invoke(worldProperties)
-//            if (alias is String) worldname = alias
-//        }
+        if (DiscordBridge.isMultiverse) {
+            val obj = DiscordBridge.mvWorlds.getObject("worlds.$worldname")
+            if (obj != null) {
+                val alias = (obj as Map<*, *>)["alias"]
+                if (alias is String && alias.isNotEmpty()) worldname = alias
+            }
+            else
+                DiscordBridge.logger.warning("Could not fetch world alias from config " +
+                        "(did you `/discord reload` yet?)")
+        }
 
         var formattedMessage = deathMessage.toDiscordPlayerDeath(username, worldname)
         formattedMessage = translateAliasesToDiscord(formattedMessage)
