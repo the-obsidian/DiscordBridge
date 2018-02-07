@@ -43,7 +43,6 @@ object EventHandler {
         }
     }
 
-    // https://github.com/sk89q/WorldEdit/blob/85ef47ae0c2c02a5870b764ca4b0da0d9e01671f/worldedit-forge/src/main/java/com/sk89q/worldedit/forge/ForgeWorldEdit.java
     @JvmStatic
     @SubscribeEvent
     fun onCommand(event: CommandEvent) {

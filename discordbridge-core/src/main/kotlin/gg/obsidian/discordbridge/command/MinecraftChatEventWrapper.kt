@@ -10,7 +10,7 @@ import net.dv8tion.jda.core.entities.MessageChannel
  * @param player the player who triggered the event
  * @param chatMessage the contents of the message that was sent
  */
-class MinecraftChatEventWrapper(val player: IDbPlayer, val chatMessage: String) : IEventWrapper {
+class MinecraftChatEventWrapper(val player: IDbPlayer, private val chatMessage: String) : IEventWrapper {
     /**
      * The Minecraft username of the event author
      */
@@ -49,5 +49,4 @@ class MinecraftChatEventWrapper(val player: IDbPlayer, val chatMessage: String) 
      */
     override val isFromRelayChannel: Boolean
         get() = true
-
 }

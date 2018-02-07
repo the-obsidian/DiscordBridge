@@ -20,7 +20,7 @@ class MinecraftCommandWrapper(val sender: IDbCommandSender, val commandName: Str
      * Returns "Console" if the command was sent from the server console
      */
     override val senderName: String
-        get() = if (sender is IDbPlayer) sender.getName() else "Console"
+        get() = (sender as? IDbPlayer)?.getName() ?: "Console"
     /**
      * Returns a space-delimited string of all the arguments passed with the command
      *
@@ -56,5 +56,4 @@ class MinecraftCommandWrapper(val sender: IDbCommandSender, val commandName: Str
      */
     override val isFromRelayChannel: Boolean
         get() = true
-
 }

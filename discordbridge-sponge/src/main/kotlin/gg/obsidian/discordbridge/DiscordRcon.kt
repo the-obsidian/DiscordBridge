@@ -68,5 +68,4 @@ class DiscordRcon(private val sender: DiscordCommandSender, private val base: Co
     override fun getPermissionValue(contexts: MutableSet<Context>, permission: String): Tristate {
         return base.getPermissionValue(contexts, permission)
     }
-
 }

@@ -11,7 +11,6 @@ import org.bukkit.permissions.PermissionAttachmentInfo
 import org.bukkit.plugin.Plugin
 
 class DiscordRCon(val discordSender: DiscordCommandSender, val base: ConsoleCommandSender) : RemoteConsoleCommandSender {
-
     override fun sendMessage(message: String) {
         discordSender.sendMessage(message)
     }
@@ -84,6 +83,4 @@ class DiscordRCon(val discordSender: DiscordCommandSender, val base: ConsoleComm
     override fun setOp(value: Boolean) {
         return base.setOp(value)
     }
-
-
 }

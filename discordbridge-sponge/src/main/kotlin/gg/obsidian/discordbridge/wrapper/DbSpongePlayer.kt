@@ -29,5 +29,4 @@ class DbSpongePlayer(private val spongePlayer: Player) : IDbPlayer {
     override fun hasPermission(permission: String): Boolean {
         return spongePlayer.hasPermission(permission)
     }
-
 }

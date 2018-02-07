@@ -9,8 +9,13 @@ import net.minecraftforge.fml.common.event.FMLServerStoppingEvent
 import org.apache.logging.log4j.Logger
 import java.io.File
 
-@Mod(modid = ForgeDiscordBridge.MODID, version = "@VERSION@", acceptableRemoteVersions = "*")
+@Mod(
+        modid = "@MODID@",
+        version = "@VERSION@",
+        acceptableRemoteVersions = "*"
+)
 class ForgeDiscordBridge {
+    lateinit var logger: Logger
 
     @Mod.EventHandler
     fun preInit(event: FMLPreInitializationEvent) {
@@ -34,14 +39,5 @@ class ForgeDiscordBridge {
     @Mod.EventHandler
     fun serverStop(event: FMLServerStoppingEvent) {
         DiscordBridge.handleServerStop()
-    }
-
-    lateinit var logger: Logger
-
-    companion object {
-        const val MODID = "discordbridge-obsidian"
-
-        @Mod.Instance(MODID)
-        lateinit var inst: ForgeDiscordBridge
     }
 }

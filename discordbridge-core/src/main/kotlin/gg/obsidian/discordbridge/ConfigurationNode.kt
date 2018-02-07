@@ -37,7 +37,6 @@ class ConfigurationNode() : MutableMap<String, Any> {
             representer.addClassTag(UserAlias::class.java, Tag.MAP)
 
             yaml = Yaml(SafeConstructor(), representer, options)
-            //yaml = Yaml(CustomClassLoaderConstructor(DiscordBridge::class.java.classLoader), representer, options)
         }
     }
 
@@ -90,15 +89,13 @@ class ConfigurationNode() : MutableMap<String, Any> {
             stream = FileOutputStream(file)
             val writer = OutputStreamWriter(stream, "UTF-8")
             yaml!!.dump(entries2, writer)
+            writer.close()
             return true
-        } catch (e: IOException) {
-        } finally {
-            try {
-                if (stream != null) {
-                    stream.close()
-                }
-            } catch (e: IOException) {
-            }
+        }
+        catch (e: IOException) { }
+        finally {
+            try { if (stream != null) stream.close() }
+            catch (e: IOException) { }
         }
         return false
     }
@@ -127,50 +124,19 @@ class ConfigurationNode() : MutableMap<String, Any> {
         return getObject(path) ?: return default
     }
 
-    @SuppressWarnings("unchecked")
-    fun <T> getGeneric(path: String, default: T): T {
-        val o = getObject(path, default as Any)
-        return try {
-            o as T
-        } catch(e: ClassCastException) {
-            default
-        }
-    }
-
-    fun getInteger(path: String, default: Int): Int {
-        return Integer.parseInt(getObject(path, default).toString())
-    }
-
-    fun getLong(path: String, default: Long): Double {
-        return getObject(path, default).toString().toLong().toDouble()
-    }
-
-    fun getFloat(path: String, default: Float): Float {
-        return getObject(path, default).toString().toFloat()
-    }
-
-    fun getDouble(path: String, default: Double): Double {
-        return getObject(path, default).toString().toDouble()
-    }
-
-    fun getBoolean(path: String, default: Boolean): Boolean {
-        return getObject(path, default).toString().toBoolean()
-    }
-
-    fun getString(path: String): String? {
-        val o = getObject(path)
-        return o.toString()
-    }
+    fun getInteger(path: String, default: Int): Int = Integer.parseInt(getObject(path, default).toString())
+    fun getLong(path: String, default: Long): Double = getObject(path, default).toString().toLong().toDouble()
+    fun getFloat(path: String, default: Float): Float = getObject(path, default).toString().toFloat()
+    fun getDouble(path: String, default: Double): Double = getObject(path, default).toString().toDouble()
+    fun getBoolean(path: String, default: Boolean): Boolean = getObject(path, default).toString().toBoolean()
+    fun getString(path: String): String? = getObject(path).toString()
 
     fun getStrings(path: String, default: List<String>): List<String> {
         val o = getObject(path) as? List<*> ?: return default
         return o.mapTo(ArrayList()) { it.toString() }
     }
 
-    fun getString(path: String, default: String): String {
-        val o = getObject(path, default)
-        return o.toString()
-    }
+    fun getString(path: String, default: String): String = getObject(path, default).toString()
 
     @SuppressWarnings("unchecked")
     fun <T> getList(path: String): List<T> {
@@ -186,42 +152,6 @@ class ConfigurationNode() : MutableMap<String, Any> {
                 return ArrayList()
             }
         }
-    }
-
-    fun getMapList(path: String): List<MutableMap<String, Any>> {
-        return getList(path)
-    }
-
-    fun getNode(path: String): ConfigurationNode? {
-        var v: MutableMap<String, Any>? = null
-        v = getGeneric(path, v)
-        if (v == null)
-            return null
-        return ConfigurationNode(v)
-    }
-
-    @SuppressWarnings("unchecked")
-    fun getNodes(path: String): List<ConfigurationNode> {
-        val o: List<Any> = getList(path)
-
-        val nodes = ArrayList<ConfigurationNode>()
-        for(i in o) {
-            if (i is MutableMap<*, *>) {
-                var map: MutableMap<String, Any>
-                try {
-                    map = i as MutableMap<String, Any>
-                } catch(e: ClassCastException) {
-                    continue
-                }
-                nodes.add(ConfigurationNode(map))
-            }
-        }
-        return nodes
-    }
-
-    fun extend(other: MutableMap<String, Any>) {
-        if (other != null)
-            extendMap(this, other)
     }
 
     companion object {
@@ -255,67 +185,14 @@ class ConfigurationNode() : MutableMap<String, Any> {
         }
     }
 
-    fun <T> createInstance(constructorParameters: Array<Class<*>>, constructorArguments: Array<Any>): T? {
-        val typeName = getString("class")
-        try {
-            val mapTypeClass = Class.forName(typeName)
+    override val size: Int get() = entries2!!.size
 
-            val constructorParameterWithConfiguration = arrayOfNulls<Class<*>>(constructorParameters.size+1)
-            for(i in constructorParameters.indices) { constructorParameterWithConfiguration[i] = constructorParameters[i]; }
-            constructorParameterWithConfiguration[constructorParameterWithConfiguration.size-1] = javaClass
-
-            val constructorArgumentsWithConfiguration = arrayOfNulls<Any>(constructorArguments.size+1)
-            for(i in constructorArguments.indices) { constructorArgumentsWithConfiguration[i] = constructorArguments[i]; }
-            constructorArgumentsWithConfiguration[constructorArgumentsWithConfiguration.size-1] = this
-            val constructor = mapTypeClass.getConstructor(*constructorParameterWithConfiguration)
-            @SuppressWarnings("unchecked")
-            val t = constructor.newInstance(constructorArgumentsWithConfiguration) as T
-            return t
-        } catch (e: Exception) {
-            // TODO: Remove reference to MapManager.
-            //Log.severe("Error loading maptype", e)
-            e.printStackTrace()
-        }
-        return null
-    }
-
-    fun <T> createInstances(path: String, constructorParameters: Array<Class<*>>, constructorArguments: Array<Any>): List<T> {
-        val nodes = getNodes(path)
-        val instances = ArrayList<T>()
-        for(node in nodes) {
-            val instance = node.createInstance<T>(constructorParameters, constructorArguments)
-            if (instance != null) instances.add(instance)
-        }
-        return instances
-    }
-
-    override val size: Int get() {
-        return entries2!!.size
-    }
-
-    override fun isEmpty(): Boolean {
-        return entries2!!.isEmpty()
-    }
-
-    override fun containsKey(key: String): Boolean {
-        return entries2!!.containsKey(key)
-    }
-
-    override fun containsValue(value: Any): Boolean {
-        return entries2!!.containsValue(value)
-    }
-
-    override fun get(key: String): Any? {
-        return entries2!![key]
-    }
-
-    override fun put(key: String, value: Any): Any? {
-        return entries2!!.put(key, value)
-    }
-
-    override fun remove(key: String): Any? {
-        return entries2!!.remove(key)
-    }
+    override fun isEmpty(): Boolean = entries2!!.isEmpty()
+    override fun containsKey(key: String): Boolean = entries2!!.containsKey(key)
+    override fun containsValue(value: Any): Boolean = entries2!!.containsValue(value)
+    override fun get(key: String): Any? = entries2!![key]
+    override fun put(key: String, value: Any): Any? = entries2!!.put(key, value)
+    override fun remove(key: String): Any? = entries2!!.remove(key)
 
     override fun putAll(from: Map<out String, Any>) {
         entries2!!.putAll(from)
@@ -325,17 +202,9 @@ class ConfigurationNode() : MutableMap<String, Any> {
         entries2!!.clear()
     }
 
-    override val keys: MutableSet<String> get() {
-        return entries2!!.keys
-    }
-
-    override val values: MutableCollection<Any> get() {
-        return entries2!!.values
-    }
-
-    override val entries: MutableSet<MutableMap.MutableEntry<String, Any>> get() {
-        return entries2!!.entries
-    }
+    override val keys: MutableSet<String> get() = entries2!!.keys
+    override val values: MutableCollection<Any> get() = entries2!!.values
+    override val entries: MutableSet<MutableMap.MutableEntry<String, Any>> get() = entries2!!.entries
 
     private class EmptyNullRepresenter : Representer() {
 
@@ -372,5 +241,4 @@ class ConfigurationNode() : MutableMap<String, Any> {
         }
         // End of borrowed code
     }
-
 }

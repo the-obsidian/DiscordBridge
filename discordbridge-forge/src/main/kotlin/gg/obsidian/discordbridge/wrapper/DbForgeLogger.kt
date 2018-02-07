@@ -22,5 +22,4 @@ class DbForgeLogger(private val logger: Logger) : IDbLogger {
     override fun severe(message: String, throwable: Throwable) {
         logger.error(message, throwable)
     }
-
 }

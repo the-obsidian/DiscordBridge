@@ -20,5 +20,4 @@ class DbForgeConsoleSender(private val sender: RConConsoleSource) : IDbConsoleSe
     override fun hasPermission(permission: String): Boolean {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-
 }

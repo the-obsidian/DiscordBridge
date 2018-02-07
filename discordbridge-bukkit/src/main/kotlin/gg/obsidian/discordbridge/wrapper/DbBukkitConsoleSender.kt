@@ -3,8 +3,7 @@ package gg.obsidian.discordbridge.wrapper
 import org.bukkit.command.ConsoleCommandSender
 import java.util.*
 
-class DbBukkitConsoleSender(val bukkitConsoleSender: ConsoleCommandSender) : IDbConsoleSender {
-
+class DbBukkitConsoleSender(private val bukkitConsoleSender: ConsoleCommandSender) : IDbConsoleSender {
     override fun sendMessage(message: String) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -20,5 +19,4 @@ class DbBukkitConsoleSender(val bukkitConsoleSender: ConsoleCommandSender) : IDb
     override fun getName(): String {
         return "DiscordRemote"
     }
-
 }

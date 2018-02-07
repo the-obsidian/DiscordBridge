@@ -3,4 +3,3 @@ include 'discordbridge-core'
 include 'discordbridge-bukkit'
 include 'discordbridge-sponge'
 include 'discordbridge-forge'
-

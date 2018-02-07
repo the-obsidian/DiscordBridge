@@ -4,7 +4,7 @@ import org.bukkit.OfflinePlayer
 import java.util.*
 
 // TODO: Add safety for when OfflinePlayer is not online
-class DbBukkitPlayer(val bukkitPlayer: OfflinePlayer) : IDbPlayer {
+class DbBukkitPlayer(private val bukkitPlayer: OfflinePlayer) : IDbPlayer {
     override fun hasPermission(permission: String): Boolean {
         return bukkitPlayer.player.hasPermission(permission)
     }
@@ -29,5 +29,4 @@ class DbBukkitPlayer(val bukkitPlayer: OfflinePlayer) : IDbPlayer {
     override fun getUUID(): UUID {
         return bukkitPlayer.uniqueId
     }
-
 }

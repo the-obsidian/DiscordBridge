@@ -36,11 +36,6 @@ class DbForgeServer(private val mod: ForgeDiscordBridge) : IDbServer {
         return DbForgePlayer(p)
     }
 
-    override fun getPlayer(name: String): IDbPlayer? {
-        val p = FMLCommonHandler.instance().minecraftServerInstance.playerList.getPlayerByUsername(name)
-        return if (p != null) DbForgePlayer(p) else null
-    }
-
     override fun getOnlinePlayers(): List<IDbPlayer> {
         return FMLCommonHandler.instance().minecraftServerInstance.playerList.players.map { DbForgePlayer(it) }
     }
@@ -57,5 +52,4 @@ class DbForgeServer(private val mod: ForgeDiscordBridge) : IDbServer {
     override fun getLogger(): DbForgeLogger {
         return DbForgeLogger(mod.logger)
     }
-
 }

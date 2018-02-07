@@ -12,7 +12,6 @@ import net.dv8tion.jda.core.entities.MessageChannel
  * @param originalMessage the underlying Message instance
  */
 class DiscordMessageWrapper(val originalMessage: Message) : IEventWrapper {
-
     /**
      * Returns a formatted mention tag in the form <@##########>
      */
@@ -65,5 +64,4 @@ class DiscordMessageWrapper(val originalMessage: Message) : IEventWrapper {
      */
     override val senderId: String
         get() = originalMessage.author.id
-
 }

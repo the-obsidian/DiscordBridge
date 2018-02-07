@@ -14,7 +14,6 @@ import net.dv8tion.jda.core.hooks.ListenerAdapter
  * Listens for events from Discord
  */
 class Listener: ListenerAdapter() {
-
     private val controllerManager = BotControllerManager()
 
     init {
@@ -116,6 +115,10 @@ class Listener: ListenerAdapter() {
                     ".pdf" -> "Adobe PDF file"
                     ".doc" -> "Microsoft Word DOC file"
                     ".docx" -> "Microsoft Word DOCX file"
+                    ".ppt" -> "Microsoft PowerPoint PPT file"
+                    ".pptx" -> "Microsoft PowerPoint PPTX file"
+                    ".xls" -> "Microsfot Excel XLS file"
+                    ".xlsx" -> "Microsoft Excel XLSX file"
 
                 // Minecraft types
                     ".schematic" -> "MCEdit Schematic file"
@@ -139,20 +142,8 @@ class Listener: ListenerAdapter() {
             if (a.isImage) hoverText += "\nDimensions: ${a.height}x${a.width}"
 
             val senderName = DiscordBridge.translateAliasesToMinecraft(event.author.name)
-
             val att = UrlAttachment(senderName, a.url, hoverText)
-
-//            val msg = ComponentBuilder(plugin.translateAliasesToMinecraft("${event.author.name} sent "))
-//                    .color(net.md_5.bungee.api.ChatColor.ITALIC)
-//                    .append("an attachment")
-//                    .color(net.md_5.bungee.api.ChatColor.RESET)
-//                    .color(net.md_5.bungee.api.ChatColor.UNDERLINE)
-//                    .event(ClickEvent(ClickEvent.Action.OPEN_URL, a.url))
-//                    .event(HoverEvent(HoverEvent.Action.SHOW_TEXT, ComponentBuilder(hoverText).create()))
-//                    .create()
-
             DiscordBridge.sendToMinecraft(att)
         }
     }
-
 }

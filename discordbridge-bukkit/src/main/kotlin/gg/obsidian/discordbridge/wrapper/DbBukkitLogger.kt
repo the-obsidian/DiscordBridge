@@ -23,5 +23,4 @@ class DbBukkitLogger(private val logger: Logger) : IDbLogger {
     override fun severe(message: String, throwable: Throwable) {
         logger.log(Level.SEVERE, message, throwable)
     }
-
 }

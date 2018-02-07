@@ -31,23 +31,20 @@ import java.util.*
 import gg.obsidian.discordbridge.util.enum.ChatColor as CC
 
 object DiscordBridge {
-
     private val pegDownProc = PegDownProcessor()
     private val minecraftChatControllerManager = BotControllerManager()
     private val discordChatControllerManager = BotControllerManager()
     private val minecraftCommandControllerManager = BotControllerManager()
     private val cfgNodes: MutableMap<Cfg, ConfigurationNode> = mutableMapOf()
     private lateinit var server: IDbServer
-    lateinit var logger: IDbLogger
 
-    // Temporary storage for alias linking requests
+    lateinit var logger: IDbLogger
     var requests: MutableList<UserAlias> = mutableListOf()
 
-    // Whether Multiverse-Core is installed in Bukkit
+    // Multiverse-Core support
+    lateinit var mvWorlds: ConfigurationNode
     var isMultiverse: Boolean = false
         private set(value) { field = value }
-
-    lateinit var mvWorlds: ConfigurationNode
 
     fun init(server: IDbServer, dataFolder: File, isMultiverse: Boolean = false) {
         this.server = server
@@ -466,5 +463,4 @@ object DiscordBridge {
     fun getServerCommands(): List<Command> {
         return minecraftCommandControllerManager.getCommands().values.toList()
     }
-
 }

@@ -16,7 +16,6 @@ import java.util.*
  * Controller for utility commands that configure the way the bot works
  */
 class UtilCommandsController : IBotController {
-
     /**
      * @return a short description of this IBotController's methods as seen in the Help command
      */

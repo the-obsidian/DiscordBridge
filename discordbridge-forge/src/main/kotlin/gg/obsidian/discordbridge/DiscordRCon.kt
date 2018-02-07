@@ -5,7 +5,7 @@ import net.minecraft.network.rcon.RConConsoleSource
 import net.minecraft.server.MinecraftServer
 import net.minecraft.util.text.ITextComponent
 
-class DiscordRCon(val sender: DiscordCommandSender, serverIn: MinecraftServer) : RConConsoleSource(serverIn) {
+class DiscordRCon(private val sender: DiscordCommandSender, serverIn: MinecraftServer) : RConConsoleSource(serverIn) {
     override fun getName(): String {
         return sender.senderName
     }

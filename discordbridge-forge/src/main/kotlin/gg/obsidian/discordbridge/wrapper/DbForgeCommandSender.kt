@@ -24,5 +24,4 @@ class DbForgeCommandSender(private val sender: net.minecraft.command.ICommandSen
         // TODO
         return true
     }
-
 }

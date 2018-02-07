@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory
  * The primary Plugin class that maintains the plugin's connection with Bukkit
  */
 class BukkitDiscordBridge : JavaPlugin() {
-
     private lateinit var instance: BukkitDiscordBridge
     private lateinit var logger: Logger
 
@@ -41,5 +40,4 @@ class BukkitDiscordBridge : JavaPlugin() {
     override fun onDisable() {
         DiscordBridge.handleServerStop()
     }
-
 }

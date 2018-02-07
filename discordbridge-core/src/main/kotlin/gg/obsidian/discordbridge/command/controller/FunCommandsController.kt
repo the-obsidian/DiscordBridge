@@ -15,7 +15,6 @@ import kotlin.collections.LinkedHashMap
  * Controller for fun commands that have no purpose outside of amusement
  */
 class FunCommandsController : IBotController {
-
     /**
      * @return a description of this class of commands, used in the Help command
      */

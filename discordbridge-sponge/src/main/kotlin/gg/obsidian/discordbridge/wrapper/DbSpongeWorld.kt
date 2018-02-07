@@ -6,5 +6,4 @@ class DbSpongeWorld(private val spongeWorld: World) : IDbWorld {
     override fun getName(): String {
         return spongeWorld.name
     }
-
 }

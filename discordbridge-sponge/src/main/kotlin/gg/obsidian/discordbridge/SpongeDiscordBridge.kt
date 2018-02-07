@@ -20,23 +20,20 @@ import org.spongepowered.api.event.game.state.GameStoppingServerEvent
 import org.spongepowered.api.text.Text
 import javax.inject.Inject
 
-@Plugin(id = "discordbridge-obsidian", name = "DiscordBridge", version = "@VERSION")
+@Plugin(
+        name = "DiscordBridge",
+        id = "@MODID@",
+        version = "@VERSION@"
+)
 class SpongeDiscordBridge {
-
     @Inject private lateinit var game: Game
-    @Inject @DefaultConfig(sharedRoot = false) private lateinit var defaultConfig: File
-
     @Inject private lateinit var logger: Logger
-
-    private lateinit var instance: SpongeDiscordBridge
-
-    fun getPlugin() : SpongeDiscordBridge = instance
+    @Inject @DefaultConfig(sharedRoot = false) private lateinit var defaultConfig: File
 
     fun getLogger() : Logger = logger
 
     @Listener
     fun onGameInitialization(event: GameInitializationEvent) {
-        instance = this
         DiscordBridge.init(DbSpongeServer(this, game), defaultConfig)
 
         val mgr = Sponge.getCommandManager()
@@ -69,8 +66,8 @@ class SpongeDiscordBridge {
     @Listener(order = Order.LAST)
     fun onPlayerDeath(event: DestructEntityEvent.Death) {
         val e = event.targetEntity
-        if (e is org.spongepowered.api.entity.living.player.Player) DiscordBridge.handlePlayerDeath(DbSpongePlayer(e), event.message.toPlain())
-
+        if (e is org.spongepowered.api.entity.living.player.Player)
+            DiscordBridge.handlePlayerDeath(DbSpongePlayer(e), event.message.toPlain())
     }
 
     @Listener(order = Order.LAST)
@@ -81,6 +78,4 @@ class SpongeDiscordBridge {
             event.setMessage(event.formatter.header.format(), Text.of(msg), event.formatter.footer.format())
         }
     }
-
-
 }

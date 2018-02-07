@@ -10,7 +10,6 @@ class DbForgePlayer(private val minecraftPlayer: EntityPlayer) : IDbPlayer {
     }
 
     override fun isVanished(): Boolean {
-        //return minecraftPlayer.get(Keys.INVISIBLE).orElse(false)
         //TODO
         return false
     }
@@ -28,9 +27,7 @@ class DbForgePlayer(private val minecraftPlayer: EntityPlayer) : IDbPlayer {
     }
 
     override fun hasPermission(permission: String): Boolean {
-        //return minecraftPlayer.hasPermission(permission)
         // TODO
         return true
     }
-
 }

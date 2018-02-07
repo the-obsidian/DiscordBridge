@@ -9,7 +9,6 @@ import org.pegdown.ast.*
  * Minecraft formatting codes
  */
 class MarkdownToMinecraftSeralizer : Visitor {
-
     private var printer = Printer()
 
     /**
@@ -212,9 +211,7 @@ class MarkdownToMinecraftSeralizer : Visitor {
     }
 
     private fun visitChildren(node: SuperNode) {
-        for (child in node.children) {
-            child.accept(this)
-        }
+        for (child in node.children) child.accept(this)
     }
 
     private fun printTag(node: SuperNode, tag: String) {
@@ -222,5 +219,4 @@ class MarkdownToMinecraftSeralizer : Visitor {
         visitChildren(node, tag)
         printer.print("\u00A7r")
     }
-
 }

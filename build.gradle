@@ -31,14 +31,16 @@ subprojects {
     }
 
     group = 'gg.obsidian'
-    version = '3.1.0'
+    version = '4.0.0'
     description = """Bridge chat between Minecraft and Discord"""
     ext.url = 'https://github.com/the-obsidian/DiscordBridge'
+    ext.modid = 'discordbridge-obsidian'
     processResources {
         filter ReplaceTokens, tokens: [
                 'DESCRIPTION': project.property('description'),
                 'URL'        : project.property('url'),
-                'VERSION'    : project.property('version')
+                'VERSION'    : project.property('version'),
+                'MODID'      : project.property('modid')
         ]
     }
 

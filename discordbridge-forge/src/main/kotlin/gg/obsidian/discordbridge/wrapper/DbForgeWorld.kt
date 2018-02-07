@@ -6,5 +6,4 @@ class DbForgeWorld(private val minecraftWorld: World) : IDbWorld {
     override fun getName(): String {
         return minecraftWorld.worldInfo.worldName
     }
-
 }

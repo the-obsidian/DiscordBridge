@@ -38,11 +38,6 @@ class DbSpongeServer(private val plugin: SpongeDiscordBridge, private val game: 
         return if (p != null) DbSpongePlayer(p) else null
     }
 
-    override fun getPlayer(name: String): IDbPlayer? {
-        val p = Sponge.getServer().getPlayer(name).unwrap()
-        return if (p != null) DbSpongePlayer(p) else null
-    }
-
     override fun getOnlinePlayers(): List<IDbPlayer> {
         return Sponge.getServer().onlinePlayers.map { DbSpongePlayer(it) }
     }
@@ -59,5 +54,4 @@ class DbSpongeServer(private val plugin: SpongeDiscordBridge, private val game: 
     override fun getLogger(): DbSpongeLogger {
         return DbSpongeLogger(plugin.getLogger())
     }
-
 }

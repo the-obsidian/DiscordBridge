@@ -23,7 +23,6 @@ import gg.obsidian.discordbridge.util.enum.ChatColor as CC
  * @see IBotController
  */
 class BotControllerManager {
-
     private val commands: MutableMap<String, Command> = mutableMapOf()
     private val controllers: MutableMap<Class<out IBotController>, IBotController> = mutableMapOf()
 

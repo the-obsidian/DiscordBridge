@@ -9,7 +9,6 @@ import gg.obsidian.discordbridge.wrapper.IDbPlayer
  * Various utility functions
  */
 object UtilFunctions {
-
     /**
      * @return the input string with all whitespace removed
      */

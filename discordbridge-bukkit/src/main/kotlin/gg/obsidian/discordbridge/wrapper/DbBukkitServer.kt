@@ -11,7 +11,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Server
 import java.util.*
 
-class DbBukkitServer(val plugin: BukkitDiscordBridge, val bukkitServer: Server) : IDbServer {
+class DbBukkitServer(private val plugin: BukkitDiscordBridge, private val bukkitServer: Server) : IDbServer {
     override fun broadcastAttachment(att: UrlAttachment) {
         val msg = ComponentBuilder("${att.sender} sent ")
                 .color(net.md_5.bungee.api.ChatColor.ITALIC)
@@ -36,10 +36,6 @@ class DbBukkitServer(val plugin: BukkitDiscordBridge, val bukkitServer: Server) 
         return DbBukkitPlayer(bukkitServer.getOfflinePlayer(uuid))
     }
 
-    override fun getPlayer(name: String): IDbPlayer? {
-        return DbBukkitPlayer(bukkitServer.getOfflinePlayer(name))
-    }
-
     override fun getOnlinePlayers(): List<IDbPlayer> {
         return bukkitServer.onlinePlayers.map { DbBukkitPlayer(it) }
     }
@@ -56,5 +52,4 @@ class DbBukkitServer(val plugin: BukkitDiscordBridge, val bukkitServer: Server) 
     override fun getLogger(): IDbLogger {
         return DbBukkitLogger(plugin.logger)
     }
-
 }
