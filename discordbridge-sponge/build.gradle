@@ -1,0 +1,17 @@
+repositories {
+    mavenCentral()
+    maven { url 'http://repo.spongepowered.org/Sponge/maven/' }
+}
+
+dependencies {
+    compile project(':discordbridge-core')
+    compile "org.spongepowered:spongeapi:6.0.0"
+}
+
+shadowJar {
+    dependencies {
+        include(project(':discordbridge-core'))
+        include(dependency("net.sf.trove4j:trove4j:3.0.3"))
+    }
+}
+build.dependsOn(shadowJar)

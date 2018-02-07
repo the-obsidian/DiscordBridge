@@ -1,18 +1,22 @@
 # DiscordBridge [![Build Status](https://travis-ci.org/the-obsidian/DiscordBridge.svg?branch=master)](https://travis-ci.org/the-obsidian/DiscordBridge)
 
-Bridges chat between Discord and Minecraft (Bukkit/Spigot).
+Bridges chat between Discord and Minecraft.
 
 ## Requirements
 
 * Java 8
+
+Any of:
 * Spigot 1.12
+* Sponge 1.12
+* Forge 1.12
 
 ## Installation
 
 
 1. Download the latest release from GitHub
-2. Add it to your plugins folder
-3. Either run Bukkit/Spigot once to generate DiscordBridge/config.yml or create it using the guide below.
+2. Add it to your plugin/mod folder
+3. Either run your server once to generate DiscordBridge/config.yml or create it using the guide below.
 4. All done!
 
 
@@ -112,7 +116,8 @@ templates:
 * Anything said in Minecraft chat will be sent to your chosen Discord channel
 * If Multiverse-Core is installed and the `%w` tag is specified in your relay message syntax, the alias assigned to your Multiverse worlds will be displayed
 * Anything said in your chosen Discord channel will be sent to your Minecraft chat (if the `%w` tag is used in your relay message syntax, Discord messages will display `Discord`)
-* If Dynmap is installed, anything said over Dynmap chat will be relayed to your chosen Discord channel (if the `%w` tag is used in your relay messag syntax, Dynmap messages will display `Dynmap`)
+* If Dynmap is installed, anything said over Dynmap chat will be relayed to your chosen Discord channel (if the `%w` tag is used in your relay messag syntax, Dynmap messages will display `Dynmap`) (Spigot only for now)
+* Uploaded images and other files in Discord will show up in Minecraft chat as clickable URLs
 * You can link Minecraft accounts to Discord accounts and the bot will translate display names to match where the message appears
 * Join / leave messages can be sent to Discord
 * Death messages can be sent to Discord
@@ -128,6 +133,8 @@ templates:
 * Use any other command on your server, built-in or from a plugin, from Discord (must have the permission `admin` on Discord server)
 
 ## Permissions
+
+***NOTE:*** Only the Spigot version supports permission nodes at this time.
 
 - `discordbridge.discord` - ability to use any command in of the /discord subcommand tree
 - `discordbridge.discord.reload` - ability to reload configs and JDA
@@ -158,7 +165,6 @@ templates:
 
 ## Upcoming Features
 
-* Add support for a URL shortening service so attachment URLs aren't so flipping long
 * Add support for relaying embeds
 * Make Discord responses for certain commands return in pretty embeds
 * More of the 'fun' commands that literally every Discord bot has (with matching Minecraft commands!)

@@ -1,0 +1,8 @@
+[{
+  "modid": "@MODID@",
+  "name": "DiscordBridge",
+  "description": "@DESCRIPTION@",
+  "version": "@VERSION@",
+  "url": "@URL@",
+  "authorList": ["Jacob Gillespie", "DiamondIceNS"]
+}]

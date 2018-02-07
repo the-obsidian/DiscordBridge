@@ -1,0 +1,28 @@
+repositories {
+    mavenCentral()
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+}
+
+dependencies {
+    compile project(':discordbridge-core')
+    compile group: 'org.spigotmc', name: 'spigot-api', version: '1.12-R0.1-SNAPSHOT'
+    compile (group: 'org.pegdown', name:'pegdown', version: '1.6.0')
+    compile files('../libraries/dynmap-api-2.5-SNAPSHOT.jar')
+}
+
+shadowJar {
+    dependencies {
+        include(project(':discordbridge-core'))
+        include(dependency('org.ow2.asm:asm'))
+        include(dependency('org.ow2.asm:asm-analysis'))
+        include(dependency('org.ow2.asm:asm-tree'))
+        include(dependency('org.ow2.asm:asm-util'))
+    }
+    relocate 'org.json', 'shadow.json'
+}
+build.dependsOn(shadowJar)
+
+artifacts {
+    archives shadowJar
+}
