@@ -11,7 +11,6 @@ dependencies {
 shadowJar {
     dependencies {
         include(project(':discordbridge-core'))
-        include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"))
         include(dependency("net.sf.trove4j:trove4j:3.0.3"))
     }
 }

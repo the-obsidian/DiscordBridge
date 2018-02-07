@@ -55,7 +55,6 @@ processResources {
 shadowJar {
     include ':discordbridge-core'
     dependencies {
-        include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"))
     }
 }
 build.dependsOn(shadowJar)

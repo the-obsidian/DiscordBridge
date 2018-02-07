@@ -11,6 +11,7 @@ dependencies {
     compile group: 'commons-lang', name:'commons-lang', version: '2.3'
     compile group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
 }
 
 shadowJar {

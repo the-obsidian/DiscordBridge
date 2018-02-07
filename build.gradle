@@ -56,19 +56,29 @@ subprojects {
     shadowJar {
         classifier = null
         dependencies {
+            // Kotlin Runtime
+            include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"))
+
+            // Dependencies for JDA
             include(dependency('net.dv8tion:JDA:3.3.1_286'))
-            include(dependency(group: 'org.yaml', name: 'snakeyaml', version: '1.19'))
-            include(dependency(group: 'org.pegdown', name:'pegdown', version: '1.6.0'))
-            include(dependency(group: 'commons-lang', name:'commons-lang', version: '2.3'))
-            include(dependency(group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'))
-            include(dependency('org.parboiled:parboiled-core'))
-            include(dependency('org.parboiled:parboiled-java'))
             include(dependency('com.squareup.okhttp3:okhttp:'))
             include(dependency('com.squareup.okio:okio'))
             include(dependency('com.neovisionaries:nv-websocket-client'))
-            include(dependency('org.slf4j:slf4j-api'))
             include(dependency('org.json:json'))
+            include(dependency('org.slf4j:slf4j-api'))
+            include(dependency('org.slf4j:slf4j-simple'))
+
+            // Dependency for SnakeYAML
+            include(dependency(group: 'org.yaml', name: 'snakeyaml', version: '1.19'))
+
+            // Dependencies for PegDown
+            include(dependency(group: 'org.pegdown', name:'pegdown', version: '1.6.0'))
+            include(dependency(group: 'commons-lang', name:'commons-lang', version: '2.3'))
+            include(dependency('org.parboiled:parboiled-core'))
+            include(dependency('org.parboiled:parboiled-java'))
+
+            // Dependency for CleverbotAPI
+            include(dependency(group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'))
         }
     }
-
 }
