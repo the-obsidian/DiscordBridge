@@ -2,7 +2,7 @@ name: DiscordBridge
 version: '@VERSION@'
 description: '@DESCRIPTION@'
 
-authors: [Jacob Gillespie, Adam Hart]
+authors: [Jacob Gillespie, DiamondIceNS]
 website: '@URL@'
 
 loadbefore: [SpaceBukkit, RemoteToolkitPlugin]

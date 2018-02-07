@@ -20,11 +20,7 @@ import org.spongepowered.api.event.game.state.GameStoppingServerEvent
 import org.spongepowered.api.text.Text
 import javax.inject.Inject
 
-@Plugin(
-        name = "DiscordBridge",
-        id = "@MODID@",
-        version = "@VERSION@"
-)
+@Plugin(id="discordbridge-obsidian")
 class SpongeDiscordBridge {
     @Inject private lateinit var game: Game
     @Inject private lateinit var logger: Logger

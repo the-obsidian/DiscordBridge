@@ -2,8 +2,7 @@
   "modid": "@MODID@",
   "name": "DiscordBridge",
   "description": "@DESCRIPTION@",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
+  "version": "@VERSION@",
   "url": "@URL@",
   "authorList": ["Jacob Gillespie", "DiamondIceNS"]
 }]

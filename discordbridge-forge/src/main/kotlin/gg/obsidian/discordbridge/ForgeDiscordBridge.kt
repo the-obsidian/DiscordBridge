@@ -9,11 +9,7 @@ import net.minecraftforge.fml.common.event.FMLServerStoppingEvent
 import org.apache.logging.log4j.Logger
 import java.io.File
 
-@Mod(
-        modid = "@MODID@",
-        version = "@VERSION@",
-        acceptableRemoteVersions = "*"
-)
+@Mod(modid = "discordbridge-obsidian", useMetadata = true, serverSideOnly = true, acceptableRemoteVersions = "*")
 class ForgeDiscordBridge {
     lateinit var logger: Logger
 
