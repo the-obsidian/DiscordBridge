@@ -29,11 +29,7 @@ class DbSpongeServer(private val plugin: SpongeDiscordBridge, private val game: 
         return DbSpongeScheduler(plugin, game)
     }
 
-    override fun getVersion(): String {
-        return game.platform.minecraftVersion.name
-    }
-
-    override fun getMinecraftShortVersion(): String {
+    override fun getMinecraftVersion(): String {
         return game.platform.minecraftVersion.name
     }
 

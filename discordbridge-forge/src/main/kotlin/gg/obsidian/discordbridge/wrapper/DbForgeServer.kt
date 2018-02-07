@@ -27,13 +27,8 @@ class DbForgeServer(private val mod: ForgeDiscordBridge) : IDbServer {
         return DbForgeScheduler()
     }
 
-    // TODO
-    override fun getVersion(): String {
-        return "Minecraft Forge " + ForgeVersion.mcVersion
-    }
-
-    override fun getMinecraftShortVersion(): String {
-        return "Minecraft Forge " + ForgeVersion.mcVersion
+    override fun getMinecraftVersion(): String {
+        return ForgeVersion.mcVersion
     }
 
     override fun getPlayer(uuid: UUID): IDbPlayer? {

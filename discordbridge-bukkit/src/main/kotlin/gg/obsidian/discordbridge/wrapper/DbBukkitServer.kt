@@ -28,11 +28,7 @@ class DbBukkitServer(val plugin: BukkitDiscordBridge, val bukkitServer: Server) 
         return DbBukkitScheduler(plugin, bukkitServer.scheduler)
     }
 
-    override fun getVersion(): String {
-        return bukkitServer.bukkitVersion.split("-")[0]
-    }
-
-    override fun getMinecraftShortVersion(): String {
+    override fun getMinecraftVersion(): String {
         return bukkitServer.bukkitVersion.split("-")[0]
     }
 

@@ -8,9 +8,7 @@ interface IDbServer {
 
     fun getScheduler(): IDbScheduler
 
-    fun getVersion(): String
-
-    fun getMinecraftShortVersion(): String
+    fun getMinecraftVersion(): String
 
     fun getPlayer(uuid: UUID): IDbPlayer?
 

@@ -113,7 +113,7 @@ object Connection: Runnable {
         JDA = builder.buildBlocking()
         listener = Listener()
         JDA.addEventListener(listener)
-        JDA.presence.game = Game.of("Minecraft ${DiscordBridge.getServer().getMinecraftShortVersion()}")
+        JDA.presence.game = Game.of("Minecraft ${DiscordBridge.getServer().getMinecraftVersion()}")
         if (serverReady) send(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.server-start", "Server started!"), getRelayChannel())
         jdaReady = true
     }
