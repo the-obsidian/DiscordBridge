@@ -385,7 +385,6 @@ class BotControllerManager {
         when (event) {
             is MinecraftChatEventWrapper -> {
                 var worldname = event.player.getWorld().getName()
-                DiscordBridge.logger.info(worldname)
 
                 // Get world alias if Multiverse is installed
                 if (DiscordBridge.isMultiverse) {
