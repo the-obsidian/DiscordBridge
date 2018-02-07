@@ -14,6 +14,7 @@ deploy:
     - discordbridge-spigot/build/libs/discordbridge-spigot*.jar
     - discordbridge-forge/build/libs/discordbridge-forge*.jargit
   file_glob: true
+  skip_cleanup: true
   on:
     repo: the-obsidian/DiscordBridge
     tags: true
