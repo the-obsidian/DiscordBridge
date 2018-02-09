@@ -31,7 +31,7 @@ import java.util.*
 import gg.obsidian.discordbridge.util.enum.ChatColor as CC
 
 object DiscordBridge {
-    private val pegDownProc = PegDownProcessor()
+    private val pegDownProc = PegDownProcessor(0x200)
     private val minecraftChatControllerManager = BotControllerManager()
     private val discordChatControllerManager = BotControllerManager()
     private val minecraftCommandControllerManager = BotControllerManager()

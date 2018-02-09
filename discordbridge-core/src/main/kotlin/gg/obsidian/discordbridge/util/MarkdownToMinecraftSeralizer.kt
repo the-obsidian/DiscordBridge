@@ -36,6 +36,8 @@ class MarkdownToMinecraftSeralizer : Visitor {
     }
 
     override fun visit(node: BlockQuoteNode) {
+        // Any intervening space is eaten
+        printer.print(">")
         visitChildren(node)
     }
 
@@ -44,7 +46,7 @@ class MarkdownToMinecraftSeralizer : Visitor {
     }
 
     override fun visit(node: CodeNode) {
-        printer.print(node.text)
+        printer.print("`${node.text}`")
     }
 
     override fun visit(node: DefinitionListNode) {
@@ -60,14 +62,28 @@ class MarkdownToMinecraftSeralizer : Visitor {
     }
 
     override fun visit(node: ExpImageNode) {
+        // space between "[]" and "()" is lost
+        printer.print("![")
         visitChildren(node)
+        if (!node.title.isNullOrEmpty())
+            printer.print("](${node.url} \"${node.title}\")")
+        else
+            printer.print("](${node.url})")
     }
 
     override fun visit(node: ExpLinkNode) {
+        // space between "[]" and "()" is lost
+        printer.print("[")
         visitChildren(node)
+        if (!node.title.isNullOrEmpty())
+            printer.print("](${node.url} \"${node.title}\")")
+        else
+            printer.print("](${node.url})")
     }
 
     override fun visit(node: HeaderNode) {
+        for (i in 0 until node.level)
+            printer.print('#')
         visitChildren(node)
     }
 
@@ -80,6 +96,8 @@ class MarkdownToMinecraftSeralizer : Visitor {
     }
 
     override fun visit(node: ListItemNode) {
+        // Lists started with "- " become stars
+        printer.print("* ")
         visitChildren(node)
     }
 
@@ -88,6 +106,7 @@ class MarkdownToMinecraftSeralizer : Visitor {
     }
 
     override fun visit(node: OrderedListNode) {
+        // Can't print the number because ???
         visitChildren(node)
     }
 
@@ -96,19 +115,47 @@ class MarkdownToMinecraftSeralizer : Visitor {
     }
 
     override fun visit(node: QuotedNode) {
+        // This is apparently not called
+        when (node.type) {
+            QuotedNode.Type.DoubleAngle -> printer.print("»")
+            QuotedNode.Type.Double -> printer.print(">>")
+            QuotedNode.Type.Single -> printer.print(">")
+            null -> printer.print(">")
+        }
         visitChildren(node)
     }
 
     override fun visit(node: ReferenceNode) {
+        // space between [] and "" is forced
+        printer.print("[")
         visitChildren(node)
+        printer.print("]: ${node.url}")
+        if (!node.title.isNullOrEmpty())
+            printer.print(" \"${node.title}\"")
     }
 
     override fun visit(node: RefImageNode) {
+        printer.print("![")
         visitChildren(node)
+        printer.print("]")
+        if (node.separatorSpace != null) {
+            printer.print(node.separatorSpace).print('[')
+            if (node.referenceKey != null)
+                visitChildren(node.referenceKey)
+            printer.print(']')
+        }
     }
 
     override fun visit(node: RefLinkNode) {
+        printer.print("[")
         visitChildren(node)
+        printer.print("]")
+        if (node.separatorSpace != null) {
+            printer.print(node.separatorSpace).print('[')
+            if (node.referenceKey != null)
+                visitChildren(node.referenceKey)
+            printer.print(']')
+        }
     }
 
     override fun visit(node: SimpleNode) {

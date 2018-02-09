@@ -31,7 +31,7 @@ subprojects {
     }
 
     group = 'gg.obsidian'
-    version = '4.0.0'
+    version = '4.0.1'
     description = """Bridge chat between Minecraft and Discord"""
     ext.url = 'https://github.com/the-obsidian/DiscordBridge'
     ext.modid = 'discordbridge-obsidian'
