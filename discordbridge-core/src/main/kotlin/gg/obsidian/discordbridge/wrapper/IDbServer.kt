@@ -20,4 +20,7 @@ interface IDbServer {
     fun getPlayer(uuid: UUID): IDbPlayer?
 
     fun getScheduler(): IDbScheduler
+
+    // https://bukkit.org/threads/get-all-the-available-commands.61941/
+    fun getAllCommandNames(): List<String>
 }

@@ -54,4 +54,8 @@ class DbSpongeServer(private val plugin: SpongeDiscordBridge, private val game: 
     override fun getLogger(): DbSpongeLogger {
         return DbSpongeLogger(plugin.getLogger())
     }
+
+    override fun getAllCommandNames(): List<String> {
+        return Sponge.getCommandManager().aliases.toList()
+    }
 }

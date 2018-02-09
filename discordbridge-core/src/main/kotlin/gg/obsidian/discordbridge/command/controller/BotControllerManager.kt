@@ -199,7 +199,9 @@ class BotControllerManager {
 
         if (command == null) {
             // Attempt to run as a server command if sent from Discord
-            if (event is DiscordMessageWrapper && event.originalMessage.member.hasPermission(Permission.ADMINISTRATOR))
+            val knownCommands = DiscordBridge.getServer().getAllCommandNames()
+            if (knownCommands.contains(commandName) && event is DiscordMessageWrapper
+                    && event.originalMessage.member.hasPermission(Permission.ADMINISTRATOR))
                 if (invokeServerCommand(event, args)) return true
 
             if (defaultToTalk) command = commands["talk"]
@@ -371,6 +373,7 @@ class BotControllerManager {
         val sender = DiscordCommandSender(event.senderName, event.channel)
         DiscordBridge.logDebug("Discord user ${event.senderName} invoked Minecraft command '${args.joinToString(" ")}'")
         DiscordBridge.getServer().dispatchCommand(sender, args.joinToString(" "))
+        // TODO
         return true
     }
 

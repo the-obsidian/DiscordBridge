@@ -9,9 +9,15 @@ import net.md_5.bungee.api.chat.ComponentBuilder
 import net.md_5.bungee.api.chat.HoverEvent
 import org.bukkit.Bukkit
 import org.bukkit.Server
+import org.bukkit.command.Command
+import org.bukkit.command.SimpleCommandMap
+import org.bukkit.plugin.SimplePluginManager
 import java.util.*
+import java.util.logging.Level
 
 class DbBukkitServer(private val plugin: BukkitDiscordBridge, private val bukkitServer: Server) : IDbServer {
+    lateinit var knownCommands: List<String>
+
     override fun broadcastAttachment(att: UrlAttachment) {
         val msg = ComponentBuilder("${att.sender} sent ")
                 .color(net.md_5.bungee.api.ChatColor.ITALIC)
@@ -51,5 +57,29 @@ class DbBukkitServer(private val plugin: BukkitDiscordBridge, private val bukkit
 
     override fun getLogger(): IDbLogger {
         return DbBukkitLogger(plugin.logger)
+    }
+
+    override fun getAllCommandNames(): List<String> {
+        if (::knownCommands.isInitialized)
+            return knownCommands
+        try {
+            val pm = bukkitServer.pluginManager as SimplePluginManager?
+            if (pm != null) {
+                val cmapField = pm::class.java.getDeclaredField("commandMap")
+                cmapField.isAccessible = true
+                val cmap = cmapField.get(pm) as SimpleCommandMap
+                val knownCommandsField = cmap::class.java.getDeclaredField("knownCommands")
+                knownCommandsField.isAccessible = true
+                val kc = (knownCommandsField.get(cmap) as Map<String, Command>).keys.toList()
+                knownCommands = kc
+                return kc
+            }
+            plugin.logger.warning("Could not get command list - plugin manager is null")
+            return listOf()
+        }
+        catch (e: Exception) {
+            plugin.logger.log(Level.WARNING, "Could not get command list", e)
+            return listOf()
+        }
     }
 }

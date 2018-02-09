@@ -52,4 +52,8 @@ class DbForgeServer(private val mod: ForgeDiscordBridge) : IDbServer {
     override fun getLogger(): DbForgeLogger {
         return DbForgeLogger(mod.logger)
     }
+
+    override fun getAllCommandNames(): List<String> {
+        return FMLCommonHandler.instance().minecraftServerInstance.commandManager.commands.keys.toList()
+    }
 }
