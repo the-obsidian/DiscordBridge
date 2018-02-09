@@ -190,7 +190,7 @@ class FunCommandsController : IBotController {
             return "You rolled... 1. Was it any surprise?"
         if (sides > 100 || sides < 1)
             return "I can't roll a die with $sides sides. It must have between 1 and 100 sides."
-        val rand = Random().nextInt(sides)
+        val rand = Random().nextInt(sides) + 1
         return "You rolled... $rand"
     }
 
