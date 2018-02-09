@@ -68,18 +68,18 @@ Bridges chat between Discord and Minecraft.
 * Make all URLs clickable, not just attachments
 * Emoji translation
 * Multiple Discord channel support
-* Permissions for "@here" and "@everyone"
+* Permissions for `@here`, `@everyone`, and mentions in general
 * Integration with other chat plugins/mods
 
 ## Similar Projects
 
-####Bukkit
+**Bukkit**
 * [DiscordSRV](https://github.com/Scarsz/DiscordSRV) by Scarsz
 * [DiscordBridge](https://github.com/BantaGaming/DiscordBridge) by BantaGaming
 
-####Sponge
+**Sponge**
 * [DiscordBridge](https://github.com/nguyenquyhy/DiscordBridge) by nguyenquyhy
 
-####Forge
+**Forge**
 * [DiscordChat](https://github.com/shadowfacts/DiscordChat) by Shadowfacts
 * [DiscordIntegration](https://github.com/Chikachi/DiscordIntegration) by Chikachi
