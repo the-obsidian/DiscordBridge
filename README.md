@@ -5,18 +5,18 @@ Bridges chat between Discord and Minecraft.
 ## Requirements
 
 * Java 8
-
-Any of:
-* Spigot 1.12
-* Sponge 1.12
-* Forge 1.12
+* Any of:
+  * Spigot 1.12
+  * Sponge 1.12
+  * Forge 1.12
 
 ## Installation
 
-1. Download the latest release from GitHub
+1. Download the latest release from the [releases page](https://github.com/the-obsidian/DiscordBridge/releases)
 2. Add it to your plugin/mod folder
-3. Either run your server once to generate DiscordBridge/config.yml or create it using [the guide on the wiki](https://github.com/the-obsidian/DiscordBridge/wiki/Configuration).
-4. All done!
+3. Run your server once to generate configs
+4. Find `config.yml` and add required information (see [the guide on the wiki](https://github.com/the-obsidian/DiscordBridge/wiki/Configuration) for details)
+5. All done!
 
 ## Features
 
@@ -73,11 +73,13 @@ Any of:
 
 ## Similar Projects
 
-#####Bukkit
+####Bukkit
 * [DiscordSRV](https://github.com/Scarsz/DiscordSRV) by Scarsz
 * [DiscordBridge](https://github.com/BantaGaming/DiscordBridge) by BantaGaming
-#####Sponge
+
+####Sponge
 * [DiscordBridge](https://github.com/nguyenquyhy/DiscordBridge) by nguyenquyhy
-#####Forge
+
+####Forge
 * [DiscordChat](https://github.com/shadowfacts/DiscordChat) by Shadowfacts
 * [DiscordIntegration](https://github.com/Chikachi/DiscordIntegration) by Chikachi
