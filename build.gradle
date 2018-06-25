@@ -64,7 +64,7 @@ subprojects {
             include(dependency('com.squareup.okhttp3:okhttp:'))
             include(dependency('com.squareup.okio:okio'))
             include(dependency('com.neovisionaries:nv-websocket-client'))
-            include(dependency('org.json:json'))
+            include(dependency('org.json:json:20160810'))
             include(dependency('org.slf4j:slf4j-api'))
             include(dependency('org.slf4j:slf4j-simple'))
 
@@ -80,5 +80,6 @@ subprojects {
             // Dependency for CleverbotAPI
             include(dependency(group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'))
         }
+        relocate 'org.json', 'discordbridge-shadow.json'
     }
 }
