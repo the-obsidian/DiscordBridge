@@ -15,7 +15,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.dynmap.DynmapWebChatEvent
 
-class EventListener: Listener, CommandExecutor {
+class MainEventListener: Listener, CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         return if (sender is org.bukkit.entity.Player) {
             val wp = DbBukkitPlayer(sender)
@@ -42,11 +42,10 @@ class EventListener: Listener, CommandExecutor {
 
     @EventHandler
     fun onPlayerDeath(event: PlayerDeathEvent) {
-        DiscordBridge.handlePlayerDeath(DbBukkitPlayer(event.entity.player), event.deathMessage)
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    fun onDynmapCatEvent(event: DynmapWebChatEvent) {
-        DiscordBridge.handleDynmapChat(event.name, event.message)
+        val player = event.entity.player
+        val msg = event.deathMessage
+        if (player != null && msg != null) {
+            DiscordBridge.handlePlayerDeath(DbBukkitPlayer(player), msg)
+        }
     }
 }

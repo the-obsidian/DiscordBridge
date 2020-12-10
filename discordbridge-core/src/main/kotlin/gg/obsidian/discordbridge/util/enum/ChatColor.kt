@@ -1,6 +1,5 @@
 package gg.obsidian.discordbridge.util.enum
 
-import org.apache.commons.lang.Validate
 import java.util.regex.Pattern
 
 private const val COLOR_CHAR = '\u00A7'
@@ -74,9 +73,6 @@ enum class ChatColor(
          * or null if it doesn't exist
          */
         fun getByChar(code: String): ChatColor {
-            Validate.notNull(code, "Code cannot be null")
-            Validate.isTrue(code.length > 0, "Code must have at least one char")
-
             return BY_CHAR[code[0]]!!
         }
 
@@ -144,8 +140,8 @@ enum class ChatColor(
 
         init {
             for (color in values()) {
-                BY_ID.put(color.intCode, color)
-                BY_CHAR.put(color.char, color)
+                BY_ID[color.intCode] = color
+                BY_CHAR[color.char] = color
             }
         }
     }

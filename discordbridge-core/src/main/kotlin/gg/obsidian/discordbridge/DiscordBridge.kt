@@ -20,18 +20,19 @@ import gg.obsidian.discordbridge.wrapper.IDbCommandSender
 import gg.obsidian.discordbridge.wrapper.IDbLogger
 import gg.obsidian.discordbridge.wrapper.IDbPlayer
 import gg.obsidian.discordbridge.wrapper.IDbServer
-import net.dv8tion.jda.core.OnlineStatus
-import net.dv8tion.jda.core.entities.Member
-import net.dv8tion.jda.core.entities.MessageChannel
-import org.pegdown.PegDownProcessor
+import net.dv8tion.jda.api.OnlineStatus
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.Message
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.lang.RuntimeException
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import gg.obsidian.discordbridge.util.enum.ChatColor as CC
 
 object DiscordBridge {
-    private val pegDownProc = PegDownProcessor()
     private val minecraftChatControllerManager = BotControllerManager()
     private val discordChatControllerManager = BotControllerManager()
     private val minecraftCommandControllerManager = BotControllerManager()
@@ -44,7 +45,7 @@ object DiscordBridge {
     // Multiverse-Core support
     lateinit var mvWorlds: ConfigurationNode
     var isMultiverse: Boolean = false
-        private set(value) { field = value }
+        private set
 
     fun init(server: IDbServer, dataFolder: File, isMultiverse: Boolean = false) {
         this.server = server
@@ -56,16 +57,16 @@ object DiscordBridge {
             val file = File(dataFolder, filename)
             if (!createDefaultFileFromResource("/$filename", file))
                 logger.severe("Could not create default file for $filename")
-            val node = ConfigurationNode(file)
+            val node = ConfigurationNode(c.filename, file)
             node.load()
-            cfgNodes.put(c, node)
+            cfgNodes[c] = node
         }
         server.getScheduler().runAsyncTask(Connection)
         UserAliasConfig.load()
 
         if (isMultiverse) {
             this.isMultiverse = true
-            mvWorlds = ConfigurationNode(File("plugins/Multiverse-Core/worlds.yml"))
+            mvWorlds = ConfigurationNode("worlds", File("plugins/Multiverse-Core/worlds.yml"))
             mvWorlds.load().toString()
         }
 
@@ -79,11 +80,10 @@ object DiscordBridge {
 
     fun logDebug(msg: String) {
         if (!getConfig(Cfg.CONFIG).getBoolean("debug", false)) return
-        logger.info("[DiscordBridge] $msg")
+        logger.info("DEBUG: $msg")
     }
 
     fun getServer(): IDbServer = server
-    fun getPegDownProcessor(): PegDownProcessor = pegDownProc
     fun getConfig(type: Cfg) = cfgNodes[type]!!
 
     // Borrowed code from dynmap-core
@@ -93,13 +93,13 @@ object DiscordBridge {
         logger.info(deffile.path + " not found - creating default")
         val inputStream = javaClass.getResourceAsStream(resourcename)
         if (inputStream == null) {
-            logger.severe("Unable to find default resource - " + resourcename)
+            logger.severe("Unable to find default resource - $resourcename")
             return false
         } else {
             var fos: FileOutputStream? = null
             try {
                 fos = FileOutputStream(deffile)
-                while (inputStream.copyTo(fos, 512) > 0) { }
+                while (inputStream.copyTo(fos, 512) > 0) { /* no-op */ }
             } catch (iox: IOException) {
                 logger.severe("ERROR creating default for " + deffile.path)
                 return false
@@ -169,35 +169,48 @@ object DiscordBridge {
      * @param discriminator the Discord username+discriminator of the target Discord user
      * @return a Discord Member object, or null if no matching member was found
      */
-    fun registerUserRequest(player: IDbPlayer, discriminator: String): Member? {
-        val users = Connection.listUsers()
-        val found: Member = users.find { it.user.name + "#" + it.user.discriminator == discriminator } ?: return null
+    fun registerUserRequest(player: IDbPlayer, discriminator: String): CompletableFuture<Member?> {
+        return Connection.listUsers()
+            .thenApply { members ->
+                members.find { it.user.name + "#" + it.user.discriminator == discriminator } ?: throw RuntimeException()
+            }
+            .thenCompose { found ->
+                Connection.JDA.retrieveUserById(found.id).submit()
+                    .thenCompose { user -> user.openPrivateChannel().submit() }
+                    .thenCompose { p ->
+                        val ua = UserAlias(player.getUUID().toString(), found.user.id)
+                        requests.add(ua)
+                        val msg =
+                            "Minecraft user '${player.getName()}' has requested to become associated with your Discord" +
+                                    " account. If this is you, respond '${Connection.JDA.selfUser.asMention} confirm'. If this is not" +
+                                    " you, respond ${Connection.JDA.selfUser.asMention} deny'."
 
-        val ua = UserAlias(player.getUUID().toString(), found.user.id)
-        requests.add(ua)
-        val msg = "Minecraft user '${player.getName()}' has requested to become associated with your Discord" +
-                " account. If this is you, respond '${Connection.JDA.selfUser.asMention} confirm'. If this is not" +
-                " you, respond ${Connection.JDA.selfUser.asMention} deny'."
-        val member = Connection.JDA.getUserById(ua.discordId)
-        member.openPrivateChannel().queue({p -> p.sendMessage(msg).queue()})
-        return found
+                        p.sendMessage(msg).submit()
+                    }
+                    .thenApply { found }
+            }
+            .exceptionally { null }
     }
 
     /**
      * @return a formatted string listing the Discord IDs of all Discord users in the relay channel
      */
-    fun getDiscordMembersAll(): String {
-        val users = Connection.listUsers()
+    fun getDiscordMembersAll(): CompletableFuture<String> {
+        return Connection.listUsers().thenApply { members ->
+            var response = ""
+            if (members.isEmpty()) {
+                response =
+                    "${CC.YELLOW}No Discord members could be found. Either server is empty or an error has occurred."
+            } else {
+                response = "${CC.YELLOW}Discord users:"
+                for (user in members) {
+                    response += if (user.user.isBot) "\n${CC.GOLD}- ${user.effectiveName} (Bot) | ${user.user.name}#${user.user.discriminator}${CC.RESET}"
+                    else "\n${CC.YELLOW}- ${user.effectiveName} | ${user.user.name}#${user.user.discriminator}${CC.RESET}"
+                }
+            }
 
-        if (users.isEmpty())
-            return "${CC.YELLOW}No Discord members could be found. Either server is empty or an error has occurred."
-
-        var response = "${CC.YELLOW}Discord users:"
-        for (user in users) {
-            response += if (user.user.isBot) "\n${CC.GOLD}- ${user.effectiveName} (Bot) | ${user.user.name}#${user.user.discriminator}${CC.RESET}"
-            else "\n${CC.YELLOW}- ${user.effectiveName} | ${user.user.name}#${user.user.discriminator}${CC.RESET}"
+            response.trim()
         }
-        return response.trim()
     }
 
     /**
@@ -251,34 +264,36 @@ object DiscordBridge {
      * @param message the message to format
      * @return the formatted message
      */
-    fun convertAtMentions(message: String): String {
+    fun convertAtMentions(message: String): CompletableFuture<String> {
         var newMessage = message
 
-        val discordusers = Connection.listUsers()
-        val discordaliases: MutableList<Pair<String, Member>> = mutableListOf()
+        return Connection.listUsers().thenApply { discordusers ->
+            val discordaliases: MutableList<Pair<String, Member>> = mutableListOf()
 
-        for (du in discordusers)
-            for ((mcUuid, discordId) in UserAliasConfig.aliases)
-                if (discordId == du.user.id) {
-                    val player = server.getPlayer(UUID.fromString(mcUuid))
-                    if (player != null) discordaliases.add(Pair(player.getName(), du))
+            for (du in discordusers)
+                for ((mcUuid, discordId) in UserAliasConfig.aliases)
+                    if (discordId == du.user.id) {
+                        val player = server.getPlayer(UUID.fromString(mcUuid))
+                        if (player != null) discordaliases.add(Pair(player.getName(), du))
+                    }
+
+            for (match in Regex("""(?:^| )@(\w+)""").findAll(message)) {
+                val found: Member? = discordusers.firstOrNull {
+                    it.user.name.noSpace().equals(match.groupValues[1], ignoreCase = true) ||
+                            it.user.name + "#" + it.user.discriminator == match.groupValues[1].toLowerCase() ||
+                            it.effectiveName.noSpace().equals(match.groupValues[1], ignoreCase = true)
                 }
+                if (found != null) newMessage = newMessage.replaceFirst("@${match.groupValues[1]}", found.asMention)
 
-        for (match in Regex("""(?:^| )@(\w+)""").findAll(message)) {
-            val found: Member? = discordusers.firstOrNull {
-                it.user.name.noSpace().toLowerCase() == match.groupValues[1].toLowerCase() ||
-                        it.user.name + "#" + it.user.discriminator == match.groupValues[1].toLowerCase() ||
-                        it.effectiveName.noSpace().toLowerCase() == match.groupValues[1].toLowerCase()
+                val found2: Pair<String, Member>? = discordaliases.firstOrNull {
+                    it.first.equals(match.groupValues[1], ignoreCase = true)
+                }
+                if (found2 != null) newMessage =
+                    newMessage.replaceFirst("@${match.groupValues[1]}", found2.second.asMention)
             }
-            if (found != null) newMessage = newMessage.replaceFirst("@${match.groupValues[1]}", found.asMention)
 
-            val found2: Pair<String, Member>? = discordaliases.firstOrNull {
-                it.first.toLowerCase() == match.groupValues[1].toLowerCase()
-            }
-            if (found2 != null) newMessage = newMessage.replaceFirst("@${match.groupValues[1]}", found2.second.asMention)
+            newMessage
         }
-
-        return newMessage
     }
 
     /**
@@ -287,13 +302,23 @@ object DiscordBridge {
      * @param message the message to format
      * @return the formatted message
      */
-    fun deconvertAtMentions(message: String): String {
+    fun deconvertAtMentions(message: String): CompletableFuture<String> {
         var modifiedMessage = message
-        for (match in Regex("""<@!(\d+)>|<@(\d+)>""").findAll(message)) {
-            val discordUser = Connection.listUsers().firstOrNull { it.user.id == match.groupValues[1] || it.user.id == match.groupValues[2] }
-            if (discordUser != null) modifiedMessage = modifiedMessage.replace(match.value, "@"+discordUser.effectiveName)
+        val r = Regex(Message.MentionType.USER.pattern.pattern())
+
+        if (r.containsMatchIn(modifiedMessage)) {
+            return Connection.listUsers().thenApply { members ->
+                for (match in r.findAll(modifiedMessage)) {
+                    val discordUser =
+                        members.firstOrNull { it.user.id == match.groupValues[1] || it.user.id == match.groupValues[2] }
+                    if (discordUser != null) modifiedMessage =
+                        modifiedMessage.replace(match.value, "@" + discordUser.effectiveName)
+                }
+                modifiedMessage
+            }
+
         }
-        return modifiedMessage
+        return CompletableFuture.supplyAsync { message }
     }
 
     /**
@@ -303,18 +328,19 @@ object DiscordBridge {
      * @param message the message to format
      * @return the formatted message
      */
-    fun translateAliasesToDiscord(message: String): String {
-        var modifiedMessage = message
+    fun translateAliasesToDiscord(message: String): CompletableFuture<String> {
+        var out = CompletableFuture.supplyAsync{ message }
         for ((mcUuid, discordId) in UserAliasConfig.aliases) {
             val player = server.getPlayer(UUID.fromString(mcUuid))
             if (player != null) {
                 val nameMC = player.getName()
-                val discordUser = Connection.listUsers().firstOrNull { it.user.id == discordId }
-                val nameDis = if (discordUser != null) discordUser.effectiveName else Connection.JDA.getUserById(discordId).name
-                modifiedMessage = modifiedMessage.replace(nameMC, nameDis)
+                out = out.thenCompose { x: String ->
+                    Connection.JDA.retrieveUserById(discordId).map{ user -> user.name }.submit()
+                            .thenApply { y: String -> x.replace(nameMC, y) }
+                }
             }
         }
-        return modifiedMessage
+        return out
     }
 
     /**
@@ -324,19 +350,23 @@ object DiscordBridge {
      * @param message the message to format
      * @return the formatted message
      */
-    fun translateAliasesToMinecraft(message: String): String {
+    fun translateAliasesToMinecraft(message: String): CompletableFuture<String> {
         var modifiedMessage = message
         for ((mcUuid, discordId) in UserAliasConfig.aliases) {
             val player = server.getPlayer(UUID.fromString(mcUuid))
             if (player != null) {
                 val nameMC = player.getName()
-                val nameDis = Connection.JDA.getUserById(discordId).name
+                val nameDis = Connection.JDA.getUserById(discordId)!!.name
                 modifiedMessage = modifiedMessage.replace(nameDis, nameMC)
-                val discordUser = Connection.listUsers().firstOrNull { it.user.id == discordId }
-                if (discordUser != null) modifiedMessage = modifiedMessage.replace(discordUser.effectiveName, nameMC)
+                return Connection.listUsers().thenApply { members ->
+                    val discordUser = members.firstOrNull { it.user.id == discordId }
+                    if (discordUser != null) modifiedMessage =
+                        modifiedMessage.replace(discordUser.effectiveName, nameMC)
+                    modifiedMessage
+                }
             }
         }
-        return modifiedMessage
+        return CompletableFuture.supplyAsync { modifiedMessage }
     }
 
     fun handleServerStart() {
@@ -352,7 +382,7 @@ object DiscordBridge {
     fun handlePlayerChat(player: IDbPlayer, message: String, isCancelled: Boolean): String {
         // TODO: the order of these if statements may produce undesired behavior
         logDebug("Received a chat event from ${player.getName()}: $message")
-        if (!getConfig(Cfg.CONFIG).getBoolean("player-messages.chat", true)) return message
+        if (!getConfig(Cfg.CONFIG).getBoolean("messages.player-chat", true)) return message
         if (isCancelled && !getConfig(Cfg.CONFIG).getBoolean("relay-cancelled-messages", true)) return message
         if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-chat", false)) return message
 
@@ -375,9 +405,16 @@ object DiscordBridge {
                 .replace(":masteryourdonger:", "(\u0E07 \u0360\u00B0 \u0644\u035C \u00B0)\u0E07")
 
         //val wrapper = MinecraftChatEventWrapper(AsyncPlayerChatEvent(true, event.player, event.message, event.recipients))
-        server.getScheduler().runAsyncTask(Runnable { minecraftChatControllerManager.dispatchMessage(MinecraftChatEventWrapper(player, newMessage)) })
+        server.getScheduler().runAsyncTask {
+            minecraftChatControllerManager.dispatchMessage(
+                MinecraftChatEventWrapper(
+                    player,
+                    newMessage
+                )
+            )
+        }
 
-        return MarkdownToMinecraftSeralizer().toMinecraft(pegDownProc.parseMarkdown(newMessage.toCharArray()))
+        return MarkdownToMinecraftSeralizer.toMinecraft(newMessage)
     }
 
     fun handlePlayerJoin(player: IDbPlayer) {
@@ -388,20 +425,19 @@ object DiscordBridge {
         if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-join", false)) return
 
         // Get world alias if Multiverse is installed
-        if (DiscordBridge.isMultiverse) {
-            val obj = DiscordBridge.mvWorlds.getObject("worlds.$worldname")
-            if (obj != null) {
-                val alias = (obj as Map<*, *>)["alias"]
-                if (alias is String && alias.isNotEmpty()) worldname = alias
+        if (isMultiverse) {
+            val alias = mvWorlds.getObject("worlds.$worldname.alias", "")
+            if (alias.isNotEmpty()) {
+                worldname = alias
+            } else {
+                logger.warning("Could not fetch world alias from config (did you `/discord reload` yet?)")
             }
-            else
-                DiscordBridge.logger.warning("Could not fetch world alias from config " +
-                        "(did you `/discord reload` yet?)")
         }
 
-        var formattedMessage = player.toDiscordPlayerJoin(worldname)
-        formattedMessage = translateAliasesToDiscord(formattedMessage)
-        sendToDiscord(formattedMessage, Connection.getRelayChannel())
+        val formattedMessage = player.toDiscordPlayerJoin(worldname)
+        translateAliasesToDiscord(formattedMessage).thenAccept {
+            x -> sendToDiscord(x, Connection.getRelayChannel())
+        }
     }
 
     fun handlePlayerQuit(player: IDbPlayer) {
@@ -412,20 +448,18 @@ object DiscordBridge {
         if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-leave", false)) return
 
         // Get world alias if Multiverse is installed
-        if (DiscordBridge.isMultiverse) {
-            val obj = DiscordBridge.mvWorlds.getObject("worlds.$worldname")
-            if (obj != null) {
-                val alias = (obj as Map<*, *>)["alias"]
-                if (alias is String && alias.isNotEmpty()) worldname = alias
+        if (isMultiverse) {
+            val alias = mvWorlds.getObject("worlds.$worldname.alias", "")
+            if (alias.isNotEmpty()) {
+                worldname = alias
+            } else {
+                logger.warning("Could not fetch world alias from config (did you `/discord reload` yet?)")
             }
-            else
-                DiscordBridge.logger.warning("Could not fetch world alias from config " +
-                        "(did you `/discord reload` yet?)")
         }
 
-        var formattedMessage = player.toDiscordPlayerLeave(worldname)
-        formattedMessage = translateAliasesToDiscord(formattedMessage)
-        sendToDiscord(formattedMessage, Connection.getRelayChannel())
+        translateAliasesToDiscord(player.toDiscordPlayerLeave(worldname)).thenAccept {
+            x -> sendToDiscord(x, Connection.getRelayChannel())
+        }
     }
 
     fun handlePlayerDeath(player: IDbPlayer, deathMessage: String) {
@@ -436,24 +470,24 @@ object DiscordBridge {
         if (player.isVanished() && !getConfig(Cfg.CONFIG).getBoolean("if-vanished.player-death", false)) return
 
         // Get world alias if Multiverse is installed
-        if (DiscordBridge.isMultiverse) {
-            val obj = DiscordBridge.mvWorlds.getObject("worlds.$worldname")
-            if (obj != null) {
-                val alias = (obj as Map<*, *>)["alias"]
-                if (alias is String && alias.isNotEmpty()) worldname = alias
+        if (isMultiverse) {
+            val alias = mvWorlds.getObject("worlds.$worldname.alias", "")
+            if (alias.isNotEmpty()) {
+                worldname = alias
+            } else {
+                logger.warning("Could not fetch world alias from config (did you `/discord reload` yet?)")
             }
-            else
-                DiscordBridge.logger.warning("Could not fetch world alias from config " +
-                        "(did you `/discord reload` yet?)")
         }
 
-        var formattedMessage = deathMessage.toDiscordPlayerDeath(username, worldname)
-        formattedMessage = translateAliasesToDiscord(formattedMessage)
-        sendToDiscord(formattedMessage, Connection.getRelayChannel())
+        translateAliasesToDiscord(deathMessage.toDiscordPlayerDeath(username, worldname)).thenAccept {
+            x -> sendToDiscord(x, Connection.getRelayChannel())
+        }
     }
 
     fun handleDynmapChat(name: String, message: String) {
-        sendToDiscord(translateAliasesToDiscord(message.toDiscordChatMessage(name, "Dynmap")), Connection.getRelayChannel())
+        translateAliasesToDiscord(message.toDiscordChatMessage(name, "Dynmap")).thenAccept {
+            x -> sendToDiscord(x, Connection.getRelayChannel())
+        }
     }
 
     fun handleCommand(sender: IDbCommandSender, commandName: String, args: Array<out String>): Boolean {

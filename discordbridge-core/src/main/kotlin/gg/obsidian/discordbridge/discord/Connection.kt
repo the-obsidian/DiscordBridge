@@ -2,10 +2,13 @@ package gg.obsidian.discordbridge.discord
 
 import gg.obsidian.discordbridge.DiscordBridge
 import gg.obsidian.discordbridge.util.enum.Cfg
-import net.dv8tion.jda.core.AccountType
-import net.dv8tion.jda.core.JDA
-import net.dv8tion.jda.core.JDABuilder
-import net.dv8tion.jda.core.entities.*
+import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.JDABuilder
+import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.utils.MemberCachePolicy
+import net.dv8tion.jda.api.utils.concurrent.Task
+import java.util.concurrent.CompletableFuture
 
 /**
  * Maintains the connection to Discord's servers. All calls to and from the Discord API are passed through this object.
@@ -81,10 +84,17 @@ object Connection: Runnable {
      *
      * @return a List of Member objects
      */
-    fun listUsers(): List<Member> {
-        channel = getRelayChannel()
-        if (channel == null) return mutableListOf()
-        return channel!!.members
+    fun listUsers(): CompletableFuture<List<Member>> {
+        val c = getRelayChannel()
+        channel = c
+
+        if (c == null) {
+            return CompletableFuture.supplyAsync { mutableListOf() }
+        }
+
+        val f = CompletableFuture<List<Member>>()
+        c.guild.loadMembers().onSuccess(f::complete).onError(f::completeExceptionally)
+        return f
     }
 
     /**
@@ -108,12 +118,19 @@ object Connection: Runnable {
      * Builds a JDA instance to connect to the Discord API
      */
     private fun connect() {
-        var builder = JDABuilder(AccountType.BOT).setAudioEnabled(true)
-        builder = builder.setToken(DiscordBridge.getConfig(Cfg.CONFIG).getString("token", ""))
-        JDA = builder.buildBlocking()
+        JDA = JDABuilder.create(
+                DiscordBridge.getConfig(Cfg.CONFIG).getString("token", ""),
+                GatewayIntent.GUILD_MESSAGES,
+                GatewayIntent.GUILD_MEMBERS,
+                GatewayIntent.DIRECT_MESSAGES,
+                GatewayIntent.GUILD_PRESENCES
+            )
+            .setMemberCachePolicy(MemberCachePolicy.ALL)
+            .build()
+        JDA.awaitReady()
         listener = Listener()
         JDA.addEventListener(listener)
-        JDA.presence.game = Game.of("Minecraft ${DiscordBridge.getServer().getMinecraftVersion()}")
+        JDA.presence.activity = Activity.playing("Minecraft ${DiscordBridge.getServer().getMinecraftVersion()}")
         if (serverReady) send(DiscordBridge.getConfig(Cfg.CONFIG).getString("templates.discord.server-start", "Server started!"), getRelayChannel())
         jdaReady = true
     }

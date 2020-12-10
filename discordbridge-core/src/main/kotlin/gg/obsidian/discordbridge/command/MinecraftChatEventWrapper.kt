@@ -2,7 +2,7 @@ package gg.obsidian.discordbridge.command
 
 import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.wrapper.IDbPlayer
-import net.dv8tion.jda.core.entities.MessageChannel
+import net.dv8tion.jda.api.entities.MessageChannel
 
 /**
  * Event wrapper for a player chat event

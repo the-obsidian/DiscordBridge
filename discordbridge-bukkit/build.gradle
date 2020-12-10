@@ -1,27 +1,80 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$project.parent.ext.kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
+    }
+
+//    configurations.all {
+//        resolutionStrategy {
+//            force 'org.ow2.asm:asm:6.0_BETA'
+//        }
+//    }
+}
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'com.github.johnrengelman.shadow'
+}
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
+
+ext {
+    url = 'https://github.com/the-obsidian/DiscordBridge'
+    modid = 'discordbridge-obsidian'
+}
+
+group = 'gg.obsidian'
+version = '5.0.0'
+description = """Bridge chat between Minecraft and Discord"""
+
+import org.apache.tools.ant.filters.ReplaceTokens
+processResources {
+    filter ReplaceTokens, tokens: [
+            'DESCRIPTION': project.description,
+            'URL'        : project.ext.url,
+            'VERSION'    : project.version,
+            'MODID'      : project.ext.modid
+    ]
+}
+
+configurations {
+    shadow
+    implementation.extendsFrom(shadow)
+}
+
 repositories {
     mavenCentral()
-    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    jcenter()
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots' }
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven { url 'https://repo.mikeprimm.com' }
 }
 
 dependencies {
-    compile project(':discordbridge-core')
-    compile group: 'org.spigotmc', name: 'spigot-api', version: '1.12-R0.1-SNAPSHOT'
-    compile (group: 'org.pegdown', name:'pegdown', version: '1.6.0')
-    compile files('../libraries/dynmap-api-2.5-SNAPSHOT.jar')
+    shadow project(':discordbridge-core')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$project.parent.ext.kotlin_version"
+    implementation 'org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT'
+    implementation 'org.dynmap:dynmap-api:2.0'
 }
 
 shadowJar {
-    dependencies {
-        include(project(':discordbridge-core'))
-        include(dependency('org.ow2.asm:asm'))
-        include(dependency('org.ow2.asm:asm-analysis'))
-        include(dependency('org.ow2.asm:asm-tree'))
-        include(dependency('org.ow2.asm:asm-util'))
-    }
-    relocate 'org.json', 'shadow.json'
+    configurations = [project.configurations.shadow]
+    archiveClassifier.set('')
+//    dependencies {
+//        include(':discordbridge-core')
+//        include(dependency('org.ow2.asm:asm'))
+//        include(dependency('org.ow2.asm:asm-analysis'))
+//        include(dependency('org.ow2.asm:asm-tree'))
+//        include(dependency('org.ow2.asm:asm-util'))
+//    }
+    //relocate 'org.json', 'shadow.json'
 }
-build.dependsOn(shadowJar)
 
 artifacts {
     archives shadowJar

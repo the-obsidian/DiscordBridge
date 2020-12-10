@@ -1,21 +1,52 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'com.github.johnrengelman.shadow'
+}
+
+ext {
+    url = 'https://github.com/the-obsidian/DiscordBridge'
+    modid = 'discordbridge-obsidian'
+}
+
+group = 'gg.obsidian'
+version = '5.0.0'
+description = """Bridge chat between Minecraft and Discord"""
+
+import org.apache.tools.ant.filters.ReplaceTokens
+processResources {
+    filter ReplaceTokens, tokens: [
+            'DESCRIPTION': project.description,
+            'URL'        : project.ext.url,
+            'VERSION'    : project.version,
+            'MODID'      : project.ext.modid
+    ]
+}
+
 repositories {
+    jcenter()
     mavenCentral()
 }
 
 dependencies {
-    compile group: 'net.dv8tion', name: 'JDA', version: '3.3.1_286'
-    compile group: 'org.yaml', name: 'snakeyaml', version: '1.19'
-    compile (group: 'org.pegdown', name:'pegdown', version: '1.6.0') {
-        exclude group: 'org.ow2.asm'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$project.parent.ext.kotlin_version"
+    compile 'net.dv8tion:JDA:4.2.0_222'
+    compile 'org.yaml:snakeyaml:1.25'
+    compile 'com.vladsch.flexmark:flexmark:0.62.2'
+    compile 'com.vladsch.flexmark:flexmark-ext-gfm-strikethrough:0.62.2'
+    compile 'com.michaelwflaherty:cleverbotapi:1.0.3'
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
-    compile group: 'commons-lang', name:'commons-lang', version: '2.3'
-    compile group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
-    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
 }
 
 shadowJar {
-    dependencies {
-    }
+    configurations = [project.configurations.compile]
+    archiveClassifier.set('')
 }
-build.dependsOn(shadowJar)
+
+jar {
+    dependsOn shadowJar
+}

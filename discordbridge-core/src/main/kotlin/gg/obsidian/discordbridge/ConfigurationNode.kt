@@ -13,10 +13,12 @@ import org.yaml.snakeyaml.reader.UnicodeReader
 import org.yaml.snakeyaml.representer.Represent
 import org.yaml.snakeyaml.representer.Representer
 import java.io.*
+import java.lang.NullPointerException
 import java.util.*
 
 class ConfigurationNode() : MutableMap<String, Any> {
     private var entries2: MutableMap<String, Any>? = null
+    private var name: String = ""
     private var f: File? = null
     private var yaml: Yaml? = null
 
@@ -40,31 +42,31 @@ class ConfigurationNode() : MutableMap<String, Any> {
         }
     }
 
-    constructor(f: File): this() {
+    constructor(name: String, f: File): this() {
+        this.name = name
         this.f = f
     }
 
-    constructor(map: MutableMap<String, Any>): this() {
+    constructor(name: String, map: MutableMap<String, Any>): this() {
+        this.name = name
         entries2 = map
     }
 
-    @SuppressWarnings("unchecked")
     fun load(): Boolean {
         initparse()
 
+        val file = f ?: return (entries2 != null)
         var fis: FileInputStream? = null
         try {
-            fis = FileInputStream(f)
-            val o: Any? = yaml!!.load(UnicodeReader(fis))
-            if((o != null) && (o is MutableMap<*, *>))
-                entries2 = o as MutableMap<String, Any>
+            fis = FileInputStream(file)
+            entries2 = yaml!!.load(UnicodeReader(fis))
             fis.close()
         }
         catch (e: YAMLException) {
-            //Log.severe("Error parsing " + f.path + ". Use http://yamllint.com to debug the YAML syntax." )
+            DiscordBridge.logger.severe("Error parsing " + file.path + ". Use http://yamllint.com to debug the YAML syntax." )
             throw e
         } catch(iox: IOException) {
-            //Log.severe("Error reading " + f.path)
+            DiscordBridge.logger.severe("Error reading " + file.path)
             return false
         } finally {
             if(fis != null) {
@@ -75,15 +77,16 @@ class ConfigurationNode() : MutableMap<String, Any> {
     }
 
     fun save(): Boolean {
-        return save(f)
+        val file = f ?: return false
+        return save(file)
     }
 
-    fun save(file: File?): Boolean {
+    private fun save(file: File): Boolean {
         initparse()
 
         var stream: FileOutputStream? = null
 
-        file?.parentFile?.mkdirs()
+        file.parentFile?.mkdirs()
 
         try {
             stream = FileOutputStream(file)
@@ -94,120 +97,68 @@ class ConfigurationNode() : MutableMap<String, Any> {
         }
         catch (e: IOException) { }
         finally {
-            try { if (stream != null) stream.close() }
+            try {
+                stream?.close()
+            }
             catch (e: IOException) { }
         }
         return false
     }
 
-    @SuppressWarnings("unchecked")
-    fun getObject(path: String): Any? {
-        if (path.isEmpty())
-            return entries2
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getObject(path: String, default: T): T {
+        if (path.isEmpty()) {
+            return try {
+                entries2 as T ?: default
+            } catch (e: ClassCastException) {
+                default
+            }
+        }
+
         val separator = path.indexOf('.')
-        if (separator < 0)
-            return get(path)
-        val localKey = path.substring(0, separator)
-        val subvalue = (get(localKey) ?: return null) as? MutableMap<*, *> ?: return null
-        val submap: MutableMap<String, Any>
-        try {
-            submap = subvalue as MutableMap<String, Any>
+        if (separator < 0) {
+            return try {
+                get(path) as T ?: default
+            } catch (e: ClassCastException) {
+                default
+            }
+        }
+
+        return try {
+            val localKey = path.substring(0, separator)
+            val submap = get(localKey) as MutableMap<String, Any>
+            val subpath = path.substring(separator + 1)
+            ConfigurationNode(path, submap).getObject(subpath, default) ?: default
         } catch (e: ClassCastException) {
-            return null
-        }
-
-        val subpath = path.substring(separator + 1)
-        return ConfigurationNode(submap).getObject(subpath)
-    }
-
-    fun getObject(path: String, default: Any): Any {
-        return getObject(path) ?: return default
-    }
-
-    fun getInteger(path: String, default: Int): Int = Integer.parseInt(getObject(path, default).toString())
-    fun getLong(path: String, default: Long): Double = getObject(path, default).toString().toLong().toDouble()
-    fun getFloat(path: String, default: Float): Float = getObject(path, default).toString().toFloat()
-    fun getDouble(path: String, default: Double): Double = getObject(path, default).toString().toDouble()
-    fun getBoolean(path: String, default: Boolean): Boolean = getObject(path, default).toString().toBoolean()
-    fun getString(path: String): String? = getObject(path).toString()
-
-    fun getStrings(path: String, default: List<String>): List<String> {
-        val o = getObject(path) as? List<*> ?: return default
-        return o.mapTo(ArrayList()) { it.toString() }
-    }
-
-    fun getString(path: String, default: String): String = getObject(path, default).toString()
-
-    @SuppressWarnings("unchecked")
-    fun <T> getList(path: String): List<T> {
-        try {
-            return getObject(path) as List<T>
-        } catch (e: ClassCastException) {
-            try {
-                val o = getObject(path) as T ?: return ArrayList()
-                val al = ArrayList<T>()
-                al.add(o)
-                return al
-            } catch (e2: ClassCastException) {
-                return ArrayList()
-            }
+            default
+        } catch (e: NullPointerException) {
+            default
         }
     }
 
-    companion object {
-        private fun copyValue(v: Any): Any {
-            when (v) {
-                is MutableMap<*, *> -> {
-                    //@SuppressWarnings("unchecked")
-                    val mv = v as MutableMap<String, Any>
-                    val newv = LinkedHashMap<String,Any>()
-                    for(me in mv.entries) {
-                        newv.put(me.key, copyValue(me.value))
-                    }
-                    return newv
-                }
-                is List<*> -> {
-                    @SuppressWarnings("unchecked")
-                    val lv = v as List<Any>
-                    return lv.indices.mapTo(ArrayList()) { copyValue(lv[it]) }
-                }
-                else -> return v
-            }
-        }
-
-        private fun extendMap(left: MutableMap<String, Any>, right: MutableMap<String, Any>) {
-            val original = ConfigurationNode(left)
-            for(entry in right.entries) {
-                val key = entry.key
-                val value = entry.value
-                original.put(key, copyValue(value))
-            }
-        }
-    }
+    fun getInteger(path: String, default: Int): Int = getObject(path, default)
+    fun getLong(path: String, default: Long): Long = getObject(path, default)
+    fun getFloat(path: String, default: Float): Float = getObject(path, default)
+    fun getDouble(path: String, default: Double): Double = getObject(path, default)
+    fun getBoolean(path: String, default: Boolean): Boolean = getObject(path, default)
+    fun getString(path: String, default: String): String = getObject(path, default)
+    fun getStrings(path: String, default: List<String>): List<String> = getObject(path, default)
+    fun <T> getList(path: String, default: List<T>): List<T> = getObject(path, default)
 
     override val size: Int get() = entries2!!.size
-
     override fun isEmpty(): Boolean = entries2!!.isEmpty()
     override fun containsKey(key: String): Boolean = entries2!!.containsKey(key)
     override fun containsValue(value: Any): Boolean = entries2!!.containsValue(value)
     override fun get(key: String): Any? = entries2!![key]
     override fun put(key: String, value: Any): Any? = entries2!!.put(key, value)
     override fun remove(key: String): Any? = entries2!!.remove(key)
-
-    override fun putAll(from: Map<out String, Any>) {
-        entries2!!.putAll(from)
-    }
-
-    override fun clear() {
-        entries2!!.clear()
-    }
-
+    override fun putAll(from: Map<out String, Any>) = entries2!!.putAll(from)
+    override fun clear() = entries2!!.clear()
     override val keys: MutableSet<String> get() = entries2!!.keys
     override val values: MutableCollection<Any> get() = entries2!!.values
     override val entries: MutableSet<MutableMap.MutableEntry<String, Any>> get() = entries2!!.entries
 
     private class EmptyNullRepresenter : Representer() {
-
         init {
             this.nullRepresenter = EmptyRepresentNull()
         }

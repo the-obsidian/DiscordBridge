@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge.command
 
-import net.dv8tion.jda.core.entities.MessageChannel
+import net.dv8tion.jda.api.entities.MessageChannel
 
 class DiscordCommandSender(val senderName: String, private val channel: MessageChannel) {
     fun sendMessage(message: String) {

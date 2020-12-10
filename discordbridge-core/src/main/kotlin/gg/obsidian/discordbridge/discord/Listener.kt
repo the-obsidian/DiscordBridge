@@ -6,9 +6,9 @@ import gg.obsidian.discordbridge.command.controller.BotControllerManager
 import gg.obsidian.discordbridge.command.controller.FunCommandsController
 import gg.obsidian.discordbridge.command.controller.UtilCommandsController
 import gg.obsidian.discordbridge.util.UrlAttachment
-import net.dv8tion.jda.core.entities.ChannelType
-import net.dv8tion.jda.core.events.message.MessageReceivedEvent
-import net.dv8tion.jda.core.hooks.ListenerAdapter
+import net.dv8tion.jda.api.entities.ChannelType
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.hooks.ListenerAdapter
 
 /**
  * Listens for events from Discord
@@ -27,7 +27,7 @@ class Listener: ListenerAdapter() {
      * @param event the MessageReceivedEvent object
      */
     override fun onMessageReceived(event: MessageReceivedEvent) {
-        DiscordBridge.logDebug("Received message ${event.message.id} from Discord - ${event.message.rawContent}")
+        DiscordBridge.logDebug("Received message ${event.message.id} from Discord - ${event.message.contentRaw}")
 
         // Immediately throw out messages sent from itself
         if (event.author.id == Connection.JDA.selfUser.id) {
@@ -43,7 +43,7 @@ class Listener: ListenerAdapter() {
                     && event.message.isFromType(ChannelType.TEXT)
                     && event.message.textChannel == Connection.getRelayChannel()) {
 
-                if (event.message.rawContent.isBlank()) {
+                if (event.message.contentRaw.isBlank()) {
                     DiscordBridge.logDebug("Attachment message has no text; sending attachment only")
                     processAttachments(event)
                 }
@@ -141,9 +141,8 @@ class Listener: ListenerAdapter() {
             var hoverText = "Name: $fileName\nType: $fileType\nSize: $fileSize"
             if (a.isImage) hoverText += "\nDimensions: ${a.height}x${a.width}"
 
-            val senderName = DiscordBridge.translateAliasesToMinecraft(event.author.name)
-            val att = UrlAttachment(senderName, a.url, hoverText)
-            DiscordBridge.sendToMinecraft(att)
+            DiscordBridge.translateAliasesToMinecraft(event.author.name)
+                .thenAccept { sender -> DiscordBridge.sendToMinecraft(UrlAttachment(sender, a.url, hoverText)) }
         }
     }
 }

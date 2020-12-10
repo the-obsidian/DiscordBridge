@@ -1,6 +1,6 @@
 package gg.obsidian.discordbridge.command
 
-import net.dv8tion.jda.core.entities.MessageChannel
+import net.dv8tion.jda.api.entities.MessageChannel
 
 /**
  * Interface for wrappers of various message event types

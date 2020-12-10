@@ -9,7 +9,7 @@ import gg.obsidian.discordbridge.util.enum.Cfg
 import gg.obsidian.discordbridge.util.enum.ChatColor as CC
 import gg.obsidian.discordbridge.util.UtilFunctions.stripColor
 import gg.obsidian.discordbridge.wrapper.IDbPlayer
-import net.dv8tion.jda.core.entities.ChannelType
+import net.dv8tion.jda.api.entities.ChannelType
 import java.util.*
 
 /**
@@ -118,7 +118,7 @@ class UtilCommandsController : IBotController {
                             "Sorry, you don't have permission to use that command.")
                 } else {
                     event.sender.sendMessage("${CC.YELLOW}Reloading Discord Bridge...")
-                    DiscordBridge.reload(Runnable { event.sender.sendMessage("${CC.DARK_GREEN}Discord Bridge has reloaded!") })
+                    DiscordBridge.reload { event.sender.sendMessage("${CC.DARK_GREEN}Discord Bridge has reloaded!") }
                 }
             }
             "linkalias" -> {
@@ -153,11 +153,15 @@ class UtilCommandsController : IBotController {
                         DiscordBridge.requests.remove(pendingRequest)
                 }
 
-                val foundMember = DiscordBridge.registerUserRequest(event.sender, args[1])
-                if (foundMember == null)
-                    event.sender.sendMessage("${CC.YELLOW}Could not find Discord user with that discriminator. " +
-                            "Try '/discord listmembers all' to see a list of valid users.")
-                else event.sender.sendMessage("${CC.YELLOW}An alias link request has been sent to Discord user '${foundMember.user.name}'")
+                DiscordBridge.registerUserRequest(event.sender, args[1])
+                    .thenAccept { member ->
+                        if (member == null)
+                            event.sender.sendMessage(
+                                "${CC.YELLOW}Could not find Discord user with that discriminator. " +
+                                        "Try '/discord listmembers all' to see a list of valid users."
+                            )
+                        else event.sender.sendMessage("${CC.YELLOW}An alias link request has been sent to Discord user '${member.user.name}'")
+                    }
             }
             "listmembers" -> {
                 if (args.size < 2) {
@@ -171,7 +175,7 @@ class UtilCommandsController : IBotController {
                 }
 
                 when (args[1].toLowerCase()) {
-                    "all" -> event.sender.sendMessage(DiscordBridge.getDiscordMembersAll())
+                    "all" -> DiscordBridge.getDiscordMembersAll().thenAccept { msg -> event.sender.sendMessage(msg) }
                     "online" -> event.sender.sendMessage(DiscordBridge.getDiscordMembersOnline())
                     else -> event.sender.sendMessage("${CC.YELLOW}Usage: /discord listmembers <all/online>")
                 }
@@ -226,19 +230,19 @@ class UtilCommandsController : IBotController {
             }
             is DiscordMessageWrapper -> {
                 DiscordBridge.logger.info("DiscordMessageWrapper detected!")
-                event.originalMessage.author.openPrivateChannel().queue({p ->
+                event.originalMessage.author.openPrivateChannel().queue { p ->
                     DiscordBridge.logger.info("RestAction returned: $p")
                     p.sendMessage("**DiscordBridge** - Bridge your Minecraft and Discord chats\n**---**").queue()
                     var out: String
                     for (bc: IBotController in instances.values) {
                         out = bc.getDescription() + "\n```"
                         commands.values.sortedBy { it.aliases[0] }
-                                .filter { it.controllerClass == bc.javaClass }
-                                .forEach { out += "\n${it.aliases[0]} ${it.usage}\n  ${it.description}\n" }
+                            .filter { it.controllerClass == bc.javaClass }
+                            .forEach { out += "\n${it.aliases[0]} ${it.usage}\n  ${it.description}\n" }
                         out += "```"
                         p.sendMessage(out).queue()
                     }
-                })
+                }
                 DiscordBridge.logger.info("Continuing non-blocking thread")
             }
         }

@@ -11,9 +11,11 @@ import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
 import gg.obsidian.discordbridge.util.UtilFunctions.stripColor
 import gg.obsidian.discordbridge.util.UtilFunctions.toDiscordChatMessage
 import gg.obsidian.discordbridge.util.UtilFunctions.toMinecraftChatMessage
-import net.dv8tion.jda.core.Permission
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.ChannelType
 import java.lang.reflect.Method
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import gg.obsidian.discordbridge.util.enum.ChatColor as CC
 
 /**
@@ -42,7 +44,7 @@ class BotControllerManager {
      */
     fun registerController(controller: IBotController, discordExclusive: Boolean = false,
                            minecraftExclusive: Boolean = false, chatExclusive: Boolean = false) {
-        controllers.put(controller.javaClass, controller)
+        controllers[controller.javaClass] = controller
         val controllerClass = controller.javaClass
 
         for (method in controllerClass.declaredMethods) {
@@ -71,12 +73,12 @@ class BotControllerManager {
         if (methodParameters.isEmpty() || !methodParameters[0].type.isAssignableFrom(IEventWrapper::class.java)) return
 
         method.isAccessible = true
-        val parameters = (1 until methodParameters.size).mapTo(ArrayList<Class<*>>()) { methodParameters[it].type }
+        val parameters = (1 until methodParameters.size).mapTo(ArrayList()) { methodParameters[it].type }
         val isTagged: Boolean = method.getAnnotation(TaggedResponse::class.java) != null
         val isPrivate: Boolean = method.getAnnotation(PrivateResponse::class.java) != null
         val command = Command(commandAliases, usage, annotation.desc, annotation.help, parameters, annotation.relayTriggerMessage,
                 annotation.squishExcessArgs, annotation.ignoreExcessArgs, isTagged, isPrivate, controllerClass, method)
-        commands.put(command.aliases[0], command)
+        commands[command.aliases[0]] = command
     }
 
     fun getCommands(): Map<String, Command> {
@@ -133,7 +135,7 @@ class BotControllerManager {
      * @return true if a trigger was found and successfully responded to, false otherwise
      */
     private fun sendScriptedResponse(event: IEventWrapper): Boolean {
-        val responses = DiscordBridge.getConfig(Cfg.SCRIPT).getList<HashMap<String, Any>>("responses").castTo({ Script(it) })
+        val responses = DiscordBridge.getConfig(Cfg.SCRIPT).getList<HashMap<String, Any>>("responses", emptyList()).castTo { Script(it) }
 
         var response: Script? = null
         for (r in responses) {
@@ -166,20 +168,29 @@ class BotControllerManager {
         val responseDis: String? = response.responseDis
         val responseMC: String? = response.responseMC
         if (responseDis != null && responseDis.isNotBlank()) {
-            var out = responseDis.replace("%u", event.senderAsMention)
-            if (event is MinecraftChatEventWrapper) {
-                out = DiscordBridge.convertAtMentions(out)
-                out = DiscordBridge.translateAliasesToDiscord(out)
-            }
-            DiscordBridge.sendToDiscord(out, event.channel)
+            CompletableFuture.supplyAsync { responseDis.replace("%u", event.senderAsMention) }
+                .thenCompose { msg ->
+                    if (event is MinecraftChatEventWrapper) {
+                        DiscordBridge.convertAtMentions(msg) .thenCompose(DiscordBridge::translateAliasesToDiscord)
+                    } else {
+                        CompletableFuture.supplyAsync { msg }
+                    }
+                }
+                .thenAccept { x -> DiscordBridge.sendToDiscord(x, event.channel) }
         }
         if (responseMC != null && responseMC.isNotBlank() && event.isFromRelayChannel) {
-            var out = responseMC.replace("%u", event.senderAsMention)
-            if (event is DiscordMessageWrapper) {
-                out = DiscordBridge.deconvertAtMentions(out)
-                out = DiscordBridge.translateAliasesToMinecraft(out)
-            }
-            DiscordBridge.sendToMinecraft(out.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
+            CompletableFuture.supplyAsync { responseMC.replace("%u", event.senderAsMention) }
+                .thenApply { responseMC.replace("%u", event.senderAsMention) }
+                .thenCompose { msg ->
+                    if (event is DiscordMessageWrapper) {
+                        DiscordBridge.deconvertAtMentions(msg) .thenCompose(DiscordBridge::translateAliasesToMinecraft)
+                    } else {
+                        CompletableFuture.supplyAsync { msg }
+                    }
+                }
+                .thenAccept {
+                    DiscordBridge.sendToMinecraft(it.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
+                }
         }
         return true
     }
@@ -199,7 +210,10 @@ class BotControllerManager {
 
         if (command == null) {
             // Attempt to run as a server command if sent from Discord
-            if (event is DiscordMessageWrapper && event.originalMessage.member.hasPermission(Permission.ADMINISTRATOR))
+            if (event is DiscordMessageWrapper
+                    && !event.originalMessage.isWebhookMessage
+                    && event.originalMessage.isFromType(ChannelType.TEXT)
+                    && event.originalMessage.member!!.hasPermission(Permission.ADMINISTRATOR))
                 if (invokeServerCommand(event, args)) return true
 
             if (defaultToTalk) command = commands["talk"]
@@ -312,50 +326,52 @@ class BotControllerManager {
         when (event) {
             is MinecraftChatEventWrapper -> {
                 if (command.isPrivate) {
-                    modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                    modifiedResponse = MarkdownToMinecraftSeralizer.toMinecraft(modifiedResponse)
                     modifiedResponse = "${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             modifiedResponse
                     event.player.sendMessage(modifiedResponse)
                     return
                 }
                 if (command.isTagged) modifiedResponse = "${event.senderAsMention} | $modifiedResponse"
-                val mcModifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                val mcModifiedResponse = MarkdownToMinecraftSeralizer.toMinecraft(modifiedResponse)
                 DiscordBridge.sendToMinecraft(mcModifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
 
-                modifiedResponse = DiscordBridge.convertAtMentions(modifiedResponse)
-                modifiedResponse = DiscordBridge.translateAliasesToDiscord(modifiedResponse)
-                DiscordBridge.sendToDiscord(modifiedResponse, event.channel)
+                DiscordBridge.convertAtMentions(modifiedResponse)
+                    .thenCompose(DiscordBridge::translateAliasesToDiscord)
+                    .thenAccept { x -> DiscordBridge.sendToDiscord(x, event.channel) }
                 return
             }
             is DiscordMessageWrapper -> {
                 if (command.isPrivate) {
-                    event.originalMessage.author.openPrivateChannel().queue({ p -> p.sendMessage(modifiedResponse).queue() })
+                    event.originalMessage.author.openPrivateChannel().queue { p ->
+                        p.sendMessage(modifiedResponse).queue()
+                    }
                     return
                 }
                 if (command.isTagged) modifiedResponse = "${event.senderAsMention} | $modifiedResponse"
                 DiscordBridge.sendToDiscord(modifiedResponse, event.channel)
 
                 modifiedResponse = modifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge"))
-                modifiedResponse = DiscordBridge.deconvertAtMentions(modifiedResponse)
-                modifiedResponse = DiscordBridge.translateAliasesToMinecraft(modifiedResponse)
-                modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
-                DiscordBridge.sendToMinecraft(modifiedResponse)
+                DiscordBridge.deconvertAtMentions(modifiedResponse)
+                    .thenCompose(DiscordBridge::translateAliasesToMinecraft)
+                    .thenApply(MarkdownToMinecraftSeralizer::toMinecraft)
+                    .thenAccept(DiscordBridge::sendToMinecraft)
                 return
             }
             is MinecraftCommandWrapper -> {
                 if (command.isPrivate || command.isTagged) {
-                    modifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                    modifiedResponse = MarkdownToMinecraftSeralizer.toMinecraft(modifiedResponse)
                     modifiedResponse = "${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             modifiedResponse
                     event.sender.sendMessage(modifiedResponse)
                     return
                 }
-                val mcModifiedResponse = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(modifiedResponse.toCharArray()))
+                val mcModifiedResponse = MarkdownToMinecraftSeralizer.toMinecraft(modifiedResponse)
                 DiscordBridge.sendToMinecraft(mcModifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
 
-                modifiedResponse = DiscordBridge.convertAtMentions(modifiedResponse)
-                modifiedResponse = DiscordBridge.translateAliasesToDiscord(modifiedResponse)
-                DiscordBridge.sendToDiscord(modifiedResponse, event.channel)
+                DiscordBridge.convertAtMentions(modifiedResponse)
+                    .thenCompose { x -> DiscordBridge.translateAliasesToDiscord(x) }
+                    .thenAccept { x: String -> DiscordBridge.sendToDiscord(x, event.channel) }
                 return
             }
         }
@@ -388,29 +404,30 @@ class BotControllerManager {
 
                 // Get world alias if Multiverse is installed
                 if (DiscordBridge.isMultiverse) {
-                    val obj = DiscordBridge.mvWorlds.getObject("worlds.$worldname")
-                    if (obj != null) {
-                        val alias = (obj as Map<*, *>)["alias"]
-                        if (alias is String && alias.isNotEmpty()) worldname = alias
+                    val alias = DiscordBridge.mvWorlds.getObject("worlds.$worldname.alias", "")
+                    if (alias.isNotEmpty()) {
+                        worldname = alias
+                    } else {
+                        DiscordBridge.logger.warning(
+                            "Could not fetch world alias from config " +
+                                    "(did you `/discord reload` yet?)"
+                        )
                     }
-                    else
-                        DiscordBridge.logger.warning("Could not fetch world alias from config " +
-                                "(did you `/discord reload` yet?)")
                 }
 
-                var formattedMessage = event.message.toDiscordChatMessage(event.senderName, worldname)
-                formattedMessage = DiscordBridge.convertAtMentions(formattedMessage)
-                formattedMessage = DiscordBridge.translateAliasesToDiscord(formattedMessage)
-                DiscordBridge.sendToDiscord(formattedMessage, Connection.getRelayChannel())
+                CompletableFuture.supplyAsync { event.message.toDiscordChatMessage(event.senderName, worldname) }
+                    .thenCompose(DiscordBridge::convertAtMentions)
+                    .thenCompose(DiscordBridge::translateAliasesToDiscord)
+                    .thenAccept { x -> DiscordBridge.sendToDiscord(x, Connection.getRelayChannel()) }
             }
             is DiscordMessageWrapper -> {
                 if (event.isFromRelayChannel) {
                     DiscordBridge.logDebug("Broadcasting message from Discord to Minecraft as user ${event.senderName}")
-                    var formattedMessage = event.message.toMinecraftChatMessage(event.senderName)
-                    formattedMessage = DiscordBridge.deconvertAtMentions(formattedMessage)
-                    formattedMessage = DiscordBridge.translateAliasesToMinecraft(formattedMessage)
-                    formattedMessage = MarkdownToMinecraftSeralizer().toMinecraft(DiscordBridge.getPegDownProcessor().parseMarkdown(formattedMessage.toCharArray()))
-                    DiscordBridge.sendToMinecraft(formattedMessage)
+                    CompletableFuture.supplyAsync { event.message.toMinecraftChatMessage(event.senderName) }
+                        .thenCompose(DiscordBridge::deconvertAtMentions)
+                        .thenCompose(DiscordBridge::translateAliasesToMinecraft)
+                        .thenApply(MarkdownToMinecraftSeralizer::toMinecraft)
+                        .thenAccept(DiscordBridge::sendToMinecraft)
                 } else if (logIgnore) DiscordBridge.logDebug("Not relaying message from Discord: channel does not match")
             }
             else -> return // slash commands do not get relayed
@@ -556,8 +573,7 @@ class BotControllerManager {
         "yes", "true" -> true
         "no", "false" -> false
         else -> {
-            val integerValue = Integer.valueOf(value)!!
-            when (integerValue) {
+            when (Integer.valueOf(value)) {
                 1 -> true
                 0 -> false
                 else -> throw IllegalArgumentException()

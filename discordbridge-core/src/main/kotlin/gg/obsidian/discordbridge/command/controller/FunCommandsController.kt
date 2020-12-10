@@ -10,6 +10,7 @@ import gg.obsidian.discordbridge.util.config.Rating
 import gg.obsidian.discordbridge.util.config.Respect
 import java.util.*
 import kotlin.collections.LinkedHashMap
+import kotlin.math.pow
 
 /**
  * Controller for fun commands that have no purpose outside of amusement
@@ -35,7 +36,7 @@ class FunCommandsController : IBotController {
     @TaggedResponse
     private fun eightBall(event: IEventWrapper): String {
         DiscordBridge.logDebug("user ${event.senderName} consults the Magic 8-Ball")
-        val responses = DiscordBridge.getConfig(Cfg.EBALL).getList<String>("responses")
+        val responses = DiscordBridge.getConfig(Cfg.EBALL).getList<String>("responses", emptyList())
         val rand = Random().nextInt(responses.count())
         return responses[rand]
     }
@@ -74,7 +75,7 @@ class FunCommandsController : IBotController {
     private fun f(event: IEventWrapper): String {
         DiscordBridge.logDebug("user ${event.senderName}} pays respects")
         var totalRespects = DiscordBridge.getConfig(Cfg.F).getInteger("total-respects", 0)
-        val responses = DiscordBridge.getConfig(Cfg.F).getList<LinkedHashMap<String, Any>>("responses").castTo({ Respect(it) })
+        val responses = DiscordBridge.getConfig(Cfg.F).getList<LinkedHashMap<String, Any>>("responses", emptyList()).castTo { Respect(it) }
         val totalWeight = responses.sumBy { it.weight }
         var rand = Random().nextInt(totalWeight) + 1
         var found: Respect? = null
@@ -87,15 +88,14 @@ class FunCommandsController : IBotController {
         }
 
         totalRespects += found!!.count
-        val msg: String
-        msg = if (found.message.contains("%u"))
+        val msg: String = if (found.message.contains("%u"))
             found.message.replace("%u", event.senderAsMention).replace("%t", totalRespects.toString())
                     .replace("%c", found.count.toString())
         else
             "${event.senderAsMention} | ${found.message}".replace("%t", totalRespects.toString())
                     .replace("%c", found.count.toString())
 
-        DiscordBridge.getConfig(Cfg.F).put("total-respects", totalRespects)
+        DiscordBridge.getConfig(Cfg.F)["total-respects"] = totalRespects
         DiscordBridge.getConfig(Cfg.F).save()
 
         return msg
@@ -116,7 +116,7 @@ class FunCommandsController : IBotController {
     )
     private fun insult(event: IEventWrapper, thingToInsult: String): String {
         DiscordBridge.logDebug("user ${event.senderName} requests an insult against '$thingToInsult'")
-        val responses = DiscordBridge.getConfig(Cfg.INSULT).getList<String>("responses")
+        val responses = DiscordBridge.getConfig(Cfg.INSULT).getList<String>("responses", emptyList())
         val rand = Random().nextInt(responses.count())
         return "${event.senderAsMention} \u27A4 $thingToInsult | ${responses[rand]}"
     }
@@ -137,7 +137,7 @@ class FunCommandsController : IBotController {
     @TaggedResponse
     private fun rate(event: IEventWrapper, thingToRate: String): String {
         DiscordBridge.logDebug("user ${event.senderName} requests a rating")
-        val responses = DiscordBridge.getConfig(Cfg.RATE).getList<LinkedHashMap<String, Any>>("responses").castTo({ Rating(it) })
+        val responses = DiscordBridge.getConfig(Cfg.RATE).getList<LinkedHashMap<String, Any>>("responses", emptyList()).castTo { Rating(it) }
 
         var rateOutOf = DiscordBridge.getConfig(Cfg.RATE).getInteger("rate-out-of", 10)
         if (rateOutOf > 1000000) rateOutOf = 1000000
@@ -147,7 +147,7 @@ class FunCommandsController : IBotController {
         if (granularity > 2) granularity = 2
         if (granularity < 0) granularity = 0
 
-        val conversionFactor = Math.pow(10.0, granularity.toDouble())
+        val conversionFactor = 10.0.pow(granularity.toDouble())
         val rating = Random().nextInt((rateOutOf * conversionFactor.toInt()) + 1) / conversionFactor
 
         val found: Rating = responses.firstOrNull { rating <= it.high && rating >= it.low }

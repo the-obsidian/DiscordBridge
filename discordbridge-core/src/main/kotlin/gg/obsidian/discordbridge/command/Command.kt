@@ -5,7 +5,6 @@ import java.lang.reflect.Method
 /**
  * Represents a command that the bot can execute
  *
- * @param name the name of the command (not necessarily the name of the method called)
  * @param usage the usage description of the method
  * @param description a description of the command's function
  * @param parameters a List of the command arguments' expected Java class types
@@ -29,4 +28,42 @@ data class Command(
         val isPrivate: Boolean,
         val controllerClass: Class<*>,
         val commandMethod: Method
-)
+) {
+        override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (javaClass != other?.javaClass) return false
+
+                other as Command
+
+                if (!aliases.contentEquals(other.aliases)) return false
+                if (usage != other.usage) return false
+                if (description != other.description) return false
+                if (help != other.help) return false
+                if (parameters != other.parameters) return false
+                if (relayTriggerMessage != other.relayTriggerMessage) return false
+                if (squishExcessArgs != other.squishExcessArgs) return false
+                if (ignoreExcessArgs != other.ignoreExcessArgs) return false
+                if (isTagged != other.isTagged) return false
+                if (isPrivate != other.isPrivate) return false
+                if (controllerClass != other.controllerClass) return false
+                if (commandMethod != other.commandMethod) return false
+
+                return true
+        }
+
+        override fun hashCode(): Int {
+                var result = aliases.contentHashCode()
+                result = 31 * result + usage.hashCode()
+                result = 31 * result + description.hashCode()
+                result = 31 * result + help.hashCode()
+                result = 31 * result + parameters.hashCode()
+                result = 31 * result + relayTriggerMessage.hashCode()
+                result = 31 * result + squishExcessArgs.hashCode()
+                result = 31 * result + ignoreExcessArgs.hashCode()
+                result = 31 * result + isTagged.hashCode()
+                result = 31 * result + isPrivate.hashCode()
+                result = 31 * result + controllerClass.hashCode()
+                result = 31 * result + commandMethod.hashCode()
+                return result
+        }
+}

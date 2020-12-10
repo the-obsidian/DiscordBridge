@@ -2,9 +2,9 @@ package gg.obsidian.discordbridge.command
 
 import gg.obsidian.discordbridge.DiscordBridge
 import gg.obsidian.discordbridge.util.enum.Cfg
-import net.dv8tion.jda.core.entities.ChannelType
-import net.dv8tion.jda.core.entities.Message
-import net.dv8tion.jda.core.entities.MessageChannel
+import net.dv8tion.jda.api.entities.ChannelType
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.MessageChannel
 
 /**
  * A wrapper for JDA's Message class
@@ -33,25 +33,25 @@ class DiscordMessageWrapper(val originalMessage: Message) : IEventWrapper {
      */
     override val isFromRelayChannel: Boolean
         get() = if (originalMessage.isFromType(ChannelType.PRIVATE)) false
-                else originalMessage.guild.id == DiscordBridge.getConfig(Cfg.CONFIG).getString("server-id")
+                else originalMessage.guild.id == DiscordBridge.getConfig(Cfg.CONFIG).getString("server-id", "")
                 && originalMessage.isFromType(ChannelType.TEXT)
-                && originalMessage.textChannel.name.equals(DiscordBridge.getConfig(Cfg.CONFIG).getString("channel"), true)
+                && originalMessage.textChannel.name.equals(DiscordBridge.getConfig(Cfg.CONFIG).getString("channel", ""), true)
 
     /**
      * The message of this event
      *
-     * This is equivalent to Message.getContent()
+     * This is equivalent to Message.getContentDisplay()
      */
     override val message: String
-        get() = originalMessage.content
+        get() = originalMessage.contentDisplay
 
     /**
      * The raw message of this event
      *
-     * This is equivalent to Message.getRawContent()
+     * This is equivalent to Message.getContentRaw()
      */
     override val rawMessage: String
-        get() = originalMessage.rawContent
+        get() = originalMessage.contentRaw
 
     /**
      * The visible server name of the author of the event

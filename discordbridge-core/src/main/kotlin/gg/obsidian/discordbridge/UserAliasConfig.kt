@@ -13,8 +13,7 @@ object UserAliasConfig {
      * Load the stored aliases from file into memory
      */
     fun load() {
-        val list = DiscordBridge.getConfig(Cfg.ALIAS).getList<Map<String, Any>>("aliases")
-        aliases = list.castTo({ UserAlias(it) })
+        aliases = DiscordBridge.getConfig(Cfg.ALIAS).getList<Map<String, Any>>("aliases", emptyList()).castTo { UserAlias(it) }
     }
 
     /**
@@ -22,7 +21,7 @@ object UserAliasConfig {
      */
     fun add(ua: UserAlias) {
         aliases = aliases.plus(ua)
-        DiscordBridge.getConfig(Cfg.ALIAS).put("aliases", aliases)
+        DiscordBridge.getConfig(Cfg.ALIAS)["aliases"] = aliases
         DiscordBridge.getConfig(Cfg.ALIAS).save()
         DiscordBridge.getConfig(Cfg.ALIAS).load()
     }
@@ -32,7 +31,7 @@ object UserAliasConfig {
      */
     fun remove(ua: UserAlias) {
         aliases = aliases.minus(ua)
-        DiscordBridge.getConfig(Cfg.ALIAS).put("aliases", aliases)
+        DiscordBridge.getConfig(Cfg.ALIAS)["aliases"] = aliases
         DiscordBridge.getConfig(Cfg.ALIAS).save()
         DiscordBridge.getConfig(Cfg.ALIAS).load()
     }

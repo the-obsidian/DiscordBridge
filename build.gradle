@@ -1,84 +1,20 @@
-import org.apache.tools.ant.filters.ReplaceTokens
-
 buildscript {
-    ext.kotlin_version = '1.2.10'
-
     repositories {
-        mavenCentral()
-        maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
-        jcenter()
+        maven { url "https://plugins.gradle.org/m2/" }
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
-    }
-
-    configurations.all {
-        resolutionStrategy {
-            force 'org.ow2.asm:asm:6.0_BETA'
-        }
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.0.0'
     }
 }
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'kotlin'
-    apply plugin: 'com.github.johnrengelman.shadow'
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.4.10' apply false
+    id 'com.github.johnrengelman.shadow' version '5.0.0' apply false
+    id "com.dorongold.task-tree" version "1.5"
+}
 
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
-    group = 'gg.obsidian'
-    version = '4.0.0'
-    description = """Bridge chat between Minecraft and Discord"""
-    ext.url = 'https://github.com/the-obsidian/DiscordBridge'
-    ext.modid = 'discordbridge-obsidian'
-    processResources {
-        filter ReplaceTokens, tokens: [
-                'DESCRIPTION': project.property('description'),
-                'URL'        : project.property('url'),
-                'VERSION'    : project.property('version'),
-                'MODID'      : project.property('modid')
-        ]
-    }
-
-    repositories {
-        maven { url 'https://github.com/DV8FromTheWorld/Maven-Repository/raw/master/repo' }
-        jcenter()
-    }
-
-    dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    }
-
-    shadowJar {
-        classifier = null
-        dependencies {
-            // Kotlin Runtime
-            include(dependency("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"))
-
-            // Dependencies for JDA
-            include(dependency('net.dv8tion:JDA:3.3.1_286'))
-            include(dependency('com.squareup.okhttp3:okhttp:'))
-            include(dependency('com.squareup.okio:okio'))
-            include(dependency('com.neovisionaries:nv-websocket-client'))
-            include(dependency('org.json:json'))
-            include(dependency('org.slf4j:slf4j-api'))
-            include(dependency('org.slf4j:slf4j-simple'))
-
-            // Dependency for SnakeYAML
-            include(dependency(group: 'org.yaml', name: 'snakeyaml', version: '1.19'))
-
-            // Dependencies for PegDown
-            include(dependency(group: 'org.pegdown', name:'pegdown', version: '1.6.0'))
-            include(dependency(group: 'commons-lang', name:'commons-lang', version: '2.3'))
-            include(dependency('org.parboiled:parboiled-core'))
-            include(dependency('org.parboiled:parboiled-java'))
-
-            // Dependency for CleverbotAPI
-            include(dependency(group: 'com.michaelwflaherty', name: 'cleverbotapi', version: '1.0.1'))
-        }
-    }
+ext {
+    kotlin_version = '1.4.10'
 }
