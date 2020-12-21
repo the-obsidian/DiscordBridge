@@ -8,7 +8,6 @@ import gg.obsidian.discordbridge.command.controller.FunCommandsController
 import gg.obsidian.discordbridge.command.controller.UtilCommandsController
 import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.util.enum.Cfg
-import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
 import gg.obsidian.discordbridge.util.UrlAttachment
 import gg.obsidian.discordbridge.util.config.UserAlias
 import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
@@ -414,7 +413,7 @@ object DiscordBridge {
             )
         }
 
-        return MarkdownToMinecraftSeralizer.toMinecraft(newMessage)
+        return newMessage
     }
 
     fun handlePlayerJoin(player: IDbPlayer) {

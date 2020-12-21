@@ -1,6 +1,7 @@
 package gg.obsidian.discordbridge.wrapper
 
 import gg.obsidian.discordbridge.BukkitDiscordBridge
+import gg.obsidian.discordbridge.DFMConverter
 import gg.obsidian.discordbridge.DiscordRCon
 import gg.obsidian.discordbridge.command.DiscordCommandSender
 import gg.obsidian.discordbridge.util.UrlAttachment
@@ -41,7 +42,7 @@ class DbBukkitServer(private val plugin: BukkitDiscordBridge, private val bukkit
     }
 
     override fun broadcastMessage(message: String) {
-        bukkitServer.broadcastMessage(message)
+        bukkitServer.spigot().broadcast(*DFMConverter.convert(message))
     }
 
     override fun dispatchCommand(sender: DiscordCommandSender, command: String) {

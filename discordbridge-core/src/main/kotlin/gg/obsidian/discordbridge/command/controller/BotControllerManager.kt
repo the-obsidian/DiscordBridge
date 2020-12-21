@@ -5,7 +5,6 @@ import gg.obsidian.discordbridge.command.*
 import gg.obsidian.discordbridge.command.annotation.*
 import gg.obsidian.discordbridge.discord.Connection
 import gg.obsidian.discordbridge.util.enum.Cfg
-import gg.obsidian.discordbridge.util.MarkdownToMinecraftSeralizer
 import gg.obsidian.discordbridge.util.config.Script
 import gg.obsidian.discordbridge.util.UtilFunctions.noSpace
 import gg.obsidian.discordbridge.util.UtilFunctions.stripColor
@@ -326,15 +325,13 @@ class BotControllerManager {
         when (event) {
             is MinecraftChatEventWrapper -> {
                 if (command.isPrivate) {
-                    modifiedResponse = MarkdownToMinecraftSeralizer.toMinecraft(modifiedResponse)
                     modifiedResponse = "${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             modifiedResponse
                     event.player.sendMessage(modifiedResponse)
                     return
                 }
                 if (command.isTagged) modifiedResponse = "${event.senderAsMention} | $modifiedResponse"
-                val mcModifiedResponse = MarkdownToMinecraftSeralizer.toMinecraft(modifiedResponse)
-                DiscordBridge.sendToMinecraft(mcModifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
+                DiscordBridge.sendToMinecraft(modifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
 
                 DiscordBridge.convertAtMentions(modifiedResponse)
                     .thenCompose(DiscordBridge::translateAliasesToDiscord)
@@ -354,20 +351,17 @@ class BotControllerManager {
                 modifiedResponse = modifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge"))
                 DiscordBridge.deconvertAtMentions(modifiedResponse)
                     .thenCompose(DiscordBridge::translateAliasesToMinecraft)
-                    .thenApply(MarkdownToMinecraftSeralizer::toMinecraft)
                     .thenAccept(DiscordBridge::sendToMinecraft)
                 return
             }
             is MinecraftCommandWrapper -> {
                 if (command.isPrivate || command.isTagged) {
-                    modifiedResponse = MarkdownToMinecraftSeralizer.toMinecraft(modifiedResponse)
                     modifiedResponse = "${CC.ITALIC}${CC.GRAY}${DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge").stripColor()} whispers to you: " +
                             modifiedResponse
                     event.sender.sendMessage(modifiedResponse)
                     return
                 }
-                val mcModifiedResponse = MarkdownToMinecraftSeralizer.toMinecraft(modifiedResponse)
-                DiscordBridge.sendToMinecraft(mcModifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
+                DiscordBridge.sendToMinecraft(modifiedResponse.toMinecraftChatMessage(DiscordBridge.getConfig(Cfg.CONFIG).getString("username", "DiscordBridge")))
 
                 DiscordBridge.convertAtMentions(modifiedResponse)
                     .thenCompose { x -> DiscordBridge.translateAliasesToDiscord(x) }
@@ -426,7 +420,6 @@ class BotControllerManager {
                     CompletableFuture.supplyAsync { event.message.toMinecraftChatMessage(event.senderName) }
                         .thenCompose(DiscordBridge::deconvertAtMentions)
                         .thenCompose(DiscordBridge::translateAliasesToMinecraft)
-                        .thenApply(MarkdownToMinecraftSeralizer::toMinecraft)
                         .thenAccept(DiscordBridge::sendToMinecraft)
                 } else if (logIgnore) DiscordBridge.logDebug("Not relaying message from Discord: channel does not match")
             }
