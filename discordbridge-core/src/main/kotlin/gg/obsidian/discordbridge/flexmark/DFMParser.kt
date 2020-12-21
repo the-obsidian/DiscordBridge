@@ -11,6 +11,7 @@ import com.vladsch.flexmark.parser.core.delimiter.UnderscoreDelimiterProcessor
 import com.vladsch.flexmark.parser.delimiter.DelimiterProcessor
 import com.vladsch.flexmark.util.ast.Node
 import com.vladsch.flexmark.util.sequence.BasedSequence
+import com.vladsch.flexmark.util.sequence.SegmentedSequence
 import com.vladsch.flexmark.util.sequence.SequenceUtils
 import gg.obsidian.discordbridge.flexmark.delimiter.SpoilerDelimiterProcessor
 import java.util.BitSet
@@ -89,8 +90,7 @@ class DFMParser {
      **/
     private fun flushPlainText() {
         if (plainTextBuffer.size > 0) {
-            val first = plainTextBuffer.removeFirst()
-            val node = Text(first.builder.addAll(plainTextBuffer).toSequence())
+            val node = Text(SegmentedSequence.create(input, plainTextBuffer))
             document.appendChild(node)
             plainTextBuffer.clear()
         }
@@ -146,7 +146,7 @@ class DFMParser {
 
         val builder = StringBuilder()
         sb.map { builder.append(it) }
-        first.chars = first.chars.builder.addAll(sb).toSequence()
+        first.chars = SegmentedSequence.create(first.chars, sb)
     }
 
     /**

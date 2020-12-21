@@ -6,7 +6,7 @@ import com.vladsch.flexmark.util.ast.Node
 import gg.obsidian.discordbridge.flexmark.delimiter.Spoiler
 
 abstract class NodeVisitor {
-    fun visit(node: Paragraph) {
+    fun visit(node: Node) {
         processNodeChildren(node)
     }
 
@@ -20,10 +20,9 @@ abstract class NodeVisitor {
             Text::class -> processTextNode(node as Text)
             else -> {}
         }
-        processNodeChildren(node)
     }
 
-    private fun processNodeChildren(node: Node) {
+    protected fun processNodeChildren(node: Node) {
         var child = node.firstChild
         while (child != null) {
             val next = child.next

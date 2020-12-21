@@ -42,7 +42,9 @@ class DbBukkitServer(private val plugin: BukkitDiscordBridge, private val bukkit
     }
 
     override fun broadcastMessage(message: String) {
-        bukkitServer.spigot().broadcast(*DFMConverter.convert(message))
+        val msg = DFMConverter.convert(message)
+        for (x in msg) bukkitServer.logger.info(x.toString())
+        bukkitServer.spigot().broadcast(*msg)
     }
 
     override fun dispatchCommand(sender: DiscordCommandSender, command: String) {
