@@ -13,6 +13,7 @@ import com.vladsch.flexmark.util.ast.Node
 import com.vladsch.flexmark.util.sequence.BasedSequence
 import com.vladsch.flexmark.util.sequence.SegmentedSequence
 import com.vladsch.flexmark.util.sequence.SequenceUtils
+import gg.obsidian.discordbridge.flexmark.delimiter.ModifiedUnderscoreDelimiterProcessor
 import gg.obsidian.discordbridge.flexmark.delimiter.SpoilerDelimiterProcessor
 import java.util.BitSet
 import java.util.regex.Pattern
@@ -28,7 +29,7 @@ class DFMParser {
     private val delimiterProcessors = mapOf(
         Pair('|', SpoilerDelimiterProcessor),
         Pair('*', AsteriskDelimiterProcessor(true)),
-        Pair('_', UnderscoreDelimiterProcessor(true)),
+        Pair('_', ModifiedUnderscoreDelimiterProcessor()),
         Pair('~', StrikethroughDelimiterProcessor())
     )
 

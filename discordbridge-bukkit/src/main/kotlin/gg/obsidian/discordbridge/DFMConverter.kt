@@ -6,6 +6,7 @@ import com.vladsch.flexmark.ast.*
 import com.vladsch.flexmark.ext.gfm.strikethrough.Strikethrough
 import gg.obsidian.discordbridge.flexmark.NodeVisitor
 import gg.obsidian.discordbridge.flexmark.delimiter.Spoiler
+import gg.obsidian.discordbridge.flexmark.delimiter.Underline
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.ComponentBuilder
 import net.md_5.bungee.api.chat.ComponentBuilder.FormatRetention
@@ -45,6 +46,12 @@ class DFMConverter(private val builder: ComponentBuilder) : NodeVisitor() {
 
     override fun processStrongEmphasisNode(node: StrongEmphasis) {
         context.push(Context.createFrom(context.peek(), isBold = true))
+        processNodeChildren(node)
+        context.pop()
+    }
+
+    override fun processUnderlineNode(node: Underline) {
+        context.push(Context.createFrom(context.peek(), isUnderline = true))
         processNodeChildren(node)
         context.pop()
     }
